@@ -160,26 +160,7 @@ git push origin main
 
 ---
 
-## 六、本次对话中 Manus 做了哪些工作
-
-1. **克隆项目** 到 `/home/ubuntu/vedabase_web`
-2. **安装依赖** 并启动开发服务器（端口 3000）
-3. **配置 GitHub Pages 自动部署**（创建 `.github/workflows/deploy.yml`，配置 `vite.config.ts` base 路径）
-4. **修复数据路径 404**：将硬编码的 `/data/xxx.json` 改为 `import.meta.env.BASE_URL + /data/xxx.json`
-5. **修复深色主题白色背景**：TopNav、列表页面、阅读页面全部改用 CSS 变量
-6. **添加 jsDelivr CDN 加速**：国内无需翻墙，自动检测并切换，失败时回退 GitHub Pages
-7. **添加搜索进度条**：显示正在加载哪篇数据、来源标签（jsDelivr/GitHub）、耗时
-8. **添加开发模式调试面板**：加载失败时显示具体错误原因、URL、环境变量（仅 dev 模式）
-
----
-
-## 七、下次对话建议优先处理
-
-1. 修复 **底部导航书签 bug**（从阅读页点书签标签 → 布局错乱）
-2. 实现 **SB 中文逐词释义**（数据已有，只需在 SBReadPage 中使用 `words_zh_fc` 字段）
-3. 使用 **真实书籍封面图**（CDN 已有 `e4.png` 和 `ux.png`）
-
----
+> 详细对话记录请查看 `docs/chat_logs/` 目录下的 session 文件。
 
 *文档生成时间：2026-03-14*
-*项目版本：v1.2（jsDelivr CDN + 进度条 + 调试面板）*
+*项目版本：v1.3（自定义搜索下拉 + 全部搜索 + 箭头溢出修复）*
