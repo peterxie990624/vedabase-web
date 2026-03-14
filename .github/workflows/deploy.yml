@@ -29,14 +29,12 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install dependencies
         run: pnpm install
 
       - name: Build
-        run: pnpm build
+        run: VITE_BASE_PATH=/vedabase-web/ pnpm build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
