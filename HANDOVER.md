@@ -50,6 +50,8 @@ GitHub 仓库：https://github.com/peterxie990624/vedabase-web
 
 GitHub 账号：3431503934@qq.com / Peterxie1
 
+请先克隆仓库后阅读根目录的 HANDOVER.md 文件，并按照其中的 Manus 工作原则进行本次开发。
+
 本次我想要：[在这里描述你想做的事情]
 ```
 
