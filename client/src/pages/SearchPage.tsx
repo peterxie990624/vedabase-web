@@ -141,7 +141,8 @@ export default function SearchPage({
     setSbLoading(true);
     try {
       for (let i = 1; i <= 12; i++) {
-        const res = await fetch(`/data/sb/canto_${i}.json`);
+        const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+        const res = await fetch(`${base}/data/sb/canto_${i}.json`);
         const data = await res.json();
         Object.assign(sbAllSectionsRef.current, data.sections);
       }

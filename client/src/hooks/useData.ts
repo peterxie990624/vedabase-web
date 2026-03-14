@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { BGData, SBIndex, SBCantoData, AkadasiData, CalendarData } from '../types';
 
+// Base URL for data files - respects Vite's base path (e.g. /vedabase-web/ on GitHub Pages)
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 // Cache for loaded data
 const cache: Record<string, unknown> = {};
 
-async function loadJSON<T>(url: string): Promise<T> {
+async function loadJSON<T>(path: string): Promise<T> {
+  const url = `${BASE}${path}`;
   if (cache[url]) return cache[url] as T;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load ${url}`);
