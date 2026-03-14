@@ -1,7 +1,7 @@
 import React from 'react';
 import TopNav from '../components/TopNav';
 import { useSBIndex } from '../hooks/useData';
-import type { Language } from '../types';
+import type { Language , VedaTheme} from '../types';
 
 interface SBChaptersPageProps {
   cantoId: number;
@@ -9,9 +9,10 @@ interface SBChaptersPageProps {
   onHome: () => void;
   onSelectChapter: (chapterId: number) => void;
   language: Language;
+  theme?: VedaTheme;
 }
 
-export default function SBChaptersPage({ cantoId, onBack, onHome, onSelectChapter, language }: SBChaptersPageProps) {
+export default function SBChaptersPage({ cantoId, onBack, onHome, onSelectChapter, language, theme = 'light' }: SBChaptersPageProps) {
   const { data, loading } = useSBIndex();
 
   const canto = data?.cantos.find(c => c.id === cantoId);

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Settings, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useBookmarks } from '../hooks/useBookmarks';
-import type { Bookmark } from '../types';
+import type { Bookmark, VedaTheme } from '../types';
+import { CDN } from '../constants';
 
 interface BookmarksPageProps {
   onOpenBookmark: (bookmark: Bookmark) => void;
+  theme?: VedaTheme;
 }
 
 const bookTypeLabel: Record<string, string> = {
@@ -13,20 +15,28 @@ const bookTypeLabel: Record<string, string> = {
   akadasi: '爱卡达西',
 };
 
-const bookTypeCover: Record<string, string> = {
-  bg: 'linear-gradient(135deg, #1a3a5c 0%, #4a9fd4 100%)',
-  sb: 'linear-gradient(135deg, #3a1a5c 0%, #9a6ad4 100%)',
-  akadasi: 'linear-gradient(135deg, #5c3a1a 0%, #d4a45a 100%)',
+const bookTypeCoverImg: Record<string, string> = {
+  bg: CDN.COVER_BG,
+  sb: CDN.COVER_SB,
+  akadasi: CDN.COVER_EKADASI,
 };
 
-const bookTypeEmoji: Record<string, string> = {
-  bg: '🌿',
-  sb: '📜',
-  akadasi: '🌸',
-};
-
-export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
+export default function BookmarksPage({ onOpenBookmark, theme = 'light' }: BookmarksPageProps) {
   const { bookmarks, removeBookmark } = useBookmarks();
+  const isDark = theme === 'dark';
+
+  const navBg = isDark ? '#1a2535' : 'white';
+  const navBorder = isDark ? '#2a3a50' : 'var(--veda-border)';
+  const navColor = isDark ? '#c8a84b' : 'var(--veda-blue)';
+  const pageBg = isDark ? '#0f1923' : 'var(--veda-bg)';
+  const listBg = isDark ? '#141e2c' : 'white';
+  const itemBorder = isDark ? '#1e2e42' : 'var(--veda-border)';
+  const titleColor = isDark ? '#d8d0b8' : 'var(--veda-text)';
+  const previewColor = isDark ? '#7a9ab8' : '#6a8aa0';
+  const bookLabelColor = isDark ? '#4a6a88' : '#b0c8dc';
+  const hoverBg = isDark ? '#1e2e42' : 'var(--veda-blue-light)';
+  const footerColor = isDark ? '#3a5070' : '#b0c8dc';
+  const deleteColor = isDark ? '#3a5070' : '#c8d8e4';
 
   return (
     <div
@@ -34,7 +44,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
         paddingTop: '56px',
         paddingBottom: '60px',
         minHeight: '100vh',
-        background: 'var(--veda-bg)',
+        background: pageBg,
       }}
     >
       {/* Top bar */}
@@ -47,14 +57,14 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
           width: '100%',
           maxWidth: '640px',
           height: '56px',
-          background: 'white',
-          borderBottom: '1px solid var(--veda-border)',
+          background: navBg,
+          borderBottom: `1px solid ${navBorder}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '0 16px',
           zIndex: 100,
-          boxShadow: '0 1px 4px rgba(74,127,165,0.08)',
+          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(74,127,165,0.08)',
         }}
       >
         <h1
@@ -62,7 +72,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
             margin: 0,
             fontSize: '1.1rem',
             fontWeight: 700,
-            color: 'var(--veda-blue)',
+            color: navColor,
           }}
         >
           书签
@@ -77,17 +87,17 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '80px 20px',
-            color: '#b0c8dc',
+            color: isDark ? '#3a5070' : '#b0c8dc',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔖</div>
           <div style={{ fontSize: '0.9rem' }}>暂无书签</div>
-          <div style={{ fontSize: '0.8rem', marginTop: '6px', color: '#c8d8e4' }}>
+          <div style={{ fontSize: '0.8rem', marginTop: '6px', color: isDark ? '#2a4060' : '#c8d8e4' }}>
             在阅读页面点击书签图标添加
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: listBg }}>
           {bookmarks.map((bookmark, idx) => (
             <div
               key={`${bookmark.bookType}-${bookmark.chapterId}-${bookmark.sectionId}-${idx}`}
@@ -95,30 +105,32 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
                 display: 'flex',
                 alignItems: 'center',
                 padding: '12px 16px',
-                borderBottom: '1px solid var(--veda-border)',
+                borderBottom: `1px solid ${itemBorder}`,
                 cursor: 'pointer',
                 transition: 'background 0.15s',
+                background: listBg,
               }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--veda-blue-light)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'white'}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = hoverBg}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = listBg}
               onClick={() => onOpenBookmark(bookmark)}
             >
-              {/* Cover */}
+              {/* Cover image */}
               <div
                 style={{
                   width: '52px',
                   height: '64px',
-                  background: bookTypeCover[bookmark.bookType],
                   borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  overflow: 'hidden',
                   flexShrink: 0,
                   marginRight: '12px',
-                  fontSize: '1.5rem',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                 }}
               >
-                {bookTypeEmoji[bookmark.bookType]}
+                <img
+                  src={bookTypeCoverImg[bookmark.bookType]}
+                  alt={bookTypeLabel[bookmark.bookType]}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               </div>
               {/* Content */}
               <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -126,7 +138,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
                   style={{
                     fontWeight: 600,
                     fontSize: '0.95rem',
-                    color: 'var(--veda-text)',
+                    color: titleColor,
                     marginBottom: '4px',
                   }}
                 >
@@ -135,7 +147,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
                 <div
                   style={{
                     fontSize: '0.82rem',
-                    color: '#6a8aa0',
+                    color: previewColor,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -143,7 +155,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
                 >
                   {bookmark.preview}...
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#b0c8dc', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.75rem', color: bookLabelColor, marginTop: '4px' }}>
                   {bookTypeLabel[bookmark.bookType]}
                 </div>
               </div>
@@ -157,7 +169,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: '#c8d8e4',
+                  color: deleteColor,
                   padding: '8px',
                   flexShrink: 0,
                 }}
@@ -167,7 +179,7 @@ export default function BookmarksPage({ onOpenBookmark }: BookmarksPageProps) {
               </button>
             </div>
           ))}
-          <div style={{ padding: '16px', textAlign: 'center', color: '#b0c8dc', fontSize: '13px' }}>
+          <div style={{ padding: '16px', textAlign: 'center', color: footerColor, fontSize: '13px' }}>
             已经加载到最后
           </div>
         </div>

@@ -100,6 +100,7 @@ export interface Bookmark {
   bookType: 'bg' | 'sb' | 'akadasi';
   chapterId: number;
   sectionId?: string | number;
+  sectionIndex?: number;   // exact section index for precise navigation
   title: string;
   preview: string;
   timestamp: number;
@@ -108,3 +109,4 @@ export interface Bookmark {
 export type Language = 'zh' | 'en';
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
 export type TabType = 'bookshelf' | 'bookmarks' | 'search' | 'calendar';
+export type VedaTheme = 'light' | 'dark';

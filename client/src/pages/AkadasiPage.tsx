@@ -3,11 +3,12 @@ import TopNav from '../components/TopNav';
 import { useAkadasiData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
-import type { Language, FontSize } from '../types';
+import type { Language, FontSize , VedaTheme} from '../types';
 
 interface AkadasiPageProps {
   onBack: () => void;
   onHome: () => void;
+  theme?: VedaTheme;
 }
 
 const fontSizeCycle: FontSize[] = ['sm', 'md', 'lg', 'xl'];
@@ -25,7 +26,7 @@ function sanitizeHtml(html: string): string {
     .trim();
 }
 
-export default function AkadasiPage({ onBack, onHome }: AkadasiPageProps) {
+export default function AkadasiPage({ onBack, onHome, theme = 'light' }: AkadasiPageProps) {
   const { data, loading } = useAkadasiData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { language, setLanguage, fontSize, setFontSize } = useSettings();

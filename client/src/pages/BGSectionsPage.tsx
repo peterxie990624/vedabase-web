@@ -1,7 +1,7 @@
 import React from 'react';
 import TopNav from '../components/TopNav';
 import { useBGData } from '../hooks/useData';
-import type { Language } from '../types';
+import type { Language , VedaTheme} from '../types';
 
 interface BGSectionsPageProps {
   chapterId: number;
@@ -9,6 +9,7 @@ interface BGSectionsPageProps {
   onHome: () => void;
   onSelectSection: (chapterId: number, sectionIndex: number) => void;
   language: Language;
+  theme?: VedaTheme;
 }
 
 export default function BGSectionsPage({
@@ -17,7 +18,9 @@ export default function BGSectionsPage({
   onHome,
   onSelectSection,
   language,
+  theme = 'light',
 }: BGSectionsPageProps) {
+  const isDark = theme === 'dark';
   const { data, loading } = useBGData();
 
   const chapter = data?.chapters.find(c => c.id === chapterId);

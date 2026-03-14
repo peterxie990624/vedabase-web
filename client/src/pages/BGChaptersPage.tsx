@@ -1,16 +1,17 @@
 import React from 'react';
 import TopNav from '../components/TopNav';
 import { useBGData } from '../hooks/useData';
-import type { Language } from '../types';
+import type { Language , VedaTheme} from '../types';
 
 interface BGChaptersPageProps {
   onBack: () => void;
   onHome: () => void;
   onSelectChapter: (chapterId: number) => void;
   language: Language;
+  theme?: VedaTheme;
 }
 
-export default function BGChaptersPage({ onBack, onHome, onSelectChapter, language }: BGChaptersPageProps) {
+export default function BGChaptersPage({ onBack, onHome, onSelectChapter, language, theme = 'light' }: BGChaptersPageProps) {
   const { data, loading } = useBGData();
 
   return (

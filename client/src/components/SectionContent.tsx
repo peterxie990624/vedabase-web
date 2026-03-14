@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Language, FontSize } from '../types';
+import type { Language, FontSize, VedaTheme } from '../types';
 
 interface SectionContentProps {
   verseText: string | null;      // 梵文原文（含换行标记）
@@ -9,6 +9,7 @@ interface SectionContentProps {
   purport: string | null;        // 要旨（含HTML）
   language: Language;
   fontSize: FontSize;
+  theme?: VedaTheme;
 }
 
 const fontSizePx: Record<FontSize, number> = {
@@ -44,7 +45,6 @@ function parseWordForWord(sanskrit: string, translation: string): Array<{ sk: st
 
 // Sanitize HTML for purport (allow basic tags)
 function sanitizePurport(html: string): string {
-  // Remove dangerous tags but keep p, em, i, b, strong, br
   return html
     .replace(/<script[^>]*>.*?<\/script>/gi, '')
     .replace(/<style[^>]*>.*?<\/style>/gi, '')
@@ -68,8 +68,10 @@ export default function SectionContent({
   purport,
   language,
   fontSize,
+  theme = 'light',
 }: SectionContentProps) {
   const fsPx = fontSizePx[fontSize];
+  const isDark = theme === 'dark';
 
   const parsedVerse = useMemo(() => {
     if (!verseText) return null;
@@ -86,11 +88,39 @@ export default function SectionContent({
     return sanitizePurport(purport);
   }, [purport]);
 
+  // Dark mode styles
+  const verseBoxStyle: React.CSSProperties = isDark ? {
+    background: '#1e2e42',
+    border: '1px dashed #3a5070',
+    borderRadius: '8px',
+    padding: '20px 24px',
+    textAlign: 'center',
+    margin: '16px 0',
+  } : undefined as any;
+
+  const dividerStyle: React.CSSProperties = {
+    border: 'none',
+    borderTop: `1px solid ${isDark ? '#2a3a50' : 'var(--veda-border)'}`,
+    margin: '12px 0',
+  };
+
+  const sectionHeaderStyle: React.CSSProperties = isDark ? {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#c8a84b',
+    fontWeight: 600,
+    fontSize: '1rem',
+    margin: '20px 0 10px',
+    paddingBottom: '6px',
+    borderBottom: '1px solid #2a3a50',
+  } : undefined as any;
+
   return (
     <div style={{ padding: '16px', fontSize: `${fsPx}px` }}>
       {/* Verse box */}
       {parsedVerse && (
-        <div className="verse-box">
+        <div className={isDark ? '' : 'verse-box'} style={isDark ? verseBoxStyle : undefined}>
           <pre
             className="sanskrit-text"
             style={{
@@ -101,6 +131,7 @@ export default function SectionContent({
               fontFamily: "'Gentium Book Plus', 'Times New Roman', serif",
               fontStyle: 'italic',
               lineHeight: 1.9,
+              color: isDark ? '#d8d0b8' : undefined,
             }}
           >
             {parsedVerse}
@@ -108,15 +139,21 @@ export default function SectionContent({
         </div>
       )}
 
-      {/* Word for word */}
+      {/* Word for word (逐词释义) */}
       {wordPairs && wordPairs.length > 0 && (
         <div style={{ marginBottom: '16px', lineHeight: 2, fontSize: `${fsPx - 1}px` }}>
           {wordPairs.map((pair, i) => (
             <React.Fragment key={i}>
               {pair.sk && (
                 <>
-                  <span className="sanskrit-word">{pair.sk}</span>
-                  {pair.tr && <span style={{ color: 'var(--veda-text)' }}> -{pair.tr} </span>}
+                  <span className="sanskrit-word" style={isDark ? { color: '#e8c060' } : undefined}>
+                    {pair.sk}
+                  </span>
+                  {pair.tr && (
+                    <span style={{ color: isDark ? '#a8b8c8' : 'var(--veda-text)' }}>
+                      {' '}-{pair.tr}{' '}
+                    </span>
+                  )}
                 </>
               )}
             </React.Fragment>
@@ -126,26 +163,37 @@ export default function SectionContent({
 
       {/* Divider */}
       {(wordPairs || parsedVerse) && translation && (
-        <hr style={{ border: 'none', borderTop: '1px solid var(--veda-border)', margin: '12px 0' }} />
+        <hr style={dividerStyle} />
       )}
 
       {/* Translation */}
       {translation && (
         <div style={{ marginBottom: '16px' }}>
-          <div className="section-header">
+          <div
+            className={isDark ? '' : 'section-header'}
+            style={isDark ? sectionHeaderStyle : undefined}
+          >
             <span>📖</span>
             <span>{language === 'zh' ? '译文' : 'Translation'}</span>
           </div>
           {translation.includes('<') ? (
             <div
               className="translation-text"
-              style={{ fontSize: `${fsPx}px`, paddingLeft: '8px' }}
+              style={{
+                fontSize: `${fsPx}px`,
+                paddingLeft: '8px',
+                color: isDark ? '#7ab8d8' : undefined,
+              }}
               dangerouslySetInnerHTML={{ __html: sanitizePurport(translation) }}
             />
           ) : (
             <div
               className="translation-text"
-              style={{ fontSize: `${fsPx}px`, paddingLeft: '8px' }}
+              style={{
+                fontSize: `${fsPx}px`,
+                paddingLeft: '8px',
+                color: isDark ? '#7ab8d8' : undefined,
+              }}
             >
               {translation}
             </div>
@@ -156,13 +204,19 @@ export default function SectionContent({
       {/* Purport */}
       {cleanPurport && (
         <div>
-          <div className="section-header">
+          <div
+            className={isDark ? '' : 'section-header'}
+            style={isDark ? sectionHeaderStyle : undefined}
+          >
             <span>📋</span>
             <span>{language === 'zh' ? '要旨' : 'Purport'}</span>
           </div>
           <div
             className="purport-text"
-            style={{ fontSize: `${fsPx}px` }}
+            style={{
+              fontSize: `${fsPx}px`,
+              color: isDark ? '#c0b8a8' : undefined,
+            }}
             dangerouslySetInnerHTML={{ __html: cleanPurport }}
           />
         </div>

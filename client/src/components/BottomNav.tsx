@@ -1,9 +1,10 @@
 import React from 'react';
-import type { TabType } from '../types';
+import type { TabType , VedaTheme} from '../types';
 
 interface BottomNavProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  theme?: VedaTheme;
 }
 
 const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -51,7 +52,7 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+export default function BottomNav({ activeTab, onTabChange, theme = 'light' }: BottomNavProps) {
   return (
     <div className="bottom-nav">
       {tabs.map(tab => (

@@ -1,17 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Language, FontSize } from '../types';
 
 const LANG_KEY = 'vedabase_language';
 const FONT_KEY = 'vedabase_fontsize';
+const THEME_KEY = 'vedabase_theme';
+
+export type VedaTheme = 'light' | 'dark';
 
 export function useSettings() {
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem(LANG_KEY) as Language) || 'zh';
   });
-
   const [fontSize, setFontSizeState] = useState<FontSize>(() => {
     return (localStorage.getItem(FONT_KEY) as FontSize) || 'md';
   });
+  const [theme, setThemeState] = useState<VedaTheme>(() => {
+    return (localStorage.getItem(THEME_KEY) as VedaTheme) || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-veda-theme', theme);
+  }, [theme]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
@@ -21,6 +30,12 @@ export function useSettings() {
   const setFontSize = useCallback((size: FontSize) => {
     setFontSizeState(size);
     localStorage.setItem(FONT_KEY, size);
+  }, []);
+
+  const setTheme = useCallback((t: VedaTheme) => {
+    setThemeState(t);
+    localStorage.setItem(THEME_KEY, t);
+    document.documentElement.setAttribute('data-veda-theme', t);
   }, []);
 
   const fontSizeClass = {
@@ -37,5 +52,5 @@ export function useSettings() {
     xl: 20,
   }[fontSize];
 
-  return { language, setLanguage, fontSize, setFontSize, fontSizeClass, fontSizePx };
+  return { language, setLanguage, fontSize, setFontSize, fontSizeClass, fontSizePx, theme, setTheme };
 }

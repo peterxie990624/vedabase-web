@@ -1,59 +1,89 @@
-import React, { useState } from 'react';
-import { Settings } from 'lucide-react';
+// BookshelfPage — 书架主页
+// Design: 支持风格1（夜间深色）和风格2（浅色），左上角齿轮设置下拉菜单
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import AboutDialog from '../components/AboutDialog';
+import type { Language, FontSize, VedaTheme } from '../types';
+import { CDN } from '../constants';
+import type { VedaTheme as VT } from '../hooks/useSettings';
 
-interface Book {
-  id: string;
-  zhName: string;
-  enName: string;
-  description: string;
-  color: string;
-  coverBg: string;
+interface BookshelfPageProps {
+  onSelectBook: (bookId: string) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  fontSize: FontSize;
+  setFontSize: (size: FontSize) => void;
+  theme: VT;
+  setTheme: (t: VT) => void;
 }
 
-const books: Book[] = [
+const FONT_SIZE_OPTIONS: { value: FontSize; label: string }[] = [
+  { value: 'sm', label: '小' },
+  { value: 'md', label: '中' },
+  { value: 'lg', label: '大' },
+  { value: 'xl', label: '特大' },
+];
+
+const books = [
   {
     id: 'bg',
     zhName: '博伽梵歌原义',
     enName: 'Bhagavad-gītā As It Is',
-    description: '18章657节，含梵文原文、词义、译文及要旨',
-    color: '#1a5fa0',
-    coverBg: 'linear-gradient(135deg, #1a3a5c 0%, #2e6fa0 50%, #4a9fd4 100%)',
+    description: '18章657节，含梵文原文、逐词释义、译文及要旨',
+    cover: CDN.COVER_BG,
   },
   {
     id: 'sb',
     zhName: '圣典博伽瓦谭',
     enName: 'Śrīmad-Bhāgavatam',
     description: '12篇336章13002节，含中英双语',
-    color: '#5a3a8c',
-    coverBg: 'linear-gradient(135deg, #3a1a5c 0%, #6a3a9c 50%, #9a6ad4 100%)',
+    cover: CDN.COVER_SB,
   },
   {
     id: 'akadasi',
     zhName: '爱卡达西',
     enName: 'Ekādaśī',
     description: '101章，爱卡达西斋戒日的故事与规范',
-    color: '#8c5a1a',
-    coverBg: 'linear-gradient(135deg, #5c3a1a 0%, #9c6a2a 50%, #d4a45a 100%)',
+    cover: CDN.COVER_EKADASI,
   },
 ];
 
-interface BookshelfPageProps {
-  onSelectBook: (bookId: string) => void;
-}
-
-export default function BookshelfPage({ onSelectBook }: BookshelfPageProps) {
+export default function BookshelfPage({
+  onSelectBook,
+  language,
+  setLanguage,
+  fontSize,
+  setFontSize,
+  theme,
+  setTheme,
+}: BookshelfPageProps) {
   const [showAbout, setShowAbout] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  const isDark = theme === 'dark';
+  const bg = isDark ? '#0f1923' : '#f5f7fa';
+  const navBg = isDark ? '#1a2535' : '#ffffff';
+  const navBorder = isDark ? '#2a3a50' : '#e0eaf2';
+  const textPrimary = isDark ? '#e8d5a3' : '#1a3a5c';
+  const textSecondary = isDark ? '#8aa0b4' : '#6a8aa0';
+  const cardBg = isDark ? '#1a2535' : '#ffffff';
+  const cardBorder = isDark ? '#2a3a50' : 'transparent';
+  const dropdownBg = isDark ? '#1e2e42' : '#ffffff';
+  const dropdownBorder = isDark ? '#2a3a50' : '#e0eaf2';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div
-      style={{
-        paddingTop: '56px',
-        paddingBottom: '60px',
-        minHeight: '100vh',
-        background: 'var(--veda-bg)',
-      }}
-    >
+    <div style={{ paddingTop: '56px', paddingBottom: '70px', minHeight: '100vh', background: bg }}>
       {/* Top bar */}
       <div
         style={{
@@ -64,65 +94,187 @@ export default function BookshelfPage({ onSelectBook }: BookshelfPageProps) {
           width: '100%',
           maxWidth: '640px',
           height: '56px',
-          background: 'white',
-          borderBottom: '1px solid var(--veda-border)',
+          background: navBg,
+          borderBottom: `1px solid ${navBorder}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
           zIndex: 100,
-          boxShadow: '0 1px 4px rgba(74,127,165,0.08)',
+          boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.4)' : '0 1px 4px rgba(74,127,165,0.08)',
         }}
       >
-        <button
-          onClick={() => setShowAbout(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8aa0b4', padding: '6px' }}
-          title="关于"
-        >
-          <Settings size={20} />
-        </button>
+        {/* Settings gear with dropdown */}
+        <div ref={settingsRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowSettings(v => !v)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: textSecondary,
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+            }}
+            title="设置"
+          >
+            <Settings size={20} />
+            <ChevronDown size={14} />
+          </button>
+
+          {/* Dropdown menu */}
+          {showSettings && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '44px',
+                left: 0,
+                background: dropdownBg,
+                border: `1px solid ${dropdownBorder}`,
+                borderRadius: '10px',
+                padding: '8px 0',
+                minWidth: '200px',
+                boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.12)',
+                zIndex: 200,
+              }}
+            >
+              {/* Language */}
+              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+                语言设置
+              </div>
+              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
+              {(['zh', 'en'] as Language[]).map(lang => (
+                <button
+                  key={lang}
+                  onClick={() => { setLanguage(lang); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: language === lang ? (isDark ? 'rgba(232,213,163,0.1)' : 'rgba(74,127,165,0.08)') : 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: language === lang ? (isDark ? '#e8d5a3' : '#2e6fa0') : (isDark ? '#c0d0e0' : '#444'),
+                    fontSize: '14px',
+                    fontWeight: language === lang ? 600 : 400,
+                    textAlign: 'left',
+                  }}
+                >
+                  {lang === 'zh' ? '中文' : 'English'}
+                  {language === lang && <span style={{ color: isDark ? '#e8d5a3' : '#2e6fa0' }}>✓</span>}
+                </button>
+              ))}
+
+              {/* Font size */}
+              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
+              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+                字号大小设置
+              </div>
+              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
+              <div style={{ display: 'flex', padding: '8px 16px', gap: '8px' }}>
+                {FONT_SIZE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFontSize(opt.value)}
+                    style={{
+                      flex: 1,
+                      padding: '6px 4px',
+                      border: `1px solid ${fontSize === opt.value ? (isDark ? '#e8d5a3' : '#2e6fa0') : dropdownBorder}`,
+                      borderRadius: '6px',
+                      background: fontSize === opt.value ? (isDark ? 'rgba(232,213,163,0.15)' : 'rgba(74,127,165,0.1)') : 'none',
+                      cursor: 'pointer',
+                      color: fontSize === opt.value ? (isDark ? '#e8d5a3' : '#2e6fa0') : (isDark ? '#c0d0e0' : '#444'),
+                      fontSize: '13px',
+                      fontWeight: fontSize === opt.value ? 700 : 400,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Theme */}
+              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
+              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+                风格切换
+              </div>
+              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
+              {([{ value: 'dark' as VT, label: '风格1（夜间深色）' }, { value: 'light' as VT, label: '风格2（日间浅色）' }]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setTheme(opt.value); setShowSettings(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: theme === opt.value ? (isDark ? 'rgba(232,213,163,0.1)' : 'rgba(74,127,165,0.08)') : 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: theme === opt.value ? (isDark ? '#e8d5a3' : '#2e6fa0') : (isDark ? '#c0d0e0' : '#444'),
+                    fontSize: '14px',
+                    fontWeight: theme === opt.value ? 600 : 400,
+                    textAlign: 'left',
+                  }}
+                >
+                  {opt.label}
+                  {theme === opt.value && <span style={{ color: isDark ? '#e8d5a3' : '#2e6fa0' }}>✓</span>}
+                </button>
+              ))}
+
+              {/* About */}
+              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
+              <button
+                onClick={() => { setShowAbout(true); setShowSettings(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: isDark ? '#c0d0e0' : '#444',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                }}
+              >
+                关于韦达书库
+              </button>
+            </div>
+          )}
+        </div>
+
         <h1
           style={{
             margin: 0,
             fontSize: '1.1rem',
             fontWeight: 700,
-            color: 'var(--veda-blue)',
+            color: textPrimary,
             fontFamily: "'Noto Serif SC', serif",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
+          <img
+            src={CDN.APP_ICON}
+            alt="韦达书库"
+            style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }}
+          />
           韦达书库
         </h1>
-        <div style={{ width: '32px' }} />
-      </div>
-
-      {/* Hero section */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #1a3a5c 0%, #2e6fa0 100%)',
-          padding: '32px 20px 28px',
-          textAlign: 'center',
-          color: 'white',
-        }}
-      >
-        <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🕉️</div>
-        <h2
-          style={{
-            margin: '0 0 6px',
-            fontSize: '1.4rem',
-            fontWeight: 700,
-            fontFamily: "'Noto Serif SC', serif",
-          }}
-        >
-          韦达书库
-        </h2>
-        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.85 }}>
-          Vedic Knowledge Library · 韦达经典在线阅读
-        </p>
+        <div style={{ width: '40px' }} />
       </div>
 
       {/* Books list */}
       <div style={{ padding: '16px' }}>
-        <div style={{ color: '#6a8aa0', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 500 }}>
+        <div style={{ color: textSecondary, fontSize: '0.85rem', marginBottom: '12px', fontWeight: 500 }}>
           书架
         </div>
         {books.map(book => (
@@ -130,86 +282,57 @@ export default function BookshelfPage({ onSelectBook }: BookshelfPageProps) {
             key={book.id}
             onClick={() => onSelectBook(book.id)}
             style={{
-              background: 'white',
+              background: cardBg,
+              border: `1px solid ${cardBorder}`,
               borderRadius: '10px',
               marginBottom: '12px',
               overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(74,127,165,0.1)',
+              boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(74,127,165,0.1)',
               cursor: 'pointer',
               display: 'flex',
               transition: 'transform 0.15s, box-shadow 0.15s',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(74,127,165,0.18)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark ? '0 4px 20px rgba(0,0,0,0.5)' : '0 4px 16px rgba(74,127,165,0.18)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(74,127,165,0.1)';
+              (e.currentTarget as HTMLElement).style.boxShadow = isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(74,127,165,0.1)';
             }}
           >
-            {/* Cover */}
-            <div
-              style={{
-                width: '72px',
-                minHeight: '90px',
-                background: book.coverBg,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <span style={{ fontSize: '1.8rem' }}>
-                {book.id === 'bg' ? '🌿' : book.id === 'sb' ? '📜' : '🌸'}
-              </span>
+            {/* Cover image */}
+            <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden' }}>
+              <img
+                src={book.cover}
+                alt={book.zhName}
+                style={{ width: '80px', height: '100%', minHeight: '100px', objectFit: 'cover', display: 'block' }}
+              />
             </div>
             {/* Info */}
             <div style={{ padding: '14px 16px', flex: 1 }}>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  color: 'var(--veda-text)',
-                  marginBottom: '4px',
-                  fontFamily: "'Noto Serif SC', serif",
-                }}
-              >
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: textPrimary, marginBottom: '4px', fontFamily: "'Noto Serif SC', serif" }}>
                 {book.zhName}
               </div>
-              <div
-                style={{
-                  fontSize: '0.8rem',
-                  color: '#6a8aa0',
-                  marginBottom: '6px',
-                  fontStyle: 'italic',
-                  fontFamily: "'Gentium Book Plus', serif",
-                }}
-              >
+              <div style={{ fontSize: '0.8rem', color: isDark ? '#c0a060' : '#6a8aa0', marginBottom: '6px', fontStyle: 'italic', fontFamily: "'Gentium Book Plus', serif" }}>
                 {book.enName}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#8aa0b4' }}>
+              <div style={{ fontSize: '0.78rem', color: textSecondary, lineHeight: 1.5 }}>
                 {book.description}
               </div>
             </div>
             {/* Arrow */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                paddingRight: '12px',
-                color: '#b0c8dc',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
+            <div style={{ display: 'flex', alignItems: 'center', paddingRight: '12px', color: isDark ? '#4a6a8a' : '#b0c8dc' }}>
+              <ChevronRight size={16} />
             </div>
           </div>
         ))}
+        <div style={{ textAlign: 'center', color: textSecondary, fontSize: '13px', marginTop: '8px' }}>
+          已经加载到最后
+        </div>
       </div>
 
-      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} theme={theme} />
     </div>
   );
 }

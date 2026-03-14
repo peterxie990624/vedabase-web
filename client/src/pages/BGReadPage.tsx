@@ -4,7 +4,7 @@ import SectionContent from '../components/SectionContent';
 import { useBGData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
-import type { Language, FontSize } from '../types';
+import type { Language, FontSize, VedaTheme } from '../types';
 
 interface BGReadPageProps {
   chapterId: number;
@@ -12,6 +12,11 @@ interface BGReadPageProps {
   onBack: () => void;
   onHome: () => void;
   onNavigate: (chapterId: number, sectionIndex: number) => void;
+  language?: Language;
+  setLanguage?: (lang: Language) => void;
+  fontSize?: FontSize;
+  setFontSize?: (size: FontSize) => void;
+  theme?: VedaTheme;
 }
 
 const fontSizeCycle: FontSize[] = ['sm', 'md', 'lg', 'xl'];
@@ -25,10 +30,12 @@ export default function BGReadPage({
 }: BGReadPageProps) {
   const { data, loading } = useBGData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
-  const { language, setLanguage, fontSize, setFontSize } = useSettings();
+  const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
   const [animClass, setAnimClass] = useState('fade-in');
   const touchStartX = useRef<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const isDark = theme === 'dark';
 
   const chapters = data?.chapters || [];
   const allSections = data?.sections || {};
@@ -49,6 +56,7 @@ export default function BGReadPage({
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
+    window.scrollTo(0, 0);
   }, [onNavigate]);
 
   const goPrev = useCallback(() => {
@@ -103,7 +111,7 @@ export default function BGReadPage({
 
   if (loading) {
     return (
-      <div style={{ paddingTop: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ paddingTop: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'white' }}>
         <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
           <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
           <div>加载中...</div>
@@ -114,7 +122,7 @@ export default function BGReadPage({
 
   if (!section) {
     return (
-      <div style={{ paddingTop: '56px', padding: '80px 16px', textAlign: 'center', color: '#8aa0b4' }}>
+      <div style={{ paddingTop: '56px', padding: '80px 16px', textAlign: 'center', color: '#8aa0b4', background: isDark ? '#0f1923' : 'white' }}>
         内容未找到
       </div>
     );
@@ -131,7 +139,7 @@ export default function BGReadPage({
 
   return (
     <div
-      style={{ minHeight: '100vh', background: 'white' }}
+      style={{ minHeight: '100vh', background: isDark ? '#0f1923' : 'white' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -147,6 +155,7 @@ export default function BGReadPage({
             bookType: 'bg',
             chapterId,
             sectionId: section.section_id,
+            sectionIndex,  // ← 精确保存sectionIndex，修复书签跳转bug
             title: sectionLabel,
             preview,
           });
@@ -160,6 +169,7 @@ export default function BGReadPage({
         onLanguageToggle={toggleLang}
         fontSize={fontSize}
         onFontSize={cycleFontSize}
+        theme={theme}
       />
 
       <div
@@ -176,10 +186,9 @@ export default function BGReadPage({
           purport={purport}
           language={language}
           fontSize={fontSize}
+          theme={theme}
         />
       </div>
-
-
     </div>
   );
 }

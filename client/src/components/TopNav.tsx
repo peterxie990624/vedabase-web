@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowLeft, Home, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Type } from 'lucide-react';
-import type { Language, FontSize } from '../types';
+import { ArrowLeft, Home, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Language, FontSize, VedaTheme } from '../types';
 
 interface TopNavProps {
   title?: string;
@@ -19,6 +19,7 @@ interface TopNavProps {
   fontSize?: FontSize;
   onFontSize?: () => void;
   showSettings?: boolean;
+  theme?: VedaTheme;
 }
 
 const fontSizeLabels: Record<FontSize, string> = {
@@ -44,8 +45,16 @@ export default function TopNav({
   onLanguageToggle,
   fontSize,
   onFontSize,
-  showSettings,
+  theme = 'light',
 }: TopNavProps) {
+  const isDark = theme === 'dark';
+  const navBg = isDark ? '#1a2535' : 'white';
+  const navBorder = isDark ? '#2a3a50' : 'var(--veda-border)';
+  const navColor = isDark ? '#c8a84b' : 'var(--veda-blue)';
+  const navShadow = isDark
+    ? '0 1px 4px rgba(0,0,0,0.3)'
+    : '0 1px 4px rgba(74,127,165,0.08)';
+
   return (
     <div
       style={{
@@ -56,14 +65,14 @@ export default function TopNav({
         width: '100%',
         maxWidth: '640px',
         height: '56px',
-        background: 'white',
-        borderBottom: '1px solid var(--veda-border)',
+        background: navBg,
+        borderBottom: `1px solid ${navBorder}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 12px',
         zIndex: 100,
-        boxShadow: '0 1px 4px rgba(74,127,165,0.08)',
+        boxShadow: navShadow,
       }}
     >
       {/* Left side */}
@@ -76,7 +85,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: 'var(--veda-blue)',
+              color: navColor,
               display: 'flex',
               alignItems: 'center',
             }}
@@ -93,7 +102,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: 'var(--veda-blue)',
+              color: navColor,
               display: 'flex',
               alignItems: 'center',
             }}
@@ -111,7 +120,7 @@ export default function TopNav({
               border: 'none',
               cursor: hasPrev ? 'pointer' : 'not-allowed',
               padding: '4px',
-              color: hasPrev ? 'var(--veda-blue)' : '#ccc',
+              color: hasPrev ? navColor : (isDark ? '#3a5070' : '#ccc'),
               display: 'flex',
               alignItems: 'center',
             }}
@@ -129,7 +138,7 @@ export default function TopNav({
           textAlign: 'center',
           fontWeight: 600,
           fontSize: '1rem',
-          color: 'var(--veda-blue)',
+          color: navColor,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -150,7 +159,7 @@ export default function TopNav({
               border: 'none',
               cursor: hasNext ? 'pointer' : 'not-allowed',
               padding: '4px',
-              color: hasNext ? 'var(--veda-blue)' : '#ccc',
+              color: hasNext ? navColor : (isDark ? '#3a5070' : '#ccc'),
               display: 'flex',
               alignItems: 'center',
             }}
@@ -167,7 +176,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: 'var(--veda-blue)',
+              color: navColor,
               fontSize: '13px',
               fontWeight: 700,
               minWidth: '28px',
@@ -182,10 +191,10 @@ export default function TopNav({
             onClick={onLanguageToggle}
             style={{
               background: 'none',
-              border: '1px solid var(--veda-blue)',
+              border: `1px solid ${navColor}`,
               cursor: 'pointer',
               padding: '3px 8px',
-              color: 'var(--veda-blue)',
+              color: navColor,
               fontSize: '12px',
               fontWeight: 600,
               borderRadius: '4px',
@@ -203,7 +212,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: isBookmarked ? 'var(--veda-blue)' : '#8aa0b4',
+              color: isBookmarked ? navColor : (isDark ? '#5a7a9a' : '#8aa0b4'),
               display: 'flex',
               alignItems: 'center',
             }}

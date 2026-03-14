@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useCalendarData } from '../hooks/useData';
+import type { VedaTheme } from '../types';
 
 const MONTH_NAMES_ZH = [
   '一月', '二月', '三月', '四月', '五月', '六月',
@@ -13,7 +14,11 @@ interface CalendarEvent {
   address: string;
 }
 
-export default function CalendarPage() {
+interface CalendarPageProps {
+  theme?: VedaTheme;
+}
+
+export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
   const { data, loading } = useCalendarData();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);

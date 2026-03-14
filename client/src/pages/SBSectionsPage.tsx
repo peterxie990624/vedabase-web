@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import TopNav from '../components/TopNav';
 import { useSBIndex, useSBCantoData } from '../hooks/useData';
-import type { Language } from '../types';
+import type { Language , VedaTheme} from '../types';
 
 interface SBSectionsPageProps {
   chapterId: number;
@@ -9,9 +9,10 @@ interface SBSectionsPageProps {
   onHome: () => void;
   onSelectSection: (chapterId: number, sectionIndex: number) => void;
   language: Language;
+  theme?: VedaTheme;
 }
 
-export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSection, language }: SBSectionsPageProps) {
+export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSection, language, theme = 'light' }: SBSectionsPageProps) {
   const { data: index } = useSBIndex();
 
   // Find canto for this chapter

@@ -393,3 +393,91 @@
     width: 640px;
   }
 }
+
+/* ===== Dark Theme (风格1 - 夜间深色) ===== */
+[data-veda-theme="dark"] {
+  --veda-blue: #c8a84b;
+  --veda-blue-dark: #e8d5a3;
+  --veda-blue-light: rgba(200,168,75,0.12);
+  --veda-bg: #0f1923;
+  --veda-text: #d0c8b8;
+  --veda-sanskrit: #e8c060;
+  --veda-translation: #7ab8d8;
+  --veda-border: #2a3a50;
+}
+
+[data-veda-theme="dark"] body,
+[data-veda-theme="dark"] {
+  background: #0f1923;
+  color: #d0c8b8;
+}
+
+[data-veda-theme="dark"] .bottom-nav {
+  background: #1a2535;
+  border-top-color: #2a3a50;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
+}
+
+[data-veda-theme="dark"] .bottom-nav-item {
+  color: #5a7a9a;
+}
+
+[data-veda-theme="dark"] .bottom-nav-item.active {
+  color: #c8a84b;
+}
+
+[data-veda-theme="dark"] .list-item {
+  background: #1a2535;
+  border-bottom-color: #2a3a50;
+  color: #d0c8b8;
+}
+
+[data-veda-theme="dark"] .list-item:hover {
+  background: rgba(200,168,75,0.08);
+}
+
+[data-veda-theme="dark"] .canto-header {
+  background: #1e2e42;
+  color: #c8a84b;
+  border-bottom-color: #2a3a50;
+}
+
+[data-veda-theme="dark"] .verse-box {
+  background: #1e2e42;
+  border-color: #3a5070;
+}
+
+[data-veda-theme="dark"] .section-header {
+  color: #c8a84b;
+  border-bottom-color: #2a3a50;
+}
+
+[data-veda-theme="dark"] .tag-chip {
+  background: #1a2535;
+  border-color: #2a3a50;
+  color: #8aa0b4;
+}
+
+[data-veda-theme="dark"] .tag-chip:hover,
+[data-veda-theme="dark"] .tag-chip.active {
+  border-color: #c8a84b;
+  color: #c8a84b;
+  background: rgba(200,168,75,0.1);
+}
+
+[data-veda-theme="dark"] .search-highlight {
+  background: rgba(200,168,75,0.2);
+  color: #e8c060;
+}
+
+[data-veda-theme="dark"] .purport-text {
+  color: #c0b8a8;
+}
+
+[data-veda-theme="dark"] .translation-text {
+  color: #7ab8d8;
+}
+
+[data-veda-theme="dark"] .sanskrit-word {
+  color: #e8c060;
+}

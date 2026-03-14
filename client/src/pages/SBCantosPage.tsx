@@ -1,16 +1,17 @@
 import React from 'react';
 import TopNav from '../components/TopNav';
 import { useSBIndex } from '../hooks/useData';
-import type { Language } from '../types';
+import type { Language , VedaTheme} from '../types';
 
 interface SBCantosPageProps {
   onBack: () => void;
   onHome: () => void;
   onSelectCanto: (cantoId: number) => void;
   language: Language;
+  theme?: VedaTheme;
 }
 
-export default function SBCantosPage({ onBack, onHome, onSelectCanto, language }: SBCantosPageProps) {
+export default function SBCantosPage({ onBack, onHome, onSelectCanto, language, theme = 'light' }: SBCantosPageProps) {
   const { data, loading } = useSBIndex();
 
   return (
