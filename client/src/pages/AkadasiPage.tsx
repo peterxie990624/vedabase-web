@@ -48,7 +48,7 @@ export default function AkadasiPage({ onBack, onHome, theme = 'light' }: Akadasi
     const bookmarked = isBookmarked('akadasi', selectedChapter.id);
 
     return (
-      <div style={{ minHeight: '100vh', background: 'white' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--veda-bg)' }}>
         <TopNav
           title={selectedChapter.zh_name}
           onBack={() => setSelectedId(null)}
@@ -116,7 +116,7 @@ export default function AkadasiPage({ onBack, onHome, theme = 'light' }: Akadasi
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: 'var(--veda-bg)' }}>
           {chapters.map(chapter => (
             <div
               key={chapter.id}

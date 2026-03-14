@@ -42,7 +42,7 @@ export default function SBChaptersPage({ cantoId, onBack, onHome, onSelectChapte
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: 'var(--veda-bg)' }}>
           {/* Canto header */}
           <div className="canto-header" style={{ position: 'sticky', top: '56px', zIndex: 10 }}>
             {cantoTitle}

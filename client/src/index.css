@@ -297,10 +297,10 @@
   border-bottom: 1px solid var(--veda-border);
   cursor: pointer;
   transition: background 0.15s;
-  background: white;
+  background: var(--veda-bg);
 }
 .list-item:hover { background: var(--veda-blue-light); }
-.list-item:active { background: #ddeef8; }
+.list-item:active { background: #c8d8e8; }
 
 /* Canto header */
 .canto-header {

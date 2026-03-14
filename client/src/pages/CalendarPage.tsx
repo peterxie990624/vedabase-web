@@ -60,7 +60,7 @@ export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
         style={{
           position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', maxWidth: '640px', height: '56px',
-          background: 'white', borderBottom: '1px solid var(--veda-border)',
+          background: 'var(--veda-bg)', borderBottom: '1px solid var(--veda-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '0 16px', zIndex: 100, boxShadow: '0 1px 4px rgba(74,127,165,0.08)',
         }}
@@ -81,7 +81,7 @@ export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
         <>
           {/* Month selector */}
           <div style={{
-            background: 'white', padding: '12px 16px',
+            background: 'var(--veda-bg)', padding: '12px 16px',
             borderBottom: '1px solid var(--veda-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
@@ -99,7 +99,7 @@ export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
           </div>
 
           {/* Calendar grid */}
-          <div style={{ background: 'white', padding: '8px 12px', marginBottom: '8px' }}>
+          <div style={{ background: 'var(--veda-bg)', padding: '8px 12px', marginBottom: '8px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '4px' }}>
               {['日', '一', '二', '三', '四', '五', '六'].map(d => (
                 <div key={d} style={{ textAlign: 'center', fontSize: '12px', color: '#8aa0b4', padding: '4px 0', fontWeight: 500 }}>
@@ -155,7 +155,7 @@ export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
                 </div>
                 {selectedEvents.length > 0 ? selectedEvents.map((event, idx) => (
                   <div key={idx} style={{
-                    background: 'white', borderRadius: '8px', padding: '12px 16px',
+                    background: 'var(--veda-bg)', borderRadius: '8px', padding: '12px 16px',
                     marginBottom: '8px', boxShadow: '0 1px 4px rgba(74,127,165,0.1)',
                     borderLeft: `3px solid ${event.important === 'true' ? '#e85d04' : 'var(--veda-blue)'}`,
                   }}>
@@ -189,7 +189,7 @@ export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
                       key={idx}
                       onClick={() => setSelectedDay(day)}
                       style={{
-                        background: 'white', borderRadius: '8px', padding: '10px 16px',
+                        background: 'var(--veda-bg)', borderRadius: '8px', padding: '10px 16px',
                         marginBottom: '6px', boxShadow: '0 1px 4px rgba(74,127,165,0.08)',
                         cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '12px',
                         borderLeft: `3px solid ${event.important === 'true' ? '#e85d04' : 'var(--veda-blue)'}`,

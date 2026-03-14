@@ -45,7 +45,7 @@ export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSect
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: 'var(--veda-bg)' }}>
           {/* Chapter header */}
           <div className="canto-header" style={{ position: 'sticky', top: '56px', zIndex: 10 }}>
             {chapterTitle}

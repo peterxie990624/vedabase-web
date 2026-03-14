@@ -30,7 +30,7 @@ export default function SBCantosPage({ onBack, onHome, onSelectCanto, language, 
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: 'var(--veda-bg)' }}>
           {data?.cantos.map((canto) => {
             const label = language === 'zh' ? canto.zh_name : canto.en_name;
             const subtitle = language === 'zh'

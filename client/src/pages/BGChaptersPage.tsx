@@ -30,7 +30,7 @@ export default function BGChaptersPage({ onBack, onHome, onSelectChapter, langua
           </div>
         </div>
       ) : (
-        <div style={{ background: 'white' }}>
+        <div style={{ background: 'var(--veda-bg)' }}>
           {data?.chapters.map((chapter, idx) => (
             <div
               key={chapter.id}

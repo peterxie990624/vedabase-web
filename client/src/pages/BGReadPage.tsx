@@ -111,7 +111,7 @@ export default function BGReadPage({
 
   if (loading) {
     return (
-      <div style={{ paddingTop: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'white' }}>
+      <div style={{ paddingTop: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)' }}>
         <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
           <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
           <div>加载中...</div>
@@ -122,7 +122,7 @@ export default function BGReadPage({
 
   if (!section) {
     return (
-      <div style={{ paddingTop: '56px', padding: '80px 16px', textAlign: 'center', color: '#8aa0b4', background: isDark ? '#0f1923' : 'white' }}>
+      <div style={{ paddingTop: '56px', padding: '80px 16px', textAlign: 'center', color: '#8aa0b4', background: isDark ? '#0f1923' : 'var(--veda-bg)' }}>
         内容未找到
       </div>
     );
@@ -139,7 +139,7 @@ export default function BGReadPage({
 
   return (
     <div
-      style={{ minHeight: '100vh', background: isDark ? '#0f1923' : 'white' }}
+      style={{ minHeight: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
