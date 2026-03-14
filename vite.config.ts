@@ -152,6 +152,10 @@ function vitePluginManusDebugCollector(): Plugin {
 
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
 
+// GitHub Pages deploys to /vedabase-web/ by default (repo name as base path)
+// Set VITE_BASE_PATH env var to override (e.g. '/' for custom domain)
+const basePath = process.env.VITE_BASE_PATH ?? '/vedabase-web/';
+
 export default defineConfig({
   plugins,
   resolve: {
@@ -163,6 +167,7 @@ export default defineConfig({
   },
   envDir: path.resolve(import.meta.dirname),
   root: path.resolve(import.meta.dirname, "client"),
+  base: basePath,
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
