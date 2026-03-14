@@ -31,10 +31,75 @@ type Route =
   | { page: 'sb-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean }
   | { page: 'akadasi' };
 
+type TabRoute = 'bookshelf' | 'bookmarks' | 'search' | 'calendar';
+
+// ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
+
+function routeToHash(route: Route, tab: TabType): string {
+  if (tab === 'bookmarks') return '#/bookmarks';
+  if (tab === 'search') return '#/search';
+  if (tab === 'calendar') return '#/calendar';
+
+  switch (route.page) {
+    case 'home':        return '#/';
+    case 'bg-chapters': return '#/bg';
+    case 'bg-sections': return `#/bg/${route.chapterId}`;
+    case 'bg-read':     return `#/bg/${route.chapterId}/${route.sectionIndex}`;
+    case 'sb-cantos':   return '#/sb';
+    case 'sb-chapters': return `#/sb/${route.cantoId}`;
+    case 'sb-sections': return `#/sb/c${route.chapterId}`;
+    case 'sb-read':     return `#/sb/c${route.chapterId}/${route.sectionIndex}`;
+    case 'akadasi':     return '#/akadasi';
+    default:            return '#/';
+  }
+}
+
+function hashToState(hash: string): { route: Route; tab: TabType } {
+  const path = hash.replace(/^#\/?/, '') || '';
+  const parts = path.split('/').filter(Boolean);
+
+  if (parts[0] === 'bookmarks') return { route: { page: 'home' }, tab: 'bookmarks' };
+  if (parts[0] === 'search')    return { route: { page: 'home' }, tab: 'search' };
+  if (parts[0] === 'calendar')  return { route: { page: 'home' }, tab: 'calendar' };
+  if (parts[0] === 'akadasi')   return { route: { page: 'akadasi' }, tab: 'bookshelf' };
+
+  if (parts[0] === 'bg') {
+    if (!parts[1]) return { route: { page: 'bg-chapters' }, tab: 'bookshelf' };
+    const chapterId = parseInt(parts[1], 10);
+    if (!parts[2]) return { route: { page: 'bg-sections', chapterId }, tab: 'bookshelf' };
+    const sectionIndex = parseInt(parts[2], 10);
+    return { route: { page: 'bg-read', chapterId, sectionIndex }, tab: 'bookshelf' };
+  }
+
+  if (parts[0] === 'sb') {
+    if (!parts[1]) return { route: { page: 'sb-cantos' }, tab: 'bookshelf' };
+    // sb/2 → cantos page (cantoId=2), sb/c15 → chapters page (chapterId=15)
+    if (parts[1].startsWith('c')) {
+      const chapterId = parseInt(parts[1].slice(1), 10);
+      if (!parts[2]) return { route: { page: 'sb-sections', chapterId }, tab: 'bookshelf' };
+      const sectionIndex = parseInt(parts[2], 10);
+      return { route: { page: 'sb-read', chapterId, sectionIndex }, tab: 'bookshelf' };
+    }
+    const cantoId = parseInt(parts[1], 10);
+    return { route: { page: 'sb-chapters', cantoId }, tab: 'bookshelf' };
+  }
+
+  return { route: { page: 'home' }, tab: 'bookshelf' };
+}
+
+// ─── Main App Component ──────────────────────────────────────────────────────
+
 function VedabaseApp() {
-  const [activeTab, setActiveTab] = useState<TabType>('bookshelf');
-  const [routeStack, setRouteStack] = useState<Route[]>([{ page: 'home' }]);
-  // Persist search state so returning to search tab restores results
+  // Initialize state from current hash (supports page refresh)
+  const getInitialState = () => {
+    const hash = window.location.hash || '#/';
+    return hashToState(hash);
+  };
+
+  const initial = getInitialState();
+  const [activeTab, setActiveTab] = useState<TabType>(initial.tab);
+  const [routeStack, setRouteStack] = useState<Route[]>([{ page: 'home' }, ...(initial.route.page !== 'home' ? [initial.route] : [])]);
+
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
     selectedBook: 'bg',
@@ -45,7 +110,7 @@ function VedabaseApp() {
   const { language, setLanguage, fontSize, setFontSize, theme, setTheme } = useSettings();
   const currentRoute = routeStack[routeStack.length - 1];
 
-  // Apply dark theme to document body for full-page coverage
+  // Apply dark theme to document body
   useEffect(() => {
     document.documentElement.setAttribute('data-veda-theme', theme);
     if (theme === 'dark') {
@@ -55,6 +120,32 @@ function VedabaseApp() {
     }
   }, [theme]);
 
+  // Sync hash → state when user presses browser back/forward
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash || '#/';
+      const { route, tab } = hashToState(hash);
+      setActiveTab(tab);
+      if (tab === 'bookshelf') {
+        setRouteStack([{ page: 'home' }, ...(route.page !== 'home' ? [route] : [])]);
+      } else {
+        setRouteStack([{ page: 'home' }]);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Sync state → hash whenever route or tab changes
+  useEffect(() => {
+    const newHash = routeToHash(currentRoute, activeTab);
+    if (window.location.hash !== newHash) {
+      window.location.hash = newHash;
+    }
+  }, [currentRoute, activeTab]);
+
+  // ─── Navigation helpers ──────────────────────────────────────────────────
+
   const push = useCallback((route: Route) => {
     setRouteStack(prev => [...prev, route]);
   }, []);
@@ -63,8 +154,7 @@ function VedabaseApp() {
     setRouteStack(prev => {
       if (prev.length <= 1) return prev;
       const leaving = prev[prev.length - 1];
-      // If leaving a page that came from search, go back to search tab
-      if ((leaving.page === 'bg-read' || leaving.page === 'sb-read') && leaving.fromSearch) {
+      if ((leaving.page === 'bg-read' || leaving.page === 'sb-read') && (leaving as any).fromSearch) {
         setActiveTab('search');
         return [{ page: 'home' }];
       }
@@ -79,11 +169,9 @@ function VedabaseApp() {
 
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
-    // When switching to bookshelf tab, reset to home
     if (tab === 'bookshelf') {
       setRouteStack([{ page: 'home' }]);
     }
-    // Search state is preserved when switching tabs
   }, []);
 
   const handleSelectBook = useCallback((bookId: string) => {
@@ -105,7 +193,6 @@ function VedabaseApp() {
   }, []);
 
   const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number }) => {
-    // Navigate to reading page, mark as fromSearch so back button returns to search
     setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
       setRouteStack([{ page: 'home' }, { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true }]);
@@ -113,6 +200,8 @@ function VedabaseApp() {
       setRouteStack([{ page: 'home' }, { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true }]);
     }
   }, []);
+
+  // ─── Render ──────────────────────────────────────────────────────────────
 
   const renderContent = () => {
     if (activeTab === 'bookmarks') {
