@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TopNav from '../components/TopNav';
+import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
 import { useBGData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -28,7 +29,7 @@ export default function BGReadPage({
   onHome,
   onNavigate,
 }: BGReadPageProps) {
-  const { data, loading } = useBGData();
+  const { data, loading, error } = useBGData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
   const [animClass, setAnimClass] = useState('fade-in');
@@ -109,21 +110,50 @@ export default function BGReadPage({
 
   const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
 
-  if (loading) {
-    return (
-      <div style={{ paddingTop: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)' }}>
-        <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-          <div>加载中...</div>
-        </div>
-      </div>
-    );
-  }
+  const DEV_MODE = import.meta.env.DEV;
 
-  if (!section) {
+  if (loading || error || !section) {
+    const resourceStatus = [{
+      name: '博伽梵歌数据',
+      url: `${import.meta.env.BASE_URL}data/bg_data.json`,
+      loading: loading,
+      error: error || (!loading && !data ? '数据为空，请检查文件路径' : null),
+      source: 'jsdelivr' as const,
+    }];
     return (
-      <div style={{ paddingTop: '56px', padding: '80px 16px', textAlign: 'center', color: '#8aa0b4', background: isDark ? '#0f1923' : 'var(--veda-bg)' }}>
-        内容未找到
+      <div style={{ paddingTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)', gap: '16px' }}>
+        <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
+          {loading ? (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>正在加载博伽梵歌数据...</div>
+            </>
+          ) : error ? (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⚠️</div>
+              <div style={{ color: '#e05050', fontWeight: 600 }}>加载失败</div>
+              {DEV_MODE && <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0', fontSize: '13px', marginTop: '8px', maxWidth: '280px' }}>{error}</div>}
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>😔</div>
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>内容未找到</div>
+            </>
+          )}
+        </div>
+        {DEV_MODE && (
+          <DevPanel
+            resources={resourceStatus}
+            env={{
+              BASE_URL: import.meta.env.BASE_URL,
+              主题: theme || 'light',
+              语言: language || 'zh',
+              章节ID: String(chapterId),
+              节索引: String(sectionIndex),
+            }}
+            isDark={isDark}
+          />
+        )}
       </div>
     );
   }

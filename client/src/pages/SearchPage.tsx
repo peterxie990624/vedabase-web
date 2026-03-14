@@ -1,8 +1,11 @@
 // SearchPage — 搜索页面
 // Features: 历史搜索记录（localStorage）、搜索状态持久化、关键词位置截取预览、右上角编辑删除历史
+// v1.2: 搜索进度条 + 开发模式调试面板 + jsDelivr CDN 加速
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, ChevronRight, Edit2, Trash2, Check } from 'lucide-react';
-import { useBGData, useSBIndex, useSBCantoData } from '../hooks/useData';
+import { useBGData, useSBIndex } from '../hooks/useData';
+import type { LoadProgress } from '../hooks/useData';
+import LoadingProgress from '../components/LoadingProgress';
 import type { Language, VedaTheme } from '../types';
 
 // ---- Types ----
@@ -28,6 +31,7 @@ interface SearchPageProps {
   searchState?: SearchState;
   onSearchStateChange?: (state: SearchState) => void;
   theme?: VedaTheme;
+  devMode?: boolean;
 }
 
 const BOOK_OPTIONS = [
@@ -62,7 +66,6 @@ function extractPreview(text: string, keyword: string, maxLen = 100): string {
   const kwLower = keyword.toLowerCase();
   const idx = lower.indexOf(kwLower);
   if (idx === -1) return clean.slice(0, maxLen);
-  // Center the snippet around the keyword
   const halfLen = Math.floor((maxLen - keyword.length) / 2);
   const start = Math.max(0, idx - halfLen);
   const end = Math.min(clean.length, idx + keyword.length + halfLen);
@@ -78,12 +81,16 @@ function highlightText(text: string, keyword: string): string {
   return text.replace(new RegExp(escaped, 'gi'), match => `<mark class="search-highlight">${match}</mark>`);
 }
 
+// SB has 12 cantos, each loaded individually during search
+const SB_TOTAL_CANTOS = 12;
+
 export default function SearchPage({
   onOpenResult,
   language,
   searchState,
   onSearchStateChange,
   theme = 'light',
+  devMode = false,
 }: SearchPageProps) {
   const isDark = theme === 'dark';
   const bg = isDark ? '#0f1923' : '#f5f7fa';
@@ -97,7 +104,6 @@ export default function SearchPage({
   const resultTextColor = isDark ? '#c0d0e0' : '#444';
   const labelColor = isDark ? '#6aacdc' : '#2e6fa0';
 
-  // Use persistent state from parent if provided, otherwise local state
   const [localSelectedBook, setLocalSelectedBook] = useState<'bg' | 'sb'>(searchState?.selectedBook || 'bg');
   const [localQuery, setLocalQuery] = useState(searchState?.query || '');
   const [localResults, setLocalResults] = useState<SearchResult[]>(searchState?.results || []);
@@ -126,32 +132,90 @@ export default function SearchPage({
   }, [query, selectedBook, results, searched, onSearchStateChange]);
 
   const [searching, setSearching] = useState(false);
-  const [sbLoading, setSbLoading] = useState(false);
   const [history, setHistory] = useState<string[]>(getHistory);
   const [editMode, setEditMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const sbAllSectionsRef = useRef<Record<string, unknown>>({});
 
+  // Progress tracking for search loading
+  const [loadProgresses, setLoadProgresses] = useState<LoadProgress[]>([]);
+  const [loadedCantos, setLoadedCantos] = useState(0);
+  const [totalCantos, setTotalCantos] = useState(0);
+
+  const addProgress = useCallback((p: LoadProgress) => {
+    setLoadProgresses(prev => {
+      // Update existing entry for same URL if status changed
+      const idx = prev.findIndex(x => x.url === p.url && x.source === p.source);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = p;
+        return next;
+      }
+      return [...prev, p];
+    });
+    if (p.status === 'ok') {
+      setLoadedCantos(c => c + 1);
+    }
+  }, []);
+
   const { data: bgData } = useBGData();
   const { data: sbIndex } = useSBIndex();
 
+  // Dynamically import loadJSON-compatible fetch with CDN fallback
+  const JSDELIVR_BASE = 'https://cdn.jsdelivr.net/gh/peterxie990624/vedabase-web@main/client/public';
+  const GH_BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+  const loadCantoWithProgress = useCallback(async (cantoId: number): Promise<unknown> => {
+    const path = `/data/sb/canto_${cantoId}.json`;
+    const jsdUrl = `${JSDELIVR_BASE}${path}`;
+    const ghUrl = `${GH_BASE}${path}`;
+
+    // Try jsDelivr first
+    addProgress({ url: jsdUrl, source: 'jsdelivr', status: 'loading' });
+    const t0 = Date.now();
+    try {
+      const res = await fetch(jsdUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      addProgress({ url: jsdUrl, source: 'jsdelivr', status: 'ok', durationMs: Date.now() - t0 });
+      return data;
+    } catch (e1) {
+      const msg1 = e1 instanceof Error ? e1.message : String(e1);
+      addProgress({ url: jsdUrl, source: 'jsdelivr', status: 'error', error: msg1 });
+      // Fallback to GitHub Pages
+      addProgress({ url: ghUrl, source: 'github', status: 'loading' });
+      const t1 = Date.now();
+      try {
+        const res2 = await fetch(ghUrl);
+        if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+        const data2 = await res2.json();
+        addProgress({ url: ghUrl, source: 'github', status: 'ok', durationMs: Date.now() - t1 });
+        return data2;
+      } catch (e2) {
+        const msg2 = e2 instanceof Error ? e2.message : String(e2);
+        addProgress({ url: ghUrl, source: 'github', status: 'error', error: msg2 });
+        throw new Error(`Canto ${cantoId} load failed`);
+      }
+    }
+  }, [addProgress, JSDELIVR_BASE, GH_BASE]);
+
   const loadAllSBForSearch = useCallback(async () => {
     if (Object.keys(sbAllSectionsRef.current).length > 0) return sbAllSectionsRef.current;
-    setSbLoading(true);
-    try {
-      for (let i = 1; i <= 12; i++) {
-        const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-        const res = await fetch(`${base}/data/sb/canto_${i}.json`);
-        const data = await res.json();
+    setTotalCantos(SB_TOTAL_CANTOS);
+    setLoadedCantos(0);
+    setLoadProgresses([]);
+
+    for (let i = 1; i <= SB_TOTAL_CANTOS; i++) {
+      try {
+        const data = await loadCantoWithProgress(i) as { sections: Record<string, unknown> };
         Object.assign(sbAllSectionsRef.current, data.sections);
+      } catch (e) {
+        console.error(`Failed to load canto ${i}`, e);
       }
-    } catch (e) {
-      console.error('Failed to load SB data for search', e);
     }
-    setSbLoading(false);
     return sbAllSectionsRef.current;
-  }, []);
+  }, [loadCantoWithProgress]);
 
   const doSearch = useCallback(async (q: string, book?: 'bg' | 'sb') => {
     const searchBook = book || selectedBook;
@@ -260,6 +324,9 @@ export default function SearchPage({
       return next;
     });
   };
+
+  const isLoadingSB = searching && selectedBook === 'sb' && totalCantos > 0;
+  const sbProgress = totalCantos > 0 ? loadedCantos / totalCantos : 0;
 
   return (
     <div style={{ paddingTop: '56px', paddingBottom: '70px', minHeight: '100vh', background: bg }}>
@@ -510,20 +577,56 @@ export default function SearchPage({
             </div>
           </div>
 
-          {searching || sbLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: labelColor }}>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔍</div>
-              <div style={{ color: textSecondary }}>{sbLoading ? '正在加载博伽瓦谭数据...' : '搜索中...'}</div>
+          {searching ? (
+            <div style={{ padding: '40px 32px', textAlign: 'center' }}>
+              {/* Search icon */}
+              <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔍</div>
+
+              {/* Status text */}
+              <div style={{ color: textPrimary, fontWeight: 600, marginBottom: '6px', fontSize: '15px' }}>
+                {isLoadingSB
+                  ? `正在加载博伽瓦谭数据... (${loadedCantos}/${totalCantos} 篇)`
+                  : '搜索中...'}
+              </div>
+
+              {/* Progress bar + detail */}
+              {isLoadingSB ? (
+                <LoadingProgress
+                  progresses={loadProgresses}
+                  totalSteps={totalCantos * 2} // each canto may have 2 attempts (jsd + gh)
+                  isDark={isDark}
+                  devMode={devMode}
+                />
+              ) : (
+                <div style={{ color: textSecondary, fontSize: '13px' }}>
+                  正在博伽梵歌中搜索...
+                </div>
+              )}
             </div>
           ) : results.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: textSecondary }}>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>😔</div>
               <div>未找到相关内容</div>
+              {devMode && loadProgresses.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <LoadingProgress
+                    progresses={loadProgresses}
+                    totalSteps={totalCantos * 2}
+                    isDark={isDark}
+                    devMode={true}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ background: cardBg }}>
               <div style={{ padding: '8px 16px', fontSize: '12px', color: textSecondary, borderBottom: `1px solid ${isDark ? '#2a3a50' : '#f0f4f8'}` }}>
                 找到 {results.length} 条结果
+                {devMode && loadProgresses.length > 0 && (
+                  <span style={{ marginLeft: '8px', color: isDark ? '#5ad88a' : '#2a8a4a' }}>
+                    · 通过 {loadProgresses.find(p => p.status === 'ok')?.source === 'jsdelivr' ? 'jsDelivr CDN' : 'GitHub Pages'} 加载
+                  </span>
+                )}
               </div>
               {results.map((result, idx) => (
                 <div

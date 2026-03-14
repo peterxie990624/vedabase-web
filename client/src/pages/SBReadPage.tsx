@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TopNav from '../components/TopNav';
+import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
 import { useSBIndex, useSBCantoData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -28,7 +29,7 @@ export default function SBReadPage({
   onHome,
   onNavigate,
 }: SBReadPageProps) {
-  const { data: index } = useSBIndex();
+  const { data: index, loading: indexLoading, error: indexError } = useSBIndex();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
   const [animClass, setAnimClass] = useState('fade-in');
@@ -38,7 +39,8 @@ export default function SBReadPage({
 
   const chapter = index?.chapters.find(c => c.id === chapterId);
   const cantoId = chapter?.canto_id || null;
-  const { data: cantoData, loading } = useSBCantoData(cantoId);
+  const { data: cantoData, loading: cantoLoading, error: cantoError } = useSBCantoData(cantoId);
+  const loading = indexLoading || cantoLoading;
 
   const chapters = index?.chapters || [];
   const sections = cantoData?.sections[String(chapterId)] || [];
@@ -102,20 +104,63 @@ export default function SBReadPage({
     setFontSize(fontSizeCycle[(idx + 1) % fontSizeCycle.length]);
   };
 
-  if (loading || !section) {
+  const DEV_MODE = import.meta.env.DEV;
+
+  if (loading || indexError || cantoError || !section) {
+    const resourceStatus = [
+      {
+        name: '博伽瓦谭目录',
+        url: `${import.meta.env.BASE_URL}data/sb_index.json`,
+        loading: indexLoading,
+        error: indexError,
+        source: 'jsdelivr' as const,
+      },
+      {
+        name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据',
+        url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined,
+        loading: cantoLoading,
+        error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null),
+        source: 'jsdelivr' as const,
+      },
+    ];
+    const hasError = !!(indexError || cantoError);
     return (
-      <div style={{
-        paddingTop: '56px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: isDark ? '#0f1923' : 'white',
-      }}>
-        <div style={{ textAlign: 'center', color: isDark ? '#c8a84b' : 'var(--veda-blue)' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-          <div>加载中...</div>
+      <div style={{ paddingTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)', gap: '16px' }}>
+        <div style={{ textAlign: 'center' }}>
+          {loading ? (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>
+                {indexLoading ? '正在加载目录...' : `正在加载第${cantoId}篇数据...`}
+              </div>
+            </>
+          ) : hasError ? (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⚠️</div>
+              <div style={{ color: '#e05050', fontWeight: 600 }}>加载失败</div>
+              {DEV_MODE && <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0', fontSize: '13px', marginTop: '8px', maxWidth: '280px' }}>{indexError || cantoError}</div>}
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>😔</div>
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>内容未找到</div>
+            </>
+          )}
         </div>
+        {DEV_MODE && (
+          <DevPanel
+            resources={resourceStatus}
+            env={{
+              BASE_URL: import.meta.env.BASE_URL,
+              主题: theme || 'light',
+              语言: language || 'zh',
+              章节ID: String(chapterId),
+              篇ID: String(cantoId),
+              节索引: String(sectionIndex),
+            }}
+            isDark={isDark}
+          />
+        )}
       </div>
     );
   }
