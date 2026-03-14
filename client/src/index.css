@@ -146,6 +146,13 @@
   --veda-border: #d0dde8;
   --veda-nav-height: 56px;
   --veda-bottom-nav: 60px;
+  /* TopNav */
+  --veda-nav-bg: #ffffff;
+  --veda-nav-border: #d0dde8;
+  --veda-nav-shadow: 0 1px 4px rgba(74,127,165,0.08);
+  --veda-nav-color: #4a7fa5;
+  --veda-nav-disabled: #cccccc;
+  --veda-nav-inactive: #8aa0b4;
 }
 
 /* Scrollbar */
@@ -404,6 +411,13 @@
   --veda-sanskrit: #e8c060;
   --veda-translation: #7ab8d8;
   --veda-border: #2a3a50;
+  /* TopNav */
+  --veda-nav-bg: #1a2535;
+  --veda-nav-border: #2a3a50;
+  --veda-nav-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --veda-nav-color: #c8a84b;
+  --veda-nav-disabled: #3a5070;
+  --veda-nav-inactive: #5a7a9a;
 }
 
 [data-veda-theme="dark"] body,

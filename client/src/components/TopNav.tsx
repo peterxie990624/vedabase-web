@@ -47,16 +47,12 @@ export default function TopNav({
   onFontSize,
   theme = 'light',
 }: TopNavProps) {
-  const isDark = theme === 'dark';
-  const navBg = isDark ? '#1a2535' : 'white';
-  const navBorder = isDark ? '#2a3a50' : 'var(--veda-border)';
-  const navColor = isDark ? '#c8a84b' : 'var(--veda-blue)';
-  const navShadow = isDark
-    ? '0 1px 4px rgba(0,0,0,0.3)'
-    : '0 1px 4px rgba(74,127,165,0.08)';
+  // All colors are now driven by CSS variables (--veda-nav-*) set via data-veda-theme on <html>
+  // This ensures the nav bar responds to theme changes even when theme prop is not passed
 
   return (
     <div
+      className="top-nav"
       style={{
         position: 'fixed',
         top: 0,
@@ -65,14 +61,14 @@ export default function TopNav({
         width: '100%',
         maxWidth: '640px',
         height: '56px',
-        background: navBg,
-        borderBottom: `1px solid ${navBorder}`,
+        background: 'var(--veda-nav-bg)',
+        borderBottom: '1px solid var(--veda-nav-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 12px',
         zIndex: 100,
-        boxShadow: navShadow,
+        boxShadow: 'var(--veda-nav-shadow)',
       }}
     >
       {/* Left side */}
@@ -85,7 +81,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: navColor,
+              color: 'var(--veda-nav-color)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -102,7 +98,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: navColor,
+              color: 'var(--veda-nav-color)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -120,7 +116,7 @@ export default function TopNav({
               border: 'none',
               cursor: hasPrev ? 'pointer' : 'not-allowed',
               padding: '4px',
-              color: hasPrev ? navColor : (isDark ? '#3a5070' : '#ccc'),
+              color: hasPrev ? 'var(--veda-nav-color)' : 'var(--veda-nav-disabled)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -138,7 +134,7 @@ export default function TopNav({
           textAlign: 'center',
           fontWeight: 600,
           fontSize: '1rem',
-          color: navColor,
+          color: 'var(--veda-nav-color)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -159,7 +155,7 @@ export default function TopNav({
               border: 'none',
               cursor: hasNext ? 'pointer' : 'not-allowed',
               padding: '4px',
-              color: hasNext ? navColor : (isDark ? '#3a5070' : '#ccc'),
+              color: hasNext ? 'var(--veda-nav-color)' : 'var(--veda-nav-disabled)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -176,7 +172,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: navColor,
+              color: 'var(--veda-nav-color)',
               fontSize: '13px',
               fontWeight: 700,
               minWidth: '28px',
@@ -191,10 +187,10 @@ export default function TopNav({
             onClick={onLanguageToggle}
             style={{
               background: 'none',
-              border: `1px solid ${navColor}`,
+              border: '1px solid var(--veda-nav-color)',
               cursor: 'pointer',
               padding: '3px 8px',
-              color: navColor,
+              color: 'var(--veda-nav-color)',
               fontSize: '12px',
               fontWeight: 600,
               borderRadius: '4px',
@@ -212,7 +208,7 @@ export default function TopNav({
               border: 'none',
               cursor: 'pointer',
               padding: '6px',
-              color: isBookmarked ? navColor : (isDark ? '#5a7a9a' : '#8aa0b4'),
+              color: isBookmarked ? 'var(--veda-nav-color)' : 'var(--veda-nav-inactive)',
               display: 'flex',
               alignItems: 'center',
             }}
