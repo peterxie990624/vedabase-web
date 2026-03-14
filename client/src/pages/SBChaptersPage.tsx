@@ -55,7 +55,7 @@ export default function SBChaptersPage({ cantoId, onBack, onHome, onSelectChapte
               onClick={() => onSelectChapter(chapter.id)}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', overflow: 'hidden' }}>
                   <span
                     style={{
                       color: 'var(--veda-blue)',
@@ -72,6 +72,9 @@ export default function SBChaptersPage({ cantoId, onBack, onHome, onSelectChapte
                       color: 'var(--veda-text)',
                       fontSize: '0.9rem',
                       fontFamily: "'Noto Serif SC', serif",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {language === 'zh' ? chapter.zh_title : chapter.en_title}

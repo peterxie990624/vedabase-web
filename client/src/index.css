@@ -305,6 +305,20 @@
   cursor: pointer;
   transition: background 0.15s;
   background: var(--veda-bg);
+  overflow: hidden; /* 防止内容撑宽页面 */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* list-item 内的文字容器自动截断 */
+.list-item > div:first-child {
+  min-width: 0; /* 允许 flex 子项收缩 */
+  overflow: hidden;
+}
+/* list-item 内的箭头图标不被压缩 */
+.list-item > svg:last-child,
+.list-item > span:last-child {
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 .list-item:hover { background: var(--veda-blue-light); }
 .list-item:active { background: #c8d8e8; }

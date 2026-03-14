@@ -38,12 +38,13 @@ export default function BGChaptersPage({ onBack, onHome, onSelectChapter, langua
               onClick={() => onSelectChapter(chapter.id)}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', overflow: 'hidden' }}>
                   <span
                     style={{
                       color: '#8aa0b4',
                       fontSize: '0.85rem',
                       minWidth: '56px',
+                      flexShrink: 0,
                       fontFamily: "'Noto Serif SC', serif",
                     }}
                   >
@@ -54,6 +55,9 @@ export default function BGChaptersPage({ onBack, onHome, onSelectChapter, langua
                       color: 'var(--veda-text)',
                       fontSize: '0.95rem',
                       fontFamily: "'Noto Serif SC', serif",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {language === 'zh' ? chapter.zh_title : chapter.en_title}

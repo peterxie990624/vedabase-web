@@ -43,7 +43,7 @@ export default function SBCantosPage({ onBack, onHome, onSelectCanto, language, 
                 onClick={() => onSelectCanto(canto.id)}
               >
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', overflow: 'hidden' }}>
                     <span
                       style={{
                         color: '#8aa0b4',
@@ -61,6 +61,9 @@ export default function SBCantosPage({ onBack, onHome, onSelectCanto, language, 
                           color: 'var(--veda-text)',
                           fontSize: '0.95rem',
                           fontFamily: "'Noto Serif SC', serif",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {subtitle}

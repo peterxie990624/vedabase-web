@@ -1,8 +1,9 @@
 // SearchPage — 搜索页面
 // Features: 历史搜索记录（localStorage）、搜索状态持久化、关键词位置截取预览、右上角编辑删除历史
 // v1.2: 搜索进度条 + 开发模式调试面板 + jsDelivr CDN 加速
+// v1.3: 自定义下拉菜单（主题一致）+ 支持同时搜索 BG+SB
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { X, ChevronRight, Edit2, Trash2, Check } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Edit2, Trash2, Check } from 'lucide-react';
 import { useBGData, useSBIndex } from '../hooks/useData';
 import type { LoadProgress } from '../hooks/useData';
 import LoadingProgress from '../components/LoadingProgress';
@@ -18,9 +19,11 @@ export interface SearchResult {
   preview: string;
 }
 
+export type BookFilter = 'bg' | 'sb' | 'all';
+
 export interface SearchState {
   query: string;
-  selectedBook: 'bg' | 'sb';
+  selectedBook: BookFilter;
   results: SearchResult[];
   searched: boolean;
 }
@@ -34,7 +37,8 @@ interface SearchPageProps {
   devMode?: boolean;
 }
 
-const BOOK_OPTIONS = [
+const BOOK_OPTIONS: { id: BookFilter; label: string; sublabel?: string }[] = [
+  { id: 'all', label: '全部', sublabel: '博伽梵歌 + 博伽瓦谭' },
   { id: 'bg', label: '博伽梵歌' },
   { id: 'sb', label: '博伽瓦谭' },
 ];
@@ -103,13 +107,20 @@ export default function SearchPage({
   const inputBorder = isDark ? '#2a3a50' : '#e0eaf2';
   const resultTextColor = isDark ? '#c0d0e0' : '#444';
   const labelColor = isDark ? '#6aacdc' : '#2e6fa0';
+  const dropdownBg = isDark ? '#1e2e42' : '#ffffff';
+  const dropdownHover = isDark ? '#2a3a50' : '#f0f6ff';
+  const dropdownBorder = isDark ? '#2a3a50' : '#e0eaf2';
 
-  const [localSelectedBook, setLocalSelectedBook] = useState<'bg' | 'sb'>(searchState?.selectedBook || 'bg');
+  const [localSelectedBook, setLocalSelectedBook] = useState<BookFilter>(
+    (searchState?.selectedBook as BookFilter) || 'bg'
+  );
   const [localQuery, setLocalQuery] = useState(searchState?.query || '');
   const [localResults, setLocalResults] = useState<SearchResult[]>(searchState?.results || []);
   const [localSearched, setLocalSearched] = useState(searchState?.searched || false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedBook = searchState ? searchState.selectedBook : localSelectedBook;
+  const selectedBook: BookFilter = searchState ? (searchState.selectedBook as BookFilter) : localSelectedBook;
   const query = searchState ? searchState.query : localQuery;
   const results = searchState ? searchState.results : localResults;
   const searched = searchState ? searchState.searched : localSearched;
@@ -125,11 +136,22 @@ export default function SearchPage({
       onSearchStateChange(newState);
     } else {
       if (updates.query !== undefined) setLocalQuery(updates.query);
-      if (updates.selectedBook !== undefined) setLocalSelectedBook(updates.selectedBook as 'bg' | 'sb');
+      if (updates.selectedBook !== undefined) setLocalSelectedBook(updates.selectedBook as BookFilter);
       if (updates.results !== undefined) setLocalResults(updates.results);
       if (updates.searched !== undefined) setLocalSearched(updates.searched);
     }
   }, [query, selectedBook, results, searched, onSearchStateChange]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [searching, setSearching] = useState(false);
   const [history, setHistory] = useState<string[]>(getHistory);
@@ -145,7 +167,6 @@ export default function SearchPage({
 
   const addProgress = useCallback((p: LoadProgress) => {
     setLoadProgresses(prev => {
-      // Update existing entry for same URL if status changed
       const idx = prev.findIndex(x => x.url === p.url && x.source === p.source);
       if (idx >= 0) {
         const next = [...prev];
@@ -162,7 +183,6 @@ export default function SearchPage({
   const { data: bgData } = useBGData();
   const { data: sbIndex } = useSBIndex();
 
-  // Dynamically import loadJSON-compatible fetch with CDN fallback
   const JSDELIVR_BASE = 'https://cdn.jsdelivr.net/gh/peterxie990624/vedabase-web@main/client/public';
   const GH_BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -171,7 +191,6 @@ export default function SearchPage({
     const jsdUrl = `${JSDELIVR_BASE}${path}`;
     const ghUrl = `${GH_BASE}${path}`;
 
-    // Try jsDelivr first
     addProgress({ url: jsdUrl, source: 'jsdelivr', status: 'loading' });
     const t0 = Date.now();
     try {
@@ -183,7 +202,6 @@ export default function SearchPage({
     } catch (e1) {
       const msg1 = e1 instanceof Error ? e1.message : String(e1);
       addProgress({ url: jsdUrl, source: 'jsdelivr', status: 'error', error: msg1 });
-      // Fallback to GitHub Pages
       addProgress({ url: ghUrl, source: 'github', status: 'loading' });
       const t1 = Date.now();
       try {
@@ -217,25 +235,54 @@ export default function SearchPage({
     return sbAllSectionsRef.current;
   }, [loadCantoWithProgress]);
 
-  const doSearch = useCallback(async (q: string, book?: 'bg' | 'sb') => {
-    const searchBook = book || selectedBook;
-    if (!q.trim()) return;
-    setSearching(true);
-    updateState({ query: q, selectedBook: searchBook, searched: true });
-    addToHistory(q.trim());
-    setHistory(getHistory());
-    const keyword = q.trim().toLowerCase();
+  // Helper: search BG data
+  const searchBG = useCallback((keyword: string, q: string): SearchResult[] => {
+    if (!bgData) return [];
     const found: SearchResult[] = [];
+    for (const [chIdStr, sections] of Object.entries(bgData.sections)) {
+      const chId = parseInt(chIdStr);
+      (sections as Array<{
+        id: number; section_id: string | number;
+        yw_zh: string | null; yw_en: string | null;
+        yz_zh: string | null; yz_en: string | null;
+        words_zh_fc: string | null; words_en_fc: string | null;
+      }>).forEach((section, idx) => {
+        const searchText = [
+          section.yw_zh, section.yw_en, section.yz_zh, section.yz_en,
+          section.words_zh_fc, section.words_en_fc,
+        ].filter(Boolean).join(' ').toLowerCase();
 
-    if (searchBook === 'bg' && bgData) {
-      for (const [chIdStr, sections] of Object.entries(bgData.sections)) {
-        const chId = parseInt(chIdStr);
-        (sections as Array<{
-          id: number; section_id: string | number;
-          yw_zh: string | null; yw_en: string | null;
-          yz_zh: string | null; yz_en: string | null;
-          words_zh_fc: string | null; words_en_fc: string | null;
-        }>).forEach((section, idx) => {
+        if (searchText.includes(keyword)) {
+          const rawPreview = language === 'zh'
+            ? (section.yw_zh || section.yz_zh || section.yw_en || '')
+            : (section.yw_en || section.yz_en || '');
+          found.push({
+            bookType: 'bg',
+            chapterId: chId,
+            sectionIndex: idx,
+            sectionId: String(section.section_id),
+            label: `BG ${section.section_id}`,
+            preview: extractPreview(rawPreview, q, 100),
+          });
+        }
+      });
+    }
+    return found;
+  }, [bgData, language]);
+
+  // Helper: search SB data
+  const searchSB = useCallback(async (keyword: string, q: string): Promise<SearchResult[]> => {
+    const allSections = await loadAllSBForSearch() as Record<string, Array<{
+      id: number; section_id: string;
+      yw_zh: string | null; yw_en: string | null;
+      yz_zh: string | null; yz_en: string | null;
+      words_zh_fc: string | null; words_en_fc: string | null;
+    }>>;
+    const found: SearchResult[] = [];
+    if (sbIndex) {
+      for (const chapter of sbIndex.chapters) {
+        const sections = allSections[String(chapter.id)] || [];
+        sections.forEach((section, idx) => {
           const searchText = [
             section.yw_zh, section.yw_en, section.yz_zh, section.yz_en,
             section.words_zh_fc, section.words_en_fc,
@@ -245,56 +292,45 @@ export default function SearchPage({
             const rawPreview = language === 'zh'
               ? (section.yw_zh || section.yz_zh || section.yw_en || '')
               : (section.yw_en || section.yz_en || '');
-            const preview = extractPreview(rawPreview, q.trim(), 100);
             found.push({
-              bookType: 'bg',
-              chapterId: chId,
+              bookType: 'sb',
+              chapterId: chapter.id,
               sectionIndex: idx,
-              sectionId: String(section.section_id),
-              label: `BG ${section.section_id}`,
-              preview,
+              sectionId: section.section_id,
+              label: `SB ${section.section_id}`,
+              preview: extractPreview(rawPreview, q, 100),
             });
           }
         });
       }
-    } else if (searchBook === 'sb') {
-      const allSections = await loadAllSBForSearch() as Record<string, Array<{
-        id: number; section_id: string;
-        yw_zh: string | null; yw_en: string | null;
-        yz_zh: string | null; yz_en: string | null;
-        words_zh_fc: string | null; words_en_fc: string | null;
-      }>>;
-      if (sbIndex) {
-        for (const chapter of sbIndex.chapters) {
-          const sections = allSections[String(chapter.id)] || [];
-          sections.forEach((section, idx) => {
-            const searchText = [
-              section.yw_zh, section.yw_en, section.yz_zh, section.yz_en,
-              section.words_zh_fc, section.words_en_fc,
-            ].filter(Boolean).join(' ').toLowerCase();
+    }
+    return found;
+  }, [sbIndex, language, loadAllSBForSearch]);
 
-            if (searchText.includes(keyword)) {
-              const rawPreview = language === 'zh'
-                ? (section.yw_zh || section.yz_zh || section.yw_en || '')
-                : (section.yw_en || section.yz_en || '');
-              const preview = extractPreview(rawPreview, q.trim(), 100);
-              found.push({
-                bookType: 'sb',
-                chapterId: chapter.id,
-                sectionIndex: idx,
-                sectionId: section.section_id,
-                label: `SB ${section.section_id}`,
-                preview,
-              });
-            }
-          });
-        }
-      }
+  const doSearch = useCallback(async (q: string, book?: BookFilter) => {
+    const searchBook: BookFilter = book || selectedBook;
+    if (!q.trim()) return;
+    setSearching(true);
+    updateState({ query: q, selectedBook: searchBook, searched: true });
+    addToHistory(q.trim());
+    setHistory(getHistory());
+    const keyword = q.trim().toLowerCase();
+    let found: SearchResult[] = [];
+
+    if (searchBook === 'bg') {
+      found = searchBG(keyword, q.trim());
+    } else if (searchBook === 'sb') {
+      found = await searchSB(keyword, q.trim());
+    } else if (searchBook === 'all') {
+      // Search BG first (fast), then SB
+      const bgResults = searchBG(keyword, q.trim());
+      const sbResults = await searchSB(keyword, q.trim());
+      found = [...bgResults, ...sbResults];
     }
 
     updateState({ results: found.slice(0, 200), searched: true, query: q, selectedBook: searchBook });
     setSearching(false);
-  }, [selectedBook, bgData, sbIndex, language, loadAllSBForSearch, updateState]);
+  }, [selectedBook, searchBG, searchSB, updateState]);
 
   const handleSearch = () => doSearch(query);
 
@@ -325,8 +361,10 @@ export default function SearchPage({
     });
   };
 
-  const isLoadingSB = searching && selectedBook === 'sb' && totalCantos > 0;
+  const isLoadingSB = searching && (selectedBook === 'sb' || selectedBook === 'all') && totalCantos > 0;
   const sbProgress = totalCantos > 0 ? loadedCantos / totalCantos : 0;
+
+  const selectedBookLabel = BOOK_OPTIONS.find(o => o.id === selectedBook)?.label || '博伽梵歌';
 
   return (
     <div style={{ paddingTop: '56px', paddingBottom: '70px', minHeight: '100vh', background: bg }}>
@@ -392,35 +430,100 @@ export default function SearchPage({
 
       {!searched ? (
         <div style={{ padding: '16px' }}>
-          {/* Book selector */}
-          <div
-            style={{
-              background: inputBg,
-              borderRadius: '24px',
-              border: `1px solid ${inputBorder}`,
-              padding: '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '12px',
-            }}
-          >
-            <select
-              value={selectedBook}
-              onChange={e => updateState({ selectedBook: e.target.value as 'bg' | 'sb' })}
+          {/* Custom book selector dropdown */}
+          <div ref={dropdownRef} style={{ position: 'relative', marginBottom: '12px' }}>
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
               style={{
-                border: 'none',
-                background: 'none',
-                fontSize: '1rem',
-                color: isDark ? '#c0d0e0' : '#333',
                 width: '100%',
+                background: inputBg,
+                borderRadius: '24px',
+                border: `1px solid ${dropdownOpen ? labelColor : inputBorder}`,
+                padding: '10px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 cursor: 'pointer',
                 outline: 'none',
+                transition: 'border-color 0.15s',
               }}
             >
-              {BOOK_OPTIONS.map(opt => (
-                <option key={opt.id} value={opt.id}>{opt.label}</option>
-              ))}
-            </select>
+              <span style={{ fontSize: '1rem', color: isDark ? '#c0d0e0' : '#333', fontFamily: "'Noto Serif SC', serif" }}>
+                {selectedBookLabel}
+              </span>
+              <ChevronDown
+                size={16}
+                color={textSecondary}
+                style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  right: 0,
+                  background: dropdownBg,
+                  border: `1px solid ${dropdownBorder}`,
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  zIndex: 200,
+                  boxShadow: isDark
+                    ? '0 8px 24px rgba(0,0,0,0.5)'
+                    : '0 8px 24px rgba(74,127,165,0.15)',
+                }}
+              >
+                {BOOK_OPTIONS.map((opt, idx) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      updateState({ selectedBook: opt.id });
+                      setDropdownOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      background: selectedBook === opt.id
+                        ? (isDark ? 'rgba(106,172,220,0.15)' : 'rgba(46,111,160,0.08)')
+                        : 'transparent',
+                      border: 'none',
+                      borderBottom: idx < BOOK_OPTIONS.length - 1 ? `1px solid ${dropdownBorder}` : 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={e => {
+                      if (selectedBook !== opt.id) {
+                        (e.currentTarget as HTMLElement).style.background = dropdownHover;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (selectedBook !== opt.id) {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.95rem', color: selectedBook === opt.id ? labelColor : (isDark ? '#c0d0e0' : '#333'), fontFamily: "'Noto Serif SC', serif", fontWeight: selectedBook === opt.id ? 600 : 400 }}>
+                        {opt.label}
+                      </div>
+                      {opt.sublabel && (
+                        <div style={{ fontSize: '0.75rem', color: textSecondary, marginTop: '2px' }}>
+                          {opt.sublabel}
+                        </div>
+                      )}
+                    </div>
+                    {selectedBook === opt.id && (
+                      <Check size={16} color={labelColor} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Search input */}
@@ -579,27 +682,24 @@ export default function SearchPage({
 
           {searching ? (
             <div style={{ padding: '40px 32px', textAlign: 'center' }}>
-              {/* Search icon */}
               <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔍</div>
-
-              {/* Status text */}
               <div style={{ color: textPrimary, fontWeight: 600, marginBottom: '6px', fontSize: '15px' }}>
                 {isLoadingSB
                   ? `正在加载博伽瓦谭数据... (${loadedCantos}/${totalCantos} 篇)`
-                  : '搜索中...'}
+                  : selectedBook === 'all'
+                    ? '正在搜索全部经典...'
+                    : '搜索中...'}
               </div>
-
-              {/* Progress bar + detail */}
               {isLoadingSB ? (
                 <LoadingProgress
                   progresses={loadProgresses}
-                  totalSteps={totalCantos * 2} // each canto may have 2 attempts (jsd + gh)
+                  totalSteps={totalCantos * 2}
                   isDark={isDark}
                   devMode={devMode}
                 />
               ) : (
                 <div style={{ color: textSecondary, fontSize: '13px' }}>
-                  正在博伽梵歌中搜索...
+                  {selectedBook === 'all' ? '正在博伽梵歌中搜索...' : '正在博伽梵歌中搜索...'}
                 </div>
               )}
             </div>
@@ -622,6 +722,11 @@ export default function SearchPage({
             <div style={{ background: cardBg }}>
               <div style={{ padding: '8px 16px', fontSize: '12px', color: textSecondary, borderBottom: `1px solid ${isDark ? '#2a3a50' : '#f0f4f8'}` }}>
                 找到 {results.length} 条结果
+                {results.some(r => r.bookType === 'bg') && results.some(r => r.bookType === 'sb') && (
+                  <span style={{ marginLeft: '6px' }}>
+                    （BG: {results.filter(r => r.bookType === 'bg').length} · SB: {results.filter(r => r.bookType === 'sb').length}）
+                  </span>
+                )}
                 {devMode && loadProgresses.length > 0 && (
                   <span style={{ marginLeft: '8px', color: isDark ? '#5ad88a' : '#2a8a4a' }}>
                     · 通过 {loadProgresses.find(p => p.status === 'ok')?.source === 'jsdelivr' ? 'jsDelivr CDN' : 'GitHub Pages'} 加载
