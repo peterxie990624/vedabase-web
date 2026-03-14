@@ -13,26 +13,6 @@ const GH_PAGES_BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 // Cache for loaded data
 const cache: Record<string, unknown> = {};
 
-// Detect if jsDelivr is reachable (cached result)
-let jsDelivrAvailable: boolean | null = null;
-
-async function checkJsDelivr(): Promise<boolean> {
-  if (jsDelivrAvailable !== null) return jsDelivrAvailable;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 4000);
-    const res = await fetch(
-      `${JSDELIVR_BASE}/data/calendar_data.json`,
-      { signal: ctrl.signal, cache: 'no-store' }
-    );
-    clearTimeout(timer);
-    jsDelivrAvailable = res.ok;
-  } catch {
-    jsDelivrAvailable = false;
-  }
-  return jsDelivrAvailable;
-}
-
 export interface LoadProgress {
   url: string;
   source: 'jsdelivr' | 'github';
@@ -41,55 +21,77 @@ export interface LoadProgress {
   durationMs?: number;
 }
 
+/**
+ * 并行竞速加载策略：同时向 jsDelivr 和 GitHub Pages 发起请求，
+ * 谁先成功响应就使用谁，另一个请求被取消。
+ * 这样可以大幅减少等待时间，特别是在网络不稳定时。
+ */
+async function loadJSONParallel<T>(
+  path: string,
+  onProgress?: (p: LoadProgress) => void
+): Promise<T> {
+  // Use cache keyed by path
+  if (cache[path]) return cache[path] as T;
+
+  const jsdelivrUrl = `${JSDELIVR_BASE}${path}`;
+  const ghUrl = `${GH_PAGES_BASE}${path}`;
+
+  onProgress?.({ url: jsdelivrUrl, source: 'jsdelivr', status: 'loading' });
+  onProgress?.({ url: ghUrl, source: 'github', status: 'loading' });
+
+  const t0 = Date.now();
+
+  // Create abort controllers for each request
+  const jsdCtrl = new AbortController();
+  const ghCtrl = new AbortController();
+
+  // Race: first successful response wins
+  const jsdPromise = fetch(jsdelivrUrl, { signal: jsdCtrl.signal })
+    .then(async res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return { data, source: 'jsdelivr' as const, url: jsdelivrUrl };
+    });
+
+  const ghPromise = fetch(ghUrl, { signal: ghCtrl.signal })
+    .then(async res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return { data, source: 'github' as const, url: ghUrl };
+    });
+
+  // Use Promise.any to get the first successful result
+  try {
+    const winner = await Promise.any([jsdPromise, ghPromise]);
+    const durationMs = Date.now() - t0;
+
+    // Cancel the losing request
+    if (winner.source === 'jsdelivr') {
+      ghCtrl.abort();
+      onProgress?.({ url: ghUrl, source: 'github', status: 'error', error: 'cancelled (jsdelivr won)' });
+    } else {
+      jsdCtrl.abort();
+      onProgress?.({ url: jsdelivrUrl, source: 'jsdelivr', status: 'error', error: 'cancelled (github won)' });
+    }
+
+    cache[path] = winner.data;
+    onProgress?.({ url: winner.url, source: winner.source, status: 'ok', durationMs });
+    return winner.data as T;
+  } catch (aggErr) {
+    // Both failed
+    const durationMs = Date.now() - t0;
+    onProgress?.({ url: jsdelivrUrl, source: 'jsdelivr', status: 'error', error: 'failed', durationMs });
+    onProgress?.({ url: ghUrl, source: 'github', status: 'error', error: 'failed', durationMs });
+    throw new Error(`Both CDN sources failed for ${path}`);
+  }
+}
+
+// Keep the old sequential function as fallback (not used by default)
 async function loadJSON<T>(
   path: string,
   onProgress?: (p: LoadProgress) => void
 ): Promise<T> {
-  // Try jsDelivr first
-  const jsdelivrUrl = `${JSDELIVR_BASE}${path}`;
-  const ghUrl = `${GH_PAGES_BASE}${path}`;
-
-  // Use cache keyed by path
-  if (cache[path]) return cache[path] as T;
-
-  const useJsdelivr = await checkJsDelivr();
-  const primaryUrl = useJsdelivr ? jsdelivrUrl : ghUrl;
-  const primarySource: 'jsdelivr' | 'github' = useJsdelivr ? 'jsdelivr' : 'github';
-
-  onProgress?.({ url: primaryUrl, source: primarySource, status: 'loading' });
-  const t0 = Date.now();
-
-  try {
-    const res = await fetch(primaryUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    cache[path] = data;
-    onProgress?.({ url: primaryUrl, source: primarySource, status: 'ok', durationMs: Date.now() - t0 });
-    return data;
-  } catch (e1) {
-    const msg1 = e1 instanceof Error ? e1.message : String(e1);
-    onProgress?.({ url: primaryUrl, source: primarySource, status: 'error', error: msg1 });
-
-    // Fallback to the other source
-    if (useJsdelivr) {
-      onProgress?.({ url: ghUrl, source: 'github', status: 'loading' });
-      const t1 = Date.now();
-      try {
-        const res2 = await fetch(ghUrl);
-        if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
-        const data2 = await res2.json();
-        cache[path] = data2;
-        onProgress?.({ url: ghUrl, source: 'github', status: 'ok', durationMs: Date.now() - t1 });
-        return data2;
-      } catch (e2) {
-        const msg2 = e2 instanceof Error ? e2.message : String(e2);
-        onProgress?.({ url: ghUrl, source: 'github', status: 'error', error: msg2 });
-        throw new Error(`Both CDN failed.\njsDelivr: ${msg1}\nGitHub: ${msg2}`);
-      }
-    }
-
-    throw new Error(`Failed to load ${primaryUrl}: ${msg1}`);
-  }
+  return loadJSONParallel<T>(path, onProgress);
 }
 
 export function useBGData(onProgress?: (p: LoadProgress) => void) {

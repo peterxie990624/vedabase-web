@@ -31,10 +31,12 @@ type Route =
   | { page: 'sb-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean }
   | { page: 'akadasi' };
 
-type TabRoute = 'bookshelf' | 'bookmarks' | 'search' | 'calendar';
-
 // ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
 
+/**
+ * 将当前路由状态序列化为 hash 字符串
+ * 注意：tab 页（书签/搜索/日历）使用独立 hash，不依赖 routeStack
+ */
 function routeToHash(route: Route, tab: TabType): string {
   if (tab === 'bookmarks') return '#/bookmarks';
   if (tab === 'search') return '#/search';
@@ -54,38 +56,134 @@ function routeToHash(route: Route, tab: TabType): string {
   }
 }
 
-function hashToState(hash: string): { route: Route; tab: TabType } {
+/**
+ * 将 hash 字符串解析为完整路由栈 + tab
+ *
+ * 关键修复：返回完整的路由栈（包含所有父级页面），
+ * 这样浏览器后退时能正确逐级返回，而不是直接跳到首页。
+ *
+ * 导航层级：
+ *   BG: home → bg-chapters → bg-sections(chId) → bg-read(chId, secIdx)
+ *   SB: home → sb-cantos → sb-chapters(cantoId) → sb-sections(chId) → sb-read(chId, secIdx)
+ *
+ * SB 的 cantoId 需要从 sb_index.json 中查找，但这里是纯函数无法异步。
+ * 解决方案：将 cantoId 编码到 hash 中（sb/{cantoId}/c{chapterId}/{secIdx}）
+ * 旧格式（sb/c{chapterId}）作为兼容处理，cantoId 默认为 0（后续由页面自行查找）
+ */
+function hashToState(hash: string): { stack: Route[]; tab: TabType } {
   const path = hash.replace(/^#\/?/, '') || '';
   const parts = path.split('/').filter(Boolean);
 
-  if (parts[0] === 'bookmarks') return { route: { page: 'home' }, tab: 'bookmarks' };
-  if (parts[0] === 'search')    return { route: { page: 'home' }, tab: 'search' };
-  if (parts[0] === 'calendar')  return { route: { page: 'home' }, tab: 'calendar' };
-  if (parts[0] === 'akadasi')   return { route: { page: 'akadasi' }, tab: 'bookshelf' };
+  // Tab pages
+  if (parts[0] === 'bookmarks') return { stack: [{ page: 'home' }], tab: 'bookmarks' };
+  if (parts[0] === 'search')    return { stack: [{ page: 'home' }], tab: 'search' };
+  if (parts[0] === 'calendar')  return { stack: [{ page: 'home' }], tab: 'calendar' };
+  if (parts[0] === 'akadasi')   return { stack: [{ page: 'home' }, { page: 'akadasi' }], tab: 'bookshelf' };
 
+  // BG: #/bg, #/bg/{chId}, #/bg/{chId}/{secIdx}
   if (parts[0] === 'bg') {
-    if (!parts[1]) return { route: { page: 'bg-chapters' }, tab: 'bookshelf' };
-    const chapterId = parseInt(parts[1], 10);
-    if (!parts[2]) return { route: { page: 'bg-sections', chapterId }, tab: 'bookshelf' };
-    const sectionIndex = parseInt(parts[2], 10);
-    return { route: { page: 'bg-read', chapterId, sectionIndex }, tab: 'bookshelf' };
-  }
-
-  if (parts[0] === 'sb') {
-    if (!parts[1]) return { route: { page: 'sb-cantos' }, tab: 'bookshelf' };
-    // sb/2 → cantos page (cantoId=2), sb/c15 → chapters page (chapterId=15)
-    if (parts[1].startsWith('c')) {
-      const chapterId = parseInt(parts[1].slice(1), 10);
-      if (!parts[2]) return { route: { page: 'sb-sections', chapterId }, tab: 'bookshelf' };
-      const sectionIndex = parseInt(parts[2], 10);
-      return { route: { page: 'sb-read', chapterId, sectionIndex }, tab: 'bookshelf' };
+    if (!parts[1]) {
+      return { stack: [{ page: 'home' }, { page: 'bg-chapters' }], tab: 'bookshelf' };
     }
-    const cantoId = parseInt(parts[1], 10);
-    return { route: { page: 'sb-chapters', cantoId }, tab: 'bookshelf' };
+    const chapterId = parseInt(parts[1], 10);
+    if (!parts[2]) {
+      return {
+        stack: [{ page: 'home' }, { page: 'bg-chapters' }, { page: 'bg-sections', chapterId }],
+        tab: 'bookshelf',
+      };
+    }
+    const sectionIndex = parseInt(parts[2], 10);
+    return {
+      stack: [
+        { page: 'home' },
+        { page: 'bg-chapters' },
+        { page: 'bg-sections', chapterId },
+        { page: 'bg-read', chapterId, sectionIndex },
+      ],
+      tab: 'bookshelf',
+    };
   }
 
-  return { route: { page: 'home' }, tab: 'bookshelf' };
+  // SB: #/sb, #/sb/{cantoId}, #/sb/{cantoId}/c{chId}, #/sb/{cantoId}/c{chId}/{secIdx}
+  // Also supports legacy: #/sb/c{chId}, #/sb/c{chId}/{secIdx}
+  if (parts[0] === 'sb') {
+    if (!parts[1]) {
+      return { stack: [{ page: 'home' }, { page: 'sb-cantos' }], tab: 'bookshelf' };
+    }
+
+    // New format: sb/{cantoId}/c{chId}/...
+    if (!parts[1].startsWith('c')) {
+      const cantoId = parseInt(parts[1], 10);
+      if (!parts[2]) {
+        return {
+          stack: [{ page: 'home' }, { page: 'sb-cantos' }, { page: 'sb-chapters', cantoId }],
+          tab: 'bookshelf',
+        };
+      }
+      if (parts[2].startsWith('c')) {
+        const chapterId = parseInt(parts[2].slice(1), 10);
+        if (!parts[3]) {
+          return {
+            stack: [
+              { page: 'home' },
+              { page: 'sb-cantos' },
+              { page: 'sb-chapters', cantoId },
+              { page: 'sb-sections', chapterId },
+            ],
+            tab: 'bookshelf',
+          };
+        }
+        const sectionIndex = parseInt(parts[3], 10);
+        return {
+          stack: [
+            { page: 'home' },
+            { page: 'sb-cantos' },
+            { page: 'sb-chapters', cantoId },
+            { page: 'sb-sections', chapterId },
+            { page: 'sb-read', chapterId, sectionIndex },
+          ],
+          tab: 'bookshelf',
+        };
+      }
+      // sb/{cantoId} only
+      return {
+        stack: [{ page: 'home' }, { page: 'sb-cantos' }, { page: 'sb-chapters', cantoId }],
+        tab: 'bookshelf',
+      };
+    }
+
+    // Legacy format: sb/c{chId}/...  (no cantoId in URL, insert sb-cantos as parent)
+    const chapterId = parseInt(parts[1].slice(1), 10);
+    if (!parts[2]) {
+      return {
+        stack: [
+          { page: 'home' },
+          { page: 'sb-cantos' },
+          { page: 'sb-sections', chapterId },
+        ],
+        tab: 'bookshelf',
+      };
+    }
+    const sectionIndex = parseInt(parts[2], 10);
+    return {
+      stack: [
+        { page: 'home' },
+        { page: 'sb-cantos' },
+        { page: 'sb-sections', chapterId },
+        { page: 'sb-read', chapterId, sectionIndex },
+      ],
+      tab: 'bookshelf',
+    };
+  }
+
+  return { stack: [{ page: 'home' }], tab: 'bookshelf' };
 }
+
+/**
+ * 更新 routeToHash 以支持新的 SB URL 格式（含 cantoId）
+ * 需要在 push sb-sections 和 sb-read 时知道 cantoId
+ * 解决方案：在 sb-sections 和 sb-read 路由中携带 cantoId
+ */
 
 // ─── Main App Component ──────────────────────────────────────────────────────
 
@@ -98,7 +196,7 @@ function VedabaseApp() {
 
   const initial = getInitialState();
   const [activeTab, setActiveTab] = useState<TabType>(initial.tab);
-  const [routeStack, setRouteStack] = useState<Route[]>([{ page: 'home' }, ...(initial.route.page !== 'home' ? [initial.route] : [])]);
+  const [routeStack, setRouteStack] = useState<Route[]>(initial.stack);
 
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
@@ -124,13 +222,9 @@ function VedabaseApp() {
   useEffect(() => {
     const onHashChange = () => {
       const hash = window.location.hash || '#/';
-      const { route, tab } = hashToState(hash);
+      const { stack, tab } = hashToState(hash);
       setActiveTab(tab);
-      if (tab === 'bookshelf') {
-        setRouteStack([{ page: 'home' }, ...(route.page !== 'home' ? [route] : [])]);
-      } else {
-        setRouteStack([{ page: 'home' }]);
-      }
+      setRouteStack(stack);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
@@ -154,6 +248,7 @@ function VedabaseApp() {
     setRouteStack(prev => {
       if (prev.length <= 1) return prev;
       const leaving = prev[prev.length - 1];
+      // If coming from search, go back to search tab
       if ((leaving.page === 'bg-read' || leaving.page === 'sb-read') && (leaving as any).fromSearch) {
         setActiveTab('search');
         return [{ page: 'home' }];
@@ -184,9 +279,19 @@ function VedabaseApp() {
     setActiveTab('bookshelf');
     const secIdx = bookmark.sectionIndex ?? 0;
     if (bookmark.bookType === 'bg') {
-      setRouteStack([{ page: 'home' }, { page: 'bg-read', chapterId: bookmark.chapterId, sectionIndex: secIdx }]);
+      setRouteStack([
+        { page: 'home' },
+        { page: 'bg-chapters' },
+        { page: 'bg-sections', chapterId: bookmark.chapterId },
+        { page: 'bg-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
+      ]);
     } else if (bookmark.bookType === 'sb') {
-      setRouteStack([{ page: 'home' }, { page: 'sb-read', chapterId: bookmark.chapterId, sectionIndex: secIdx }]);
+      setRouteStack([
+        { page: 'home' },
+        { page: 'sb-cantos' },
+        { page: 'sb-sections', chapterId: bookmark.chapterId },
+        { page: 'sb-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
+      ]);
     } else if (bookmark.bookType === 'akadasi') {
       setRouteStack([{ page: 'home' }, { page: 'akadasi' }]);
     }
@@ -195,9 +300,15 @@ function VedabaseApp() {
   const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number }) => {
     setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
-      setRouteStack([{ page: 'home' }, { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true }]);
+      setRouteStack([
+        { page: 'home' },
+        { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true },
+      ]);
     } else if (result.bookType === 'sb') {
-      setRouteStack([{ page: 'home' }, { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true }]);
+      setRouteStack([
+        { page: 'home' },
+        { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true },
+      ]);
     }
   }, []);
 

@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TopNav from '../components/TopNav';
 import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
+import LoadingProgress from '../components/LoadingProgress';
 import { useSBIndex, useSBCantoData } from '../hooks/useData';
+import type { LoadProgress } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
 import type { Language, FontSize, VedaTheme } from '../types';
@@ -29,7 +31,21 @@ export default function SBReadPage({
   onHome,
   onNavigate,
 }: SBReadPageProps) {
-  const { data: index, loading: indexLoading, error: indexError } = useSBIndex();
+  const [progresses, setProgresses] = useState<LoadProgress[]>([]);
+  const onProgress = useCallback((p: LoadProgress) => {
+    setProgresses(prev => {
+      // Update existing entry for same URL, or append new
+      const idx = prev.findIndex(x => x.url === p.url);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = p;
+        return next;
+      }
+      return [...prev, p];
+    });
+  }, []);
+
+  const { data: index, loading: indexLoading, error: indexError } = useSBIndex(onProgress);
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
   const [animClass, setAnimClass] = useState('fade-in');
@@ -39,7 +55,7 @@ export default function SBReadPage({
 
   const chapter = index?.chapters.find(c => c.id === chapterId);
   const cantoId = chapter?.canto_id || null;
-  const { data: cantoData, loading: cantoLoading, error: cantoError } = useSBCantoData(cantoId);
+  const { data: cantoData, loading: cantoLoading, error: cantoError } = useSBCantoData(cantoId, onProgress);
   const loading = indexLoading || cantoLoading;
 
   const chapters = index?.chapters || [];
@@ -106,39 +122,44 @@ export default function SBReadPage({
 
   const DEV_MODE = import.meta.env.DEV;
 
+  // Calculate total loading steps: sb_index + canto file = 2 files, each may have 2 progress events (loading + ok/error)
+  // For LoadingProgress, count unique URLs that are "ok" or "error" as completed
+  const uniqueUrls = Array.from(new Set(progresses.map(p => p.url)));
+  const totalSteps = Math.max(2, uniqueUrls.length);
+
   if (loading || indexError || cantoError || !section) {
-    const resourceStatus = [
-      {
-        name: '博伽瓦谭目录',
-        url: `${import.meta.env.BASE_URL}data/sb_index.json`,
-        loading: indexLoading,
-        error: indexError,
-        source: 'jsdelivr' as const,
-      },
-      {
-        name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据',
-        url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined,
-        loading: cantoLoading,
-        error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null),
-        source: 'jsdelivr' as const,
-      },
-    ];
     const hasError = !!(indexError || cantoError);
     return (
-      <div style={{ paddingTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)', gap: '16px' }}>
+      <div style={{
+        paddingTop: '56px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: isDark ? '#0f1923' : 'var(--veda-bg)',
+        gap: '20px',
+      }}>
         <div style={{ textAlign: 'center' }}>
           {loading ? (
             <>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>
-                {indexLoading ? '正在加载目录...' : `正在加载第${cantoId}篇数据...`}
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📖</div>
+              <div style={{ color: isDark ? '#c8a84b' : '#8a6a00', fontWeight: 600, marginBottom: '4px' }}>
+                {indexLoading ? '正在加载目录...' : cantoId ? `正在加载第${cantoId}篇经文...` : '正在加载...'}
               </div>
+              {cantoId && (
+                <div style={{ color: isDark ? '#6a8aa0' : '#8a9aaa', fontSize: '12px' }}>
+                  博伽瓦谭第 {cantoId} 篇（大文件，请稍候）
+                </div>
+              )}
             </>
           ) : hasError ? (
             <>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⚠️</div>
               <div style={{ color: '#e05050', fontWeight: 600 }}>加载失败</div>
-              {DEV_MODE && <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0', fontSize: '13px', marginTop: '8px', maxWidth: '280px' }}>{indexError || cantoError}</div>}
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0', fontSize: '13px', marginTop: '8px', maxWidth: '280px' }}>
+                {indexError || cantoError}
+              </div>
             </>
           ) : (
             <>
@@ -147,9 +168,35 @@ export default function SBReadPage({
             </>
           )}
         </div>
+
+        {/* Loading progress bar - always show when loading */}
+        {(loading || hasError) && progresses.length > 0 && (
+          <LoadingProgress
+            progresses={progresses}
+            totalSteps={totalSteps}
+            isDark={isDark}
+            devMode={DEV_MODE}
+          />
+        )}
+
         {DEV_MODE && (
           <DevPanel
-            resources={resourceStatus}
+            resources={[
+              {
+                name: '博伽瓦谭目录',
+                url: `${import.meta.env.BASE_URL}data/sb_index.json`,
+                loading: indexLoading,
+                error: indexError,
+                source: 'jsdelivr' as const,
+              },
+              {
+                name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据',
+                url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined,
+                loading: cantoLoading,
+                error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null),
+                source: 'jsdelivr' as const,
+              },
+            ]}
             env={{
               BASE_URL: import.meta.env.BASE_URL,
               主题: theme || 'light',
@@ -194,7 +241,7 @@ export default function SBReadPage({
             bookType: 'sb',
             chapterId,
             sectionId: section.section_id,
-            sectionIndex,  // ← 精确保存sectionIndex，修复书签跳转bug
+            sectionIndex,
             title: sectionLabel,
             preview,
           });
