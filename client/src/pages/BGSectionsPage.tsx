@@ -1,7 +1,7 @@
 import React from 'react';
 import TopNav from '../components/TopNav';
 import { useBGData } from '../hooks/useData';
-import type { Language , VedaTheme} from '../types';
+import type { Language, VedaTheme } from '../types';
 
 interface BGSectionsPageProps {
   chapterId: number;
@@ -30,6 +30,10 @@ export default function BGSectionsPage({
     ? `${chapter.zh_name} ${language === 'zh' ? chapter.zh_title : chapter.en_title}`
     : '...';
 
+  // Colors consistent with chapter list
+  const labelColor = isDark ? '#8aa0b4' : '#8aa0b4'; // muted, same as chapter page
+  const textColor = isDark ? '#c0d0e0' : 'var(--veda-text)';
+
   return (
     <div style={{ paddingTop: '56px', paddingBottom: '60px', minHeight: '100vh', background: 'var(--veda-bg)' }}>
       <TopNav
@@ -42,7 +46,7 @@ export default function BGSectionsPage({
         <div className="loading-spinner">
           <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-            <div>加载中...</div>
+            <div>{language === 'zh' ? '加载中...' : 'Loading...'}</div>
           </div>
         </div>
       ) : (
@@ -53,7 +57,6 @@ export default function BGSectionsPage({
           </div>
 
           {sections.map((section, idx) => {
-            // Get preview text
             const preview = language === 'zh'
               ? (section.yw_zh || section.yz_zh || '')
               : (section.yw_en || section.yz_en || '');
@@ -72,18 +75,19 @@ export default function BGSectionsPage({
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                     <span
                       style={{
-                        color: 'var(--veda-blue)',
+                        color: labelColor,
                         fontSize: '0.85rem',
-                        fontWeight: 600,
+                        fontWeight: 500,
                         minWidth: '48px',
                         flexShrink: 0,
+                        fontFamily: "'Noto Serif SC', serif",
                       }}
                     >
                       BG {section.section_id}
                     </span>
                     <span
                       style={{
-                        color: '#555',
+                        color: textColor,
                         fontSize: '0.9rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',

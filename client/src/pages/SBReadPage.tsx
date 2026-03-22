@@ -8,6 +8,7 @@ import type { LoadProgress } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
 import type { Language, FontSize, VedaTheme } from '../types';
+import { toast } from 'sonner';
 
 interface SBReadPageProps {
   chapterId: number;
@@ -22,7 +23,13 @@ interface SBReadPageProps {
   theme?: VedaTheme;
 }
 
-const fontSizeCycle: FontSize[] = ['sm', 'md', 'lg', 'xl'];
+const PROGRESS_KEY = 'vedabase_progress_sb';
+
+function saveProgress(chapterId: number, sectionIndex: number) {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chapterId, sectionIndex }));
+  } catch {}
+}
 
 export default function SBReadPage({
   chapterId,
@@ -34,7 +41,6 @@ export default function SBReadPage({
   const [progresses, setProgresses] = useState<LoadProgress[]>([]);
   const onProgress = useCallback((p: LoadProgress) => {
     setProgresses(prev => {
-      // Update existing entry for same URL, or append new
       const idx = prev.findIndex(x => x.url === p.url);
       if (idx >= 0) {
         const next = [...prev];
@@ -50,8 +56,11 @@ export default function SBReadPage({
   const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
   const [animClass, setAnimClass] = useState('fade-in');
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const [showToc, setShowToc] = useState(false);
 
   const isDark = theme === 'dark';
+  const isEn = language === 'en';
 
   const chapter = index?.chapters.find(c => c.id === chapterId);
   const cantoId = chapter?.canto_id || null;
@@ -62,10 +71,14 @@ export default function SBReadPage({
   const sections = cantoData?.sections[String(chapterId)] || [];
   const section = sections[sectionIndex];
 
-  // Navigation
   const chapterIdx = chapters.findIndex(c => c.id === chapterId);
   const hasPrev = sectionIndex > 0 || chapterIdx > 0;
   const hasNext = sectionIndex < sections.length - 1 || chapterIdx < chapters.length - 1;
+
+  // Save progress
+  useEffect(() => {
+    if (section) saveProgress(chapterId, sectionIndex);
+  }, [chapterId, sectionIndex, section]);
 
   const goTo = useCallback((newChapterId: number, newSectionIdx: number, direction: 'left' | 'right') => {
     setAnimClass(direction === 'right' ? 'slide-in-right' : 'slide-in-left');
@@ -91,18 +104,21 @@ export default function SBReadPage({
     }
   }, [sectionIndex, sections.length, chapterIdx, chapterId, chapters, goTo]);
 
-  // Touch swipe
+  // Touch swipe — require horizontal dominance to avoid diagonal triggers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && hasNext) goNext();
-      else if (diff < 0 && hasPrev) goPrev();
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    const dy = touchStartY.current - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx > 0 && hasNext) goNext();
+      else if (dx < 0 && hasPrev) goPrev();
     }
     touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   // Keyboard navigation
@@ -115,96 +131,47 @@ export default function SBReadPage({
     return () => window.removeEventListener('keydown', handler);
   }, [goNext, goPrev, hasNext, hasPrev]);
 
-  const cycleFontSize = () => {
-    const idx = fontSizeCycle.indexOf(fontSize);
-    setFontSize(fontSizeCycle[(idx + 1) % fontSizeCycle.length]);
-  };
+  const handleFontSize = (size: FontSize) => setFontSize(size);
+  const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
 
   const DEV_MODE = import.meta.env.DEV;
-
-  // Calculate total loading steps: sb_index + canto file = 2 files, each may have 2 progress events (loading + ok/error)
-  // For LoadingProgress, count unique URLs that are "ok" or "error" as completed
   const uniqueUrls = Array.from(new Set(progresses.map(p => p.url)));
   const totalSteps = Math.max(2, uniqueUrls.length);
 
   if (loading || indexError || cantoError || !section) {
     const hasError = !!(indexError || cantoError);
     return (
-      <div style={{
-        paddingTop: '56px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: isDark ? '#0f1923' : 'var(--veda-bg)',
-        gap: '20px',
-      }}>
+      <div style={{ paddingTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: isDark ? '#0f1923' : 'var(--veda-bg)', gap: '20px' }}>
         <div style={{ textAlign: 'center' }}>
           {loading ? (
             <>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📖</div>
               <div style={{ color: isDark ? '#c8a84b' : '#8a6a00', fontWeight: 600, marginBottom: '4px' }}>
-                {indexLoading ? '正在加载目录...' : cantoId ? `正在加载第${cantoId}篇经文...` : '正在加载...'}
+                {indexLoading ? (isEn ? 'Loading index...' : '正在加载目录...') : cantoId ? (isEn ? `Loading Canto ${cantoId}...` : `正在加载第${cantoId}篇经文...`) : (isEn ? 'Loading...' : '正在加载...')}
               </div>
-              {cantoId && (
-                <div style={{ color: isDark ? '#6a8aa0' : '#8a9aaa', fontSize: '12px' }}>
-                  博伽瓦谭第 {cantoId} 篇（大文件，请稍候）
-                </div>
-              )}
             </>
           ) : hasError ? (
             <>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⚠️</div>
-              <div style={{ color: '#e05050', fontWeight: 600 }}>加载失败</div>
-              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0', fontSize: '13px', marginTop: '8px', maxWidth: '280px' }}>
-                {indexError || cantoError}
-              </div>
+              <div style={{ color: '#e05050', fontWeight: 600 }}>{isEn ? 'Load failed' : '加载失败'}</div>
             </>
           ) : (
             <>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>😔</div>
-              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>内容未找到</div>
+              <div style={{ color: isDark ? '#8aa0b4' : '#6a8aa0' }}>{isEn ? 'Content not found' : '内容未找到'}</div>
             </>
           )}
         </div>
-
-        {/* Loading progress bar - always show when loading */}
         {(loading || hasError) && progresses.length > 0 && (
-          <LoadingProgress
-            progresses={progresses}
-            totalSteps={totalSteps}
-            isDark={isDark}
-            devMode={DEV_MODE}
-          />
+          <LoadingProgress progresses={progresses} totalSteps={totalSteps} isDark={isDark} devMode={DEV_MODE} />
         )}
-
         {DEV_MODE && (
           <DevPanel
             resources={[
-              {
-                name: '博伽瓦谭目录',
-                url: `${import.meta.env.BASE_URL}data/sb_index.json`,
-                loading: indexLoading,
-                error: indexError,
-                source: 'jsdelivr' as const,
-              },
-              {
-                name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据',
-                url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined,
-                loading: cantoLoading,
-                error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null),
-                source: 'jsdelivr' as const,
-              },
+              { name: '博伽瓦谭目录', url: `${import.meta.env.BASE_URL}data/sb_index.json`, loading: indexLoading, error: indexError, source: 'jsdelivr' as const },
+              { name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据', url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined, loading: cantoLoading, error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null), source: 'jsdelivr' as const },
             ]}
-            env={{
-              BASE_URL: import.meta.env.BASE_URL,
-              主题: theme || 'light',
-              语言: language || 'zh',
-              章节ID: String(chapterId),
-              篇ID: String(cantoId),
-              节索引: String(sectionIndex),
-            }}
+            env={{ BASE_URL: import.meta.env.BASE_URL, 主题: theme || 'light', 语言: language || 'zh', 章节ID: String(chapterId), 篇ID: String(cantoId), 节索引: String(sectionIndex) }}
             isDark={isDark}
           />
         )}
@@ -215,13 +182,36 @@ export default function SBReadPage({
   const sectionLabel = `SB ${section.section_id}`;
   const bookmarked = isBookmarked('sb', chapterId, section.section_id);
 
-  // SB: use ldw_fc for Sanskrit, words_en_fc for English word-for-word
-  // (SB has no Chinese word-for-word in the database)
   const wfwSanskrit = section.ldw_fc;
-  // Always use English word-for-word for SB (no Chinese available in DB)
-  const wfwLang = section.words_en_fc;
+  const wfwLang = section.words_en_fc; // SB only has English word-for-word
   const translation = language === 'zh' ? section.yw_zh : section.yw_en;
   const purport = language === 'zh' ? section.yz_zh : section.yz_en;
+
+  // Share handler
+  const handleShare = () => {
+    const verseText = section.ldw || '';
+    const translationText = (translation || '').replace(/<[^>]+>/g, '').trim().slice(0, 200);
+    const shareText = `${sectionLabel}\n\n${verseText}\n\n${translationText}...\n\n— 韦达书库 vedabase-web`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast.success(isEn ? 'Verse copied to clipboard / 经文已复制' : '经文已复制到剪贴板', { duration: 2000 });
+      });
+    } else {
+      toast.error(isEn ? 'Copy not supported' : '复制不支持', { duration: 2000 });
+    }
+  };
+
+  // TOC colors
+  const tocBg = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)';
+  const tocPanelBg = isDark ? '#1a2535' : '#ffffff';
+  const tocBorder = isDark ? '#2a3a50' : '#e0eaf2';
+  const tocTextPrimary = isDark ? '#e8d5a3' : '#1a3a5c';
+  const tocTextSecondary = isDark ? '#8aa0b4' : '#6a8aa0';
+  const tocActiveColor = isDark ? '#e8d5a3' : '#2e6fa0';
+  const tocActiveBg = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(46,111,160,0.08)';
+
+  // Group chapters by canto for TOC
+  const cantos = index?.cantos || [];
 
   return (
     <div
@@ -252,10 +242,11 @@ export default function SBReadPage({
         hasPrev={hasPrev}
         hasNext={hasNext}
         language={language}
-        onLanguageToggle={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+        onLanguageToggle={toggleLang}
         fontSize={fontSize}
-        onFontSize={cycleFontSize}
+        onFontSize={handleFontSize}
         theme={theme}
+        onToc={() => setShowToc(true)}
       />
 
       <div
@@ -272,8 +263,108 @@ export default function SBReadPage({
           language={language}
           fontSize={fontSize}
           theme={theme}
+          onShare={handleShare}
         />
       </div>
+
+      {/* TOC Overlay */}
+      {showToc && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: tocBg, zIndex: 300, display: 'flex', justifyContent: 'flex-end' }}
+          onClick={() => setShowToc(false)}
+        >
+          <div
+            style={{
+              width: '80%',
+              maxWidth: '360px',
+              height: '100%',
+              background: tocPanelBg,
+              borderLeft: `1px solid ${tocBorder}`,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* TOC header */}
+            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
+                {isEn ? 'Table of Contents' : '目录'}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: tocTextSecondary, marginTop: '2px' }}>
+                {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
+              </div>
+            </div>
+
+            {/* Cantos and chapters */}
+            {cantos.map(canto => {
+              const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
+              return (
+                <div key={canto.id}>
+                  <div style={{ padding: '8px 16px', background: isDark ? '#0f1923' : '#f5f7fa', borderBottom: `1px solid ${tocBorder}` }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: tocTextSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {isEn ? canto.en_name : canto.zh_name}
+                    </div>
+                  </div>
+                  {cantoChapters.map(ch => {
+                    const isCurrentChapter = ch.id === chapterId;
+                    const chSections = isCurrentChapter ? sections : [];
+                    return (
+                      <div key={ch.id}>
+                        <div
+                          style={{
+                            padding: '10px 16px',
+                            background: isCurrentChapter ? tocActiveBg : 'transparent',
+                            borderBottom: `1px solid ${tocBorder}`,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            setShowToc(false);
+                            goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                          }}
+                        >
+                          <div style={{ fontSize: '0.78rem', color: tocTextSecondary }}>{isEn ? ch.en_name : ch.zh_name}</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
+                            {isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '')}
+                          </div>
+                        </div>
+
+                        {/* Sections for current chapter only */}
+                        {isCurrentChapter && chSections.map((sec, idx) => (
+                          <div
+                            key={sec.id}
+                            style={{
+                              padding: '8px 16px 8px 28px',
+                              background: idx === sectionIndex ? tocActiveBg : 'transparent',
+                              borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                            }}
+                            onClick={() => {
+                              setShowToc(false);
+                              goTo(chapterId, idx, idx > sectionIndex ? 'right' : 'left');
+                            }}
+                          >
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
+                              SB {sec.section_id}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
+                              {idx === sectionIndex && ' ◀'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -361,6 +361,16 @@ export default function SearchPage({
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedForDelete.size === history.length) {
+      // All selected → deselect all
+      setSelectedForDelete(new Set());
+    } else {
+      // Select all
+      setSelectedForDelete(new Set(history.map((_, i) => i)));
+    }
+  };
+
   const isLoadingSB = searching && (selectedBook === 'sb' || selectedBook === 'all') && totalCantos > 0;
   const sbProgress = totalCantos > 0 ? loadedCantos / totalCantos : 0;
 
@@ -403,18 +413,27 @@ export default function SearchPage({
         </h1>
         {!searched && history.length > 0 ? (
           editMode ? (
-            <button
-              onClick={() => {
-                if (selectedForDelete.size > 0) {
-                  handleDeleteHistory(Array.from(selectedForDelete));
-                } else {
-                  setEditMode(false);
-                }
-              }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: labelColor, fontSize: '14px', fontWeight: 600 }}
-            >
-              {selectedForDelete.size > 0 ? `删除(${selectedForDelete.size})` : '完成'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={handleSelectAll}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: textSecondary, fontSize: '13px' }}
+              >
+                {selectedForDelete.size === history.length ? '取消全选' : '全选'}
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedForDelete.size > 0) {
+                    handleDeleteHistory(Array.from(selectedForDelete));
+                  } else {
+                    setEditMode(false);
+                    setSelectedForDelete(new Set());
+                  }
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: selectedForDelete.size > 0 ? '#e05050' : labelColor, fontSize: '14px', fontWeight: 600 }}
+              >
+                {selectedForDelete.size > 0 ? `删除(${selectedForDelete.size})` : '完成'}
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => setEditMode(true)}

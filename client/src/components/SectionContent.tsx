@@ -2,14 +2,15 @@ import React, { useMemo } from 'react';
 import type { Language, FontSize, VedaTheme } from '../types';
 
 interface SectionContentProps {
-  verseText: string | null;      // 梵文原文（含换行标记）
-  wordForWordSanskrit: string | null;  // 梵文词（分号分隔）
-  wordForWordLang: string | null;      // 对应语言词义（分号分隔）
-  translation: string | null;    // 译文
-  purport: string | null;        // 要旨（含HTML）
+  verseText: string | null;
+  wordForWordSanskrit: string | null;
+  wordForWordLang: string | null;
+  translation: string | null;
+  purport: string | null;
   language: Language;
   fontSize: FontSize;
   theme?: VedaTheme;
+  onShare?: () => void;
 }
 
 const fontSizePx: Record<FontSize, number> = {
@@ -19,7 +20,6 @@ const fontSizePx: Record<FontSize, number> = {
   xl: 20,
 };
 
-// Parse verse text with HTML entities and line breaks
 function parseVerseText(text: string): string {
   return text
     .replace(/<br\s*\/?>/gi, '\n')
@@ -31,7 +31,6 @@ function parseVerseText(text: string): string {
     .trim();
 }
 
-// Parse word-for-word: interleave Sanskrit and translation
 function parseWordForWord(sanskrit: string, translation: string): Array<{ sk: string; tr: string }> {
   const skWords = sanskrit.split(';').map(s => s.trim()).filter(Boolean);
   const trWords = translation.split(';').map(s => s.trim()).filter(Boolean);
@@ -43,7 +42,6 @@ function parseWordForWord(sanskrit: string, translation: string): Array<{ sk: st
   return result;
 }
 
-// Sanitize HTML for purport (allow basic tags)
 function sanitizePurport(html: string): string {
   return html
     .replace(/<script[^>]*>.*?<\/script>/gi, '')
@@ -69,9 +67,11 @@ export default function SectionContent({
   language,
   fontSize,
   theme = 'light',
+  onShare,
 }: SectionContentProps) {
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
+  const isEn = language === 'en';
 
   const parsedVerse = useMemo(() => {
     if (!verseText) return null;
@@ -88,7 +88,6 @@ export default function SectionContent({
     return sanitizePurport(purport);
   }, [purport]);
 
-  // Dark mode styles
   const verseBoxStyle: React.CSSProperties = isDark ? {
     background: '#1e2e42',
     border: '1px dashed #3a5070',
@@ -110,11 +109,21 @@ export default function SectionContent({
     gap: '8px',
     color: '#c8a84b',
     fontWeight: 600,
-    fontSize: '1rem',
+    fontSize: `${fsPx}px`,
     margin: '20px 0 10px',
     paddingBottom: '6px',
     borderBottom: '1px solid #2a3a50',
-  } : undefined as any;
+  } : {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontWeight: 600,
+    fontSize: `${fsPx}px`,
+    margin: '20px 0 10px',
+    paddingBottom: '6px',
+    borderBottom: '1px solid var(--veda-border)',
+    color: 'var(--veda-blue)',
+  };
 
   return (
     <div style={{ padding: '16px', fontSize: `${fsPx}px` }}>
@@ -139,7 +148,7 @@ export default function SectionContent({
         </div>
       )}
 
-      {/* Word for word (逐词释义) */}
+      {/* Word for word */}
       {wordPairs && wordPairs.length > 0 && (
         <div style={{ marginBottom: '16px', lineHeight: 2, fontSize: `${fsPx - 1}px` }}>
           {wordPairs.map((pair, i) => (
@@ -169,31 +178,20 @@ export default function SectionContent({
       {/* Translation */}
       {translation && (
         <div style={{ marginBottom: '16px' }}>
-          <div
-            className={isDark ? '' : 'section-header'}
-            style={isDark ? sectionHeaderStyle : undefined}
-          >
+          <div style={sectionHeaderStyle}>
             <span>📖</span>
-            <span>{language === 'zh' ? '译文' : 'Translation'}</span>
+            <span>{isEn ? 'Translation' : '译文'}</span>
           </div>
           {translation.includes('<') ? (
             <div
               className="translation-text"
-              style={{
-                fontSize: `${fsPx}px`,
-                paddingLeft: '8px',
-                color: isDark ? '#7ab8d8' : undefined,
-              }}
+              style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
               dangerouslySetInnerHTML={{ __html: sanitizePurport(translation) }}
             />
           ) : (
             <div
               className="translation-text"
-              style={{
-                fontSize: `${fsPx}px`,
-                paddingLeft: '8px',
-                color: isDark ? '#7ab8d8' : undefined,
-              }}
+              style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
             >
               {translation}
             </div>
@@ -204,21 +202,51 @@ export default function SectionContent({
       {/* Purport */}
       {cleanPurport && (
         <div>
-          <div
-            className={isDark ? '' : 'section-header'}
-            style={isDark ? sectionHeaderStyle : undefined}
-          >
+          <div style={sectionHeaderStyle}>
             <span>📋</span>
-            <span>{language === 'zh' ? '要旨' : 'Purport'}</span>
+            <span>{isEn ? 'Purport' : '要旨'}</span>
           </div>
           <div
             className="purport-text"
-            style={{
-              fontSize: `${fsPx}px`,
-              color: isDark ? '#c0b8a8' : undefined,
-            }}
+            style={{ fontSize: `${fsPx}px`, color: isDark ? '#c0b8a8' : undefined }}
             dangerouslySetInnerHTML={{ __html: cleanPurport }}
           />
+        </div>
+      )}
+
+      {/* Share button */}
+      {onShare && (translation || purport) && (
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: `1px solid ${isDark ? '#2a3a50' : 'var(--veda-border)'}`, display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={onShare}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: `${Math.round(fsPx * 0.5)}px ${Math.round(fsPx * 1.2)}px`,
+              background: isDark ? 'rgba(232,213,163,0.1)' : 'rgba(46,111,160,0.08)',
+              border: `1px solid ${isDark ? '#c8a84b' : '#2e6fa0'}`,
+              borderRadius: '20px',
+              cursor: 'pointer',
+              color: isDark ? '#c8a84b' : '#2e6fa0',
+              fontSize: `${fsPx - 1}px`,
+              fontWeight: 500,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(232,213,163,0.2)' : 'rgba(46,111,160,0.15)';
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(46,111,160,0.08)';
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+            }}
+            onMouseDown={e => (e.currentTarget as HTMLElement).style.transform = 'scale(0.96)'}
+            onMouseUp={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'}
+          >
+            <span>📋</span>
+            <span>{isEn ? 'Copy Verse / 复制经文' : '复制经文 / Copy Verse'}</span>
+          </button>
         </div>
       )}
     </div>

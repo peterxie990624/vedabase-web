@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import TopNav from '../components/TopNav';
 import { useSBIndex, useSBCantoData } from '../hooks/useData';
-import type { Language , VedaTheme} from '../types';
+import type { Language, VedaTheme } from '../types';
 
 interface SBSectionsPageProps {
   chapterId: number;
@@ -13,9 +13,9 @@ interface SBSectionsPageProps {
 }
 
 export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSection, language, theme = 'light' }: SBSectionsPageProps) {
+  const isDark = theme === 'dark';
   const { data: index } = useSBIndex();
 
-  // Find canto for this chapter
   const chapter = index?.chapters.find(c => c.id === chapterId);
   const cantoId = chapter?.canto_id || null;
 
@@ -29,6 +29,10 @@ export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSect
         : `${chapter.en_name} ${chapter.en_title || ''}`)
     : '...';
 
+  // Colors consistent with canto/chapter list
+  const labelColor = isDark ? '#8aa0b4' : '#8aa0b4';
+  const textColor = isDark ? '#c0d0e0' : 'var(--veda-text)';
+
   return (
     <div style={{ paddingTop: '56px', paddingBottom: '60px', minHeight: '100vh', background: 'var(--veda-bg)' }}>
       <TopNav
@@ -41,12 +45,11 @@ export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSect
         <div className="loading-spinner">
           <div style={{ textAlign: 'center', color: 'var(--veda-blue)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-            <div>加载中...</div>
+            <div>{language === 'zh' ? '加载中...' : 'Loading...'}</div>
           </div>
         </div>
       ) : (
         <div style={{ background: 'var(--veda-bg)' }}>
-          {/* Chapter header */}
           <div className="canto-header" style={{ position: 'sticky', top: '56px', zIndex: 10 }}>
             {chapterTitle}
           </div>
@@ -70,18 +73,19 @@ export default function SBSectionsPage({ chapterId, onBack, onHome, onSelectSect
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                     <span
                       style={{
-                        color: 'var(--veda-blue)',
+                        color: labelColor,
                         fontSize: '0.85rem',
-                        fontWeight: 600,
+                        fontWeight: 500,
                         minWidth: '56px',
                         flexShrink: 0,
+                        fontFamily: "'Noto Serif SC', serif",
                       }}
                     >
                       SB {section.section_id}
                     </span>
                     <span
                       style={{
-                        color: '#555',
+                        color: textColor,
                         fontSize: '0.9rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',

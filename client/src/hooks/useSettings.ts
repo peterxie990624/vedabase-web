@@ -18,9 +18,17 @@ export function useSettings() {
     return (localStorage.getItem(THEME_KEY) as VedaTheme) || 'dark';
   });
 
+  // Sync theme to html attribute
   useEffect(() => {
     document.documentElement.setAttribute('data-veda-theme', theme);
   }, [theme]);
+
+  // Sync font size to CSS variable and html attribute for global UI scaling
+  useEffect(() => {
+    const uiFontSizePx: Record<FontSize, number> = { sm: 13, md: 15, lg: 17, xl: 19 };
+    document.documentElement.setAttribute('data-veda-fontsize', fontSize);
+    document.documentElement.style.setProperty('--veda-ui-font-size', `${uiFontSizePx[fontSize]}px`);
+  }, [fontSize]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);

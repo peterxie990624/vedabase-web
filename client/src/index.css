@@ -136,6 +136,8 @@
 
 /* Vedabase Custom Variables */
 :root {
+  /* Global UI font size (updated by useSettings via JS) */
+  --veda-ui-font-size: 15px;
   --veda-blue: #4a7fa5;
   --veda-blue-dark: #1a3a5c;
   --veda-blue-light: #e8f2f9;
@@ -289,8 +291,11 @@
   color: #8aa0b4;
   cursor: pointer;
   padding: 6px 0;
-  transition: color 0.2s;
+  transition: color 0.2s, transform 0.1s;
   flex: 1;
+}
+.bottom-nav-item:active {
+  transform: scale(0.9);
 }
 .bottom-nav-item.active {
   color: var(--veda-blue);
@@ -308,6 +313,7 @@
   overflow: hidden; /* 防止内容撑宽页面 */
   max-width: 100%;
   box-sizing: border-box;
+  font-size: var(--veda-ui-font-size);
 }
 /* list-item 内的文字容器自动截断 */
 .list-item > div:first-child {
@@ -329,7 +335,7 @@
   padding: 10px 16px;
   font-weight: 600;
   color: var(--veda-blue-dark);
-  font-size: 0.9rem;
+  font-size: var(--veda-ui-font-size);
   border-bottom: 1px solid var(--veda-border);
 }
 
