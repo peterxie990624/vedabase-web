@@ -180,3 +180,23 @@ export function preloadBGData() {
 export function preloadSBIndex() {
   loadJSON('/data/sb_index.json').catch(() => {});
 }
+
+export function preloadSBCanto(cantoId: number) {
+  if (cantoId < 1 || cantoId > 12) return;
+  loadJSON(`/data/sb/canto_${cantoId}.json`).catch(() => {});
+}
+
+/**
+ * 后台预加载相邻篇：当前篇加载完成后，地山火源预加载上一篇和下一篇
+ */
+export function useSBPreload(currentCantoId: number | null, isLoaded: boolean) {
+  useEffect(() => {
+    if (!currentCantoId || !isLoaded) return;
+    // 延迟 2 秒后开始预加载，避免干扰当前请求
+    const timer = setTimeout(() => {
+      if (currentCantoId > 1) preloadSBCanto(currentCantoId - 1);
+      if (currentCantoId < 12) preloadSBCanto(currentCantoId + 1);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [currentCantoId, isLoaded]);
+}

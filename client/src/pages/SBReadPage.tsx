@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav';
 import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
 import LoadingProgress from '../components/LoadingProgress';
-import { useSBIndex, useSBCantoData } from '../hooks/useData';
+import { useSBIndex, useSBCantoData, useSBPreload } from '../hooks/useData';
 import type { LoadProgress } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
@@ -21,6 +21,9 @@ interface SBReadPageProps {
   fontSize?: FontSize;
   setFontSize?: (size: FontSize) => void;
   theme?: VedaTheme;
+  devMode?: boolean;
+  onGoToCanto?: (cantoId: number) => void;
+  searchKeyword?: string;
 }
 
 const PROGRESS_KEY = 'vedabase_progress_sb';
@@ -37,6 +40,9 @@ export default function SBReadPage({
   onBack,
   onHome,
   onNavigate,
+  devMode = false,
+  onGoToCanto,
+  searchKeyword,
 }: SBReadPageProps) {
   const [progresses, setProgresses] = useState<LoadProgress[]>([]);
   const onProgress = useCallback((p: LoadProgress) => {
@@ -66,6 +72,9 @@ export default function SBReadPage({
   const cantoId = chapter?.canto_id || null;
   const { data: cantoData, loading: cantoLoading, error: cantoError } = useSBCantoData(cantoId, onProgress);
   const loading = indexLoading || cantoLoading;
+
+  // 后台预加载相邻篇
+  useSBPreload(cantoId, !cantoLoading && !!cantoData);
 
   const chapters = index?.chapters || [];
   const sections = cantoData?.sections[String(chapterId)] || [];
@@ -134,7 +143,7 @@ export default function SBReadPage({
   const handleFontSize = (size: FontSize) => setFontSize(size);
   const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
 
-  const DEV_MODE = import.meta.env.DEV;
+  const DEV_MODE = devMode || import.meta.env.DEV;
   const uniqueUrls = Array.from(new Set(progresses.map(p => p.url)));
   const totalSteps = Math.max(2, uniqueUrls.length);
 
@@ -147,7 +156,7 @@ export default function SBReadPage({
             <>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📖</div>
               <div style={{ color: isDark ? '#c8a84b' : '#8a6a00', fontWeight: 600, marginBottom: '4px' }}>
-                {indexLoading ? (isEn ? 'Loading index...' : '正在加载目录...') : cantoId ? (isEn ? `Loading Canto ${cantoId}...` : `正在加载第${cantoId}篇经文...`) : (isEn ? 'Loading...' : '正在加载...')}
+                {indexLoading ? (isEn ? 'Loading index...' : '正在加载目录...') : cantoId ? (isEn ? `Loading Canto ${cantoId}...` : `正在加载第${cantoId}篇经典...`) : (isEn ? 'Loading...' : '正在加载...')}
               </div>
             </>
           ) : hasError ? (
@@ -194,7 +203,7 @@ export default function SBReadPage({
     const shareText = `${sectionLabel}\n\n${verseText}\n\n${translationText}...\n\n— 韦达书库 vedabase-web`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareText).then(() => {
-        toast.success(isEn ? 'Verse copied to clipboard / 经文已复制' : '经文已复制到剪贴板', { duration: 2000 });
+        toast.success(isEn ? 'Verse copied to clipboard / 经典已复制' : '经典已复制到剪贴板', { duration: 2000 });
       });
     } else {
       toast.error(isEn ? 'Copy not supported' : '复制不支持', { duration: 2000 });
@@ -212,6 +221,20 @@ export default function SBReadPage({
 
   // Group chapters by canto for TOC
   const cantos = index?.cantos || [];
+
+  // Handle tap on left/right 1/3 of screen to navigate
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, mark, .purport-text')) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    if (x < third && hasPrev) {
+      goPrev();
+    } else if (x > third * 2 && hasNext) {
+      goNext();
+    }
+  };
 
   return (
     <div
@@ -253,6 +276,7 @@ export default function SBReadPage({
         key={`${chapterId}-${sectionIndex}`}
         className={animClass}
         style={{ paddingTop: '56px', paddingBottom: '80px', minHeight: '100vh' }}
+        onClick={handleContentClick}
       >
         <SectionContent
           verseText={section.ldw}
@@ -264,6 +288,7 @@ export default function SBReadPage({
           fontSize={fontSize}
           theme={theme}
           onShare={handleShare}
+          searchKeyword={searchKeyword}
         />
       </div>
 
@@ -296,13 +321,20 @@ export default function SBReadPage({
               </div>
             </div>
 
-            {/* Cantos and chapters */}
+            {/* Cantos — clickable to go to canto's chapter list */}
             {cantos.map(canto => {
               const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
+              const isCurrentCanto = cantoId === canto.id;
               return (
                 <div key={canto.id}>
-                  <div style={{ padding: '8px 16px', background: isDark ? '#0f1923' : '#f5f7fa', borderBottom: `1px solid ${tocBorder}` }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: tocTextSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div
+                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, cursor: 'pointer' }}
+                    onClick={() => {
+                      setShowToc(false);
+                      if (onGoToCanto) onGoToCanto(canto.id);
+                    }}
+                  >
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {isEn ? canto.en_name : canto.zh_name}
                     </div>
                   </div>
@@ -320,7 +352,12 @@ export default function SBReadPage({
                           }}
                           onClick={() => {
                             setShowToc(false);
-                            goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                            // 点击章标题 → 跳转到该章的节列表页
+                            if (onGoToCanto) {
+                              onGoToCanto(ch.canto_id);
+                            } else {
+                              goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                            }
                           }}
                         >
                           <div style={{ fontSize: '0.78rem', color: tocTextSecondary }}>{isEn ? ch.en_name : ch.zh_name}</div>

@@ -9,6 +9,8 @@ interface AkadasiPageProps {
   onBack: () => void;
   onHome: () => void;
   theme?: VedaTheme;
+  initialSelectedId?: number;
+  onSelectedIdChange?: (id: number | null) => void;
 }
 
 const fontSizeCycle: FontSize[] = ['sm', 'md', 'lg', 'xl'];
@@ -26,11 +28,16 @@ function sanitizeHtml(html: string): string {
     .trim();
 }
 
-export default function AkadasiPage({ onBack, onHome, theme = 'light' }: AkadasiPageProps) {
+export default function AkadasiPage({ onBack, onHome, theme = 'light', initialSelectedId, onSelectedIdChange }: AkadasiPageProps) {
   const { data, loading } = useAkadasiData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { language, setLanguage, fontSize, setFontSize } = useSettings();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(initialSelectedId ?? null);
+
+  const handleSetSelectedId = (id: number | null) => {
+    setSelectedId(id);
+    onSelectedIdChange?.(id);
+  };
 
   const chapters = data?.chapters || [];
   const selectedChapter = chapters.find(c => c.id === selectedId);
@@ -51,7 +58,7 @@ export default function AkadasiPage({ onBack, onHome, theme = 'light' }: Akadasi
       <div style={{ minHeight: '100vh', background: 'var(--veda-bg)' }}>
         <TopNav
           title={selectedChapter.zh_name}
-          onBack={() => setSelectedId(null)}
+          onBack={() => handleSetSelectedId(null)}
           onHome={onHome}
           showBookmark
           isBookmarked={bookmarked}
@@ -121,7 +128,7 @@ export default function AkadasiPage({ onBack, onHome, theme = 'light' }: Akadasi
             <div
               key={chapter.id}
               className="list-item"
-              onClick={() => setSelectedId(chapter.id)}
+              onClick={() => handleSetSelectedId(chapter.id)}
             >
               <div style={{ flex: 1 }}>
                 <div

@@ -7,6 +7,7 @@ import type { Language, FontSize, VedaTheme } from '../types';
 import { CDN } from '../constants';
 import type { VedaTheme as VT } from '../hooks/useSettings';
 import { toast } from 'sonner';
+import { preloadBGData, preloadSBIndex } from '../hooks/useData';
 
 interface BookshelfPageProps {
   onSelectBook: (bookId: string) => void;
@@ -78,6 +79,15 @@ export default function BookshelfPage({
   const dropdownBorder = isDark ? '#2a3a50' : '#e0eaf2';
   const activeColor = isDark ? '#e8d5a3' : '#2e6fa0';
   const activeBg = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(74,127,165,0.08)';
+
+  // 书架页加载时，地山火源预加载主要数据文件
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      preloadBGData();
+      preloadSBIndex();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

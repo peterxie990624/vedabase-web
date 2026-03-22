@@ -359,8 +359,8 @@
 
 /* Search highlight */
 .search-highlight {
-  background: #fff3cd;
-  color: #c8860a;
+  background: #ffe5e5;
+  color: #d63031;
   font-weight: 600;
   border-radius: 2px;
   padding: 0 1px;
@@ -500,8 +500,8 @@
 }
 
 [data-veda-theme="dark"] .search-highlight {
-  background: rgba(200,168,75,0.2);
-  color: #e8c060;
+  background: rgba(214,48,49,0.2);
+  color: #ff7675;
 }
 
 [data-veda-theme="dark"] .purport-text {

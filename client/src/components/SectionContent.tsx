@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import type { Language, FontSize, VedaTheme } from '../types';
 
 interface SectionContentProps {
@@ -11,6 +11,7 @@ interface SectionContentProps {
   fontSize: FontSize;
   theme?: VedaTheme;
   onShare?: () => void;
+  searchKeyword?: string;
 }
 
 const fontSizePx: Record<FontSize, number> = {
@@ -68,7 +69,23 @@ export default function SectionContent({
   fontSize,
   theme = 'light',
   onShare,
+  searchKeyword,
 }: SectionContentProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to first highlighted match when searchKeyword is provided
+  useEffect(() => {
+    if (!searchKeyword) return;
+    const timer = setTimeout(() => {
+      const el = contentRef.current;
+      if (!el) return;
+      const mark = el.querySelector('mark.search-highlight') as HTMLElement | null;
+      if (mark) {
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchKeyword]);
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -125,8 +142,18 @@ export default function SectionContent({
     color: 'var(--veda-blue)',
   };
 
+  // Highlight search keyword in text
+  const highlightText = (html: string): string => {
+    if (!searchKeyword) return html;
+    const escaped = searchKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return html.replace(
+      new RegExp(escaped, 'gi'),
+      match => `<mark class="search-highlight" style="background:#ffd700;color:#1a1a1a;border-radius:2px;padding:0 1px">${match}</mark>`
+    );
+  };
+
   return (
-    <div style={{ padding: '16px', fontSize: `${fsPx}px` }}>
+    <div ref={contentRef} style={{ padding: '16px', fontSize: `${fsPx}px` }}>
       {/* Verse box */}
       {parsedVerse && (
         <div className={isDark ? '' : 'verse-box'} style={isDark ? verseBoxStyle : undefined}>
@@ -186,15 +213,14 @@ export default function SectionContent({
             <div
               className="translation-text"
               style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
-              dangerouslySetInnerHTML={{ __html: sanitizePurport(translation) }}
+              dangerouslySetInnerHTML={{ __html: highlightText(sanitizePurport(translation)) }}
             />
           ) : (
             <div
               className="translation-text"
               style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
-            >
-              {translation}
-            </div>
+              dangerouslySetInnerHTML={{ __html: highlightText(translation) }}
+            />
           )}
         </div>
       )}
@@ -209,7 +235,7 @@ export default function SectionContent({
           <div
             className="purport-text"
             style={{ fontSize: `${fsPx}px`, color: isDark ? '#c0b8a8' : undefined }}
-            dangerouslySetInnerHTML={{ __html: cleanPurport }}
+            dangerouslySetInnerHTML={{ __html: highlightText(cleanPurport) }}
           />
         </div>
       )}
@@ -245,7 +271,7 @@ export default function SectionContent({
             onMouseUp={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'}
           >
             <span>📋</span>
-            <span>{isEn ? 'Copy Verse / 复制经文' : '复制经文 / Copy Verse'}</span>
+            <span>{isEn ? 'Copy Scripture / 复制经典' : '复制经典 / Copy Scripture'}</span>
           </button>
         </div>
       )}

@@ -19,6 +19,9 @@ interface BGReadPageProps {
   fontSize?: FontSize;
   setFontSize?: (size: FontSize) => void;
   theme?: VedaTheme;
+  devMode?: boolean;
+  onGoToChapter?: (chapterId: number) => void;
+  searchKeyword?: string;
 }
 
 const PROGRESS_KEY = 'vedabase_progress_bg';
@@ -35,6 +38,9 @@ export default function BGReadPage({
   onBack,
   onHome,
   onNavigate,
+  devMode = false,
+  onGoToChapter,
+  searchKeyword,
 }: BGReadPageProps) {
   const { data, loading, error } = useBGData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -121,7 +127,7 @@ export default function BGReadPage({
 
   const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
 
-  const DEV_MODE = import.meta.env.DEV;
+  const DEV_MODE = devMode || import.meta.env.DEV;
 
   if (loading || error || !section) {
     return (
@@ -170,7 +176,7 @@ export default function BGReadPage({
     const shareText = `${sectionLabel}\n\n${verseText}\n\n${translationText}...\n\n— 韦达书库 vedabase-web`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareText).then(() => {
-        toast.success(isEn ? 'Verse copied to clipboard / 经文已复制' : '经文已复制到剪贴板', { duration: 2000 });
+        toast.success(isEn ? 'Verse copied to clipboard / 经典已复制' : '经典已复制到剪贴板', { duration: 2000 });
       });
     } else {
       toast.error(isEn ? 'Copy not supported' : '复制不支持', { duration: 2000 });
@@ -185,6 +191,21 @@ export default function BGReadPage({
   const tocTextSecondary = isDark ? '#8aa0b4' : '#6a8aa0';
   const tocActiveColor = isDark ? '#e8d5a3' : '#2e6fa0';
   const tocActiveBg = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(46,111,160,0.08)';
+
+  // Handle tap on left/right 1/3 of screen to navigate
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Don't trigger if clicking on interactive elements
+    if (target.closest('button, a, mark, .purport-text')) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    if (x < third && hasPrev) {
+      goPrev();
+    } else if (x > third * 2 && hasNext) {
+      goNext();
+    }
+  };
 
   return (
     <div
@@ -227,6 +248,7 @@ export default function BGReadPage({
         key={`${chapterId}-${sectionIndex}`}
         className={animClass}
         style={{ paddingTop: '56px', paddingBottom: '80px', minHeight: '100vh' }}
+        onClick={handleContentClick}
       >
         <SectionContent
           verseText={section.ldw_fd}
@@ -238,6 +260,7 @@ export default function BGReadPage({
           fontSize={fontSize}
           theme={theme}
           onShare={handleShare}
+          searchKeyword={searchKeyword}
         />
       </div>
 
@@ -276,7 +299,7 @@ export default function BGReadPage({
               const isCurrentChapter = ch.id === chapterId;
               return (
                 <div key={ch.id}>
-                  {/* Chapter title — clickable to jump to first section */}
+                  {/* Chapter title — clickable to go to sections page */}
                   <div
                     style={{
                       padding: '10px 16px',
@@ -286,7 +309,12 @@ export default function BGReadPage({
                     }}
                     onClick={() => {
                       setShowToc(false);
-                      goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                      if (onGoToChapter) {
+                        onGoToChapter(ch.id);
+                      } else {
+                        // fallback: jump to first section of this chapter
+                        goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                      }
                     }}
                   >
                     <div style={{ fontSize: '0.8rem', color: tocTextSecondary }}>{ch.zh_name}</div>

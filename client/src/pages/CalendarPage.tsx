@@ -19,6 +19,62 @@ interface CalendarPageProps {
 }
 
 export default function CalendarPage({ theme = 'light' }: CalendarPageProps) {
+  const isDark = theme === 'dark';
+
+  // ── 开发中遮挡 ── 完全覆盖日历内容，用户无法看到任何内容
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: isDark ? '#0f1923' : '#f5f7fa',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px 24px',
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🌙</div>
+      <div
+        style={{
+          fontSize: '1.3rem',
+          fontWeight: 700,
+          color: isDark ? '#e8d5a3' : '#1a3a5c',
+          fontFamily: "'Noto Serif SC', serif",
+          marginBottom: '12px',
+        }}
+      >
+        韦达日历
+      </div>
+      <div
+        style={{
+          fontSize: '0.95rem',
+          color: isDark ? '#8aa0b4' : '#6a8aa0',
+          lineHeight: 1.7,
+          maxWidth: '280px',
+          marginBottom: '8px',
+        }}
+      >
+        此功能正在精心开发中，
+        <br />
+        敬请期待。
+      </div>
+      <div
+        style={{
+          fontSize: '0.8rem',
+          color: isDark ? '#4a6a8a' : '#b0c8dc',
+          fontStyle: 'italic',
+          marginTop: '8px',
+        }}
+      >
+        Vedic Calendar — Coming Soon
+      </div>
+    </div>
+  );
+
+  // eslint-disable-next-line no-unreachable
+  const _unused = theme;
   const { data, loading } = useCalendarData();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);

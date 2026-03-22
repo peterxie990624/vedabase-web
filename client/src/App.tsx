@@ -24,12 +24,12 @@ type Route =
   | { page: 'home' }
   | { page: 'bg-chapters' }
   | { page: 'bg-sections'; chapterId: number }
-  | { page: 'bg-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean; fromBookmark?: boolean }
+  | { page: 'bg-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean; fromBookmark?: boolean; searchKeyword?: string }
   | { page: 'sb-cantos' }
   | { page: 'sb-chapters'; cantoId: number }
   | { page: 'sb-sections'; chapterId: number }
-  | { page: 'sb-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean; fromBookmark?: boolean }
-  | { page: 'akadasi' };
+  | { page: 'sb-read'; chapterId: number; sectionIndex: number; fromSearch?: boolean; fromBookmark?: boolean; searchKeyword?: string }
+  | { page: 'akadasi'; selectedId?: number };
 
 // ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
 
@@ -47,19 +47,24 @@ function routeToHash(route: Route, tab: TabType): string {
     case 'sb-chapters': return `#/sb/${route.cantoId}`;
     case 'sb-sections': return `#/sb/c${route.chapterId}`;
     case 'sb-read':     return `#/sb/c${route.chapterId}/${route.sectionIndex}`;
-    case 'akadasi':     return '#/akadasi';
+    case 'akadasi':     return route.selectedId ? `#/akadasi/${route.selectedId}` : '#/akadasi';
     default:            return '#/';
   }
 }
 
 function hashToState(hash: string): { stack: Route[]; tab: TabType } {
-  const path = hash.replace(/^#\/?/, '') || '';
+  // Strip #dev suffix before parsing
+  const cleanHash = hash.replace(/#dev$/, '').replace(/#dev\//, '#/');
+  const path = cleanHash.replace(/^#\/?/, '') || '';
   const parts = path.split('/').filter(Boolean);
 
   if (parts[0] === 'bookmarks') return { stack: [{ page: 'home' }], tab: 'bookmarks' };
   if (parts[0] === 'search')    return { stack: [{ page: 'home' }], tab: 'search' };
   if (parts[0] === 'calendar')  return { stack: [{ page: 'home' }], tab: 'calendar' };
-  if (parts[0] === 'akadasi')   return { stack: [{ page: 'home' }, { page: 'akadasi' }], tab: 'bookshelf' };
+  if (parts[0] === 'akadasi') {
+    const selectedId = parts[1] ? parseInt(parts[1], 10) : undefined;
+    return { stack: [{ page: 'home' }, { page: 'akadasi', selectedId }], tab: 'bookshelf' };
+  }
 
   if (parts[0] === 'bg') {
     if (!parts[1]) {
@@ -154,6 +159,11 @@ function hashToState(hash: string): { stack: Route[]; tab: TabType } {
   return { stack: [{ page: 'home' }], tab: 'bookshelf' };
 }
 
+// ─── Dev mode detection ──────────────────────────────────────────────────────
+function isDevMode(): boolean {
+  return window.location.hash.includes('#dev') || import.meta.env.DEV;
+}
+
 // ─── Main App Component ──────────────────────────────────────────────────────
 
 function VedabaseApp() {
@@ -165,9 +175,12 @@ function VedabaseApp() {
   const initial = getInitialState();
   const [activeTab, setActiveTab] = useState<TabType>(initial.tab);
   const [routeStack, setRouteStack] = useState<Route[]>(initial.stack);
+  const [devMode, setDevMode] = useState(isDevMode);
 
   // 保存书架页的路由栈（切换tab时保留阅读位置）
-  const [bookshelfRouteStack, setBookshelfRouteStack] = useState<Route[]>(initial.tab === 'bookshelf' ? initial.stack : [{ page: 'home' }]);
+  const [bookshelfRouteStack, setBookshelfRouteStack] = useState<Route[]>(
+    initial.tab === 'bookshelf' ? initial.stack : [{ page: 'home' }]
+  );
 
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
@@ -175,6 +188,9 @@ function VedabaseApp() {
     results: [],
     searched: false,
   });
+
+  // 爱卡达西阅读位置：独立于路由栈，切换 tab 后能恢复
+  const [akadasiSelectedId, setAkadasiSelectedId] = useState<number | null>(null);
 
   const { language, setLanguage, fontSize, setFontSize, theme, setTheme } = useSettings();
   const currentRoute = routeStack[routeStack.length - 1];
@@ -190,6 +206,7 @@ function VedabaseApp() {
 
   useEffect(() => {
     const onHashChange = () => {
+      setDevMode(isDevMode());
       const hash = window.location.hash || '#/';
       const { stack, tab } = hashToState(hash);
       setActiveTab(tab);
@@ -224,7 +241,6 @@ function VedabaseApp() {
       // 从搜索结果进入阅读页，返回时回到搜索页
       if ((leaving.page === 'bg-read' || leaving.page === 'sb-read') && (leaving as any).fromSearch) {
         setActiveTab('search');
-        // 保留 bookshelf 栈为 home，不影响搜索页
         const newStack: Route[] = [{ page: 'home' }];
         setBookshelfRouteStack(newStack);
         return newStack;
@@ -252,16 +268,44 @@ function VedabaseApp() {
   }, []);
 
   const handleTabChange = useCallback((tab: TabType) => {
+    if (tab === activeTab) {
+      // 重复点击当前 tab：回到该 tab 的根页面
+      if (tab === 'bookshelf') {
+        const newStack: Route[] = [{ page: 'home' }];
+        setRouteStack(newStack);
+        setBookshelfRouteStack(newStack);
+      } else if (tab === 'search') {
+        // 重置搜索页到初始状态
+        setSearchState({ query: '', selectedBook: 'bg', results: [], searched: false });
+      }
+      // bookmarks 和 calendar 重复点击不需要特殊处理（只有一个页面）
+      return;
+    }
     setActiveTab(tab);
     if (tab === 'bookshelf') {
-      // 切回书架时，恢复之前的阅读位置
-      setRouteStack(bookshelfRouteStack);
+      // 切回书架 tab 时，始终回到书架首页
+      // （爱卡达西的阅读位置通过 initialSelectedId + onSelectedIdChange 单独维护）
+      const newStack: Route[] = [{ page: 'home' }];
+      setRouteStack(newStack);
+      setBookshelfRouteStack(newStack);
     }
-  }, [bookshelfRouteStack]);
+  }, [activeTab]);
 
   const handleSelectBook = useCallback((bookId: string) => {
     if (bookId === 'bg') {
-      // Try to restore last reading progress
+      // 直接进入章节列表，不恢复进度（进度只用于"继续阅读"按钮）
+      push({ page: 'bg-chapters' });
+    } else if (bookId === 'sb') {
+      // 直接进入篇列表，不恢复进度
+      push({ page: 'sb-cantos' });
+    } else if (bookId === 'akadasi') {
+      push({ page: 'akadasi' });
+    }
+  }, [push]);
+
+  // 继续阅读：从 localStorage 恢复上次阅读位置
+  const handleContinueReading = useCallback((bookId: string) => {
+    if (bookId === 'bg') {
       try {
         const saved = localStorage.getItem('vedabase_progress_bg');
         if (saved) {
@@ -274,7 +318,6 @@ function VedabaseApp() {
       } catch {}
       push({ page: 'bg-chapters' });
     } else if (bookId === 'sb') {
-      // Try to restore last reading progress
       try {
         const saved = localStorage.getItem('vedabase_progress_sb');
         if (saved) {
@@ -286,12 +329,11 @@ function VedabaseApp() {
         }
       } catch {}
       push({ page: 'sb-cantos' });
-    } else if (bookId === 'akadasi') {
-      push({ page: 'akadasi' });
     }
   }, [push]);
 
   const handleOpenBookmark = useCallback((bookmark: Bookmark) => {
+    // 先切换到书架 tab，然后设置路由栈（带 fromBookmark 标记）
     setActiveTab('bookshelf');
     const secIdx = bookmark.sectionIndex ?? 0;
     if (bookmark.bookType === 'bg') {
@@ -319,20 +361,20 @@ function VedabaseApp() {
     }
   }, []);
 
-  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number }) => {
-    // 保持在 bookshelf tab 下显示阅读页，通过 fromSearch 标记返回时回到搜索页
+  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string }) => {
+    // 切换到书架 tab 显示阅读页，通过 fromSearch 标记返回时回到搜索页
     setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
       const newStack: Route[] = [
         { page: 'home' },
-        { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true },
+        { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true, searchKeyword: result.searchKeyword },
       ];
       setRouteStack(newStack);
       setBookshelfRouteStack(newStack);
     } else if (result.bookType === 'sb') {
       const newStack: Route[] = [
         { page: 'home' },
-        { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true },
+        { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, fromSearch: true, searchKeyword: result.searchKeyword },
       ];
       setRouteStack(newStack);
       setBookshelfRouteStack(newStack);
@@ -353,6 +395,7 @@ function VedabaseApp() {
           searchState={searchState}
           onSearchStateChange={setSearchState}
           theme={theme}
+          devMode={devMode}
         />
       );
     }
@@ -365,6 +408,7 @@ function VedabaseApp() {
         return (
           <BookshelfPage
             onSelectBook={handleSelectBook}
+            onContinueReading={handleContinueReading}
             language={language}
             setLanguage={setLanguage}
             fontSize={fontSize}
@@ -414,11 +458,23 @@ function VedabaseApp() {
                 return newStack;
               });
             }}
+            onGoToChapter={(chId) => {
+              // 目录点击章标题 → 跳转到该章的节列表页
+              const newStack: Route[] = [
+                { page: 'home' },
+                { page: 'bg-chapters' },
+                { page: 'bg-sections', chapterId: chId },
+              ];
+              setRouteStack(newStack);
+              setBookshelfRouteStack(newStack);
+            }}
             language={language}
             setLanguage={setLanguage}
             fontSize={fontSize}
             setFontSize={setFontSize}
             theme={theme}
+            devMode={devMode}
+            searchKeyword={(currentRoute as any).searchKeyword}
           />
         );
 
@@ -474,21 +530,45 @@ function VedabaseApp() {
                 return newStack;
               });
             }}
+            onGoToCanto={(cantoId) => {
+              // 目录点击篇标题 → 跳转到该篇的章列表页
+              const newStack: Route[] = [
+                { page: 'home' },
+                { page: 'sb-cantos' },
+                { page: 'sb-chapters', cantoId },
+              ];
+              setRouteStack(newStack);
+              setBookshelfRouteStack(newStack);
+            }}
             language={language}
             setLanguage={setLanguage}
             fontSize={fontSize}
             setFontSize={setFontSize}
             theme={theme}
+            devMode={devMode}
+            searchKeyword={(currentRoute as any).searchKeyword}
           />
         );
 
       case 'akadasi':
-        return <AkadasiPage onBack={pop} onHome={goHome} theme={theme} />;
+        return (
+          <AkadasiPage
+            onBack={pop}
+            onHome={goHome}
+            theme={theme}
+            initialSelectedId={akadasiSelectedId ?? undefined}
+            onSelectedIdChange={(id: number | null) => {
+              // 用独立状态维护爱卡达西阅读位置，不依赖路由栈
+              setAkadasiSelectedId(id);
+            }}
+          />
+        );
 
       default:
         return (
           <BookshelfPage
             onSelectBook={handleSelectBook}
+            onContinueReading={handleContinueReading}
             language={language}
             setLanguage={setLanguage}
             fontSize={fontSize}

@@ -17,6 +17,7 @@ export interface SearchResult {
   sectionId: string;
   label: string;
   preview: string;
+  searchKeyword?: string;
 }
 
 export type BookFilter = 'bg' | 'sb' | 'all';
@@ -263,6 +264,7 @@ export default function SearchPage({
             sectionId: String(section.section_id),
             label: `BG ${section.section_id}`,
             preview: extractPreview(rawPreview, q, 100),
+            searchKeyword: q.trim(),
           });
         }
       });
@@ -298,6 +300,7 @@ export default function SearchPage({
               sectionIndex: idx,
               sectionId: section.section_id,
               label: `SB ${section.section_id}`,
+              searchKeyword: q.trim(),
               preview: extractPreview(rawPreview, q, 100),
             });
           }
@@ -420,18 +423,22 @@ export default function SearchPage({
               >
                 {selectedForDelete.size === history.length ? '取消全选' : '全选'}
               </button>
+              {selectedForDelete.size > 0 && (
+                <button
+                  onClick={() => handleDeleteHistory(Array.from(selectedForDelete))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e05050', fontSize: '14px', fontWeight: 600 }}
+                >
+                  删除({selectedForDelete.size})
+                </button>
+              )}
               <button
                 onClick={() => {
-                  if (selectedForDelete.size > 0) {
-                    handleDeleteHistory(Array.from(selectedForDelete));
-                  } else {
-                    setEditMode(false);
-                    setSelectedForDelete(new Set());
-                  }
+                  setEditMode(false);
+                  setSelectedForDelete(new Set());
                 }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: selectedForDelete.size > 0 ? '#e05050' : labelColor, fontSize: '14px', fontWeight: 600 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: labelColor, fontSize: '14px', fontWeight: 600 }}
               >
-                {selectedForDelete.size > 0 ? `删除(${selectedForDelete.size})` : '完成'}
+                取消
               </button>
             </div>
           ) : (
