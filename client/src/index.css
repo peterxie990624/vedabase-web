@@ -357,13 +357,13 @@
   background: var(--veda-blue-light);
 }
 
-/* Search highlight */
+/* Search highlight - Chaitanya gold */
 .search-highlight {
-  background: #ffe5e5;
-  color: #d63031;
+  background: #d4a017;
+  color: #1a1a1a;
   font-weight: 600;
   border-radius: 2px;
-  padding: 0 1px;
+  padding: 0 2px;
 }
 
 /* Calendar event */
@@ -500,8 +500,8 @@
 }
 
 [data-veda-theme="dark"] .search-highlight {
-  background: rgba(214,48,49,0.2);
-  color: #ff7675;
+  background: #b8860b;
+  color: #fff8e7;
 }
 
 [data-veda-theme="dark"] .purport-text {

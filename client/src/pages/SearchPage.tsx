@@ -45,6 +45,7 @@ const BOOK_OPTIONS: { id: BookFilter; label: string; sublabel?: string }[] = [
 ];
 
 const HISTORY_KEY = 'veda_search_history';
+const SEARCH_TIME_KEY = 'vedabase_last_search_time';
 const MAX_HISTORY = 20;
 
 function getHistory(): string[] {
@@ -63,27 +64,56 @@ function addToHistory(query: string) {
   saveHistory(h.slice(0, MAX_HISTORY));
 }
 
-// Extract preview snippet centered around keyword
-function extractPreview(text: string, keyword: string, maxLen = 100): string {
+// Extract preview snippet: find the sentence containing the keyword
+function extractPreview(text: string, keyword: string, maxLen = 120): string {
   const clean = text.replace(/<[^>]+>/g, '').trim();
   if (!keyword) return clean.slice(0, maxLen);
   const lower = clean.toLowerCase();
   const kwLower = keyword.toLowerCase();
   const idx = lower.indexOf(kwLower);
   if (idx === -1) return clean.slice(0, maxLen);
-  const halfLen = Math.floor((maxLen - keyword.length) / 2);
-  const start = Math.max(0, idx - halfLen);
-  const end = Math.min(clean.length, idx + keyword.length + halfLen);
-  let snippet = clean.slice(start, end);
-  if (start > 0) snippet = '...' + snippet;
-  if (end < clean.length) snippet = snippet + '...';
+
+  // Try to find the sentence containing the keyword
+  // Sentence boundaries: period, exclamation, question mark, newline
+  const sentenceEnd = /[.!?\n]/;
+  let start = idx;
+  let end = idx + keyword.length;
+
+  // Expand backward to find sentence start
+  while (start > 0 && !sentenceEnd.test(clean[start - 1])) {
+    start--;
+  }
+  // Expand forward to find sentence end
+  while (end < clean.length && !sentenceEnd.test(clean[end])) {
+    end++;
+  }
+  // Include the sentence-ending punctuation
+  if (end < clean.length && sentenceEnd.test(clean[end])) end++;
+
+  let snippet = clean.slice(start, end).trim();
+
+  // If snippet is too long, fall back to centered window
+  if (snippet.length > maxLen * 2) {
+    const halfLen = Math.floor((maxLen - keyword.length) / 2);
+    const s = Math.max(0, idx - halfLen);
+    const e = Math.min(clean.length, idx + keyword.length + halfLen);
+    snippet = clean.slice(s, e);
+    if (s > 0) snippet = '...' + snippet;
+    if (e < clean.length) snippet = snippet + '...';
+  } else {
+    if (start > 0) snippet = '...' + snippet;
+    if (end < clean.length) snippet = snippet + '...';
+  }
   return snippet;
 }
 
 function highlightText(text: string, keyword: string): string {
   if (!keyword) return text;
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(escaped, 'gi'), match => `<mark class="search-highlight">${match}</mark>`);
+  return text.replace(
+    new RegExp(escaped, 'gi'),
+    match => `<mark class="search-highlight" style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px">${match}</mark>`
+  );
 }
 
 // SB has 12 cantos, each loaded individually during search
@@ -317,6 +347,8 @@ export default function SearchPage({
     updateState({ query: q, selectedBook: searchBook, searched: true });
     addToHistory(q.trim());
     setHistory(getHistory());
+    // 记录搜索时间戳（用于2小时记忆时限）
+    localStorage.setItem(SEARCH_TIME_KEY, String(Date.now()));
     const keyword = q.trim().toLowerCase();
     let found: SearchResult[] = [];
 

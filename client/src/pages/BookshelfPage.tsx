@@ -65,6 +65,10 @@ export default function BookshelfPage({
   const [showAbout, setShowAbout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  // 封面图加载状态
+  const [coverLoaded, setCoverLoaded] = useState<Record<string, boolean>>({});
+  // 开发模式：长按"关于"按钮激活
+  const aboutLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -286,6 +290,51 @@ export default function BookshelfPage({
               <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
               <button
                 onClick={() => { setShowAbout(true); setShowSettings(false); }}
+                onMouseDown={() => {
+                  // 长按3秒激活开发模式
+                  aboutLongPressRef.current = setTimeout(() => {
+                    const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
+                    if (isNowDev) {
+                      localStorage.removeItem('vedabase_devmode');
+                      toast.success('开发模式已关闭', { duration: 2000 });
+                    } else {
+                      localStorage.setItem('vedabase_devmode', 'true');
+                      toast.success('🛠 开发模式已激活！重新进入搜索页生效', { duration: 3000 });
+                    }
+                    setShowSettings(false);
+                  }, 3000);
+                }}
+                onMouseUp={() => {
+                  if (aboutLongPressRef.current) {
+                    clearTimeout(aboutLongPressRef.current);
+                    aboutLongPressRef.current = null;
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (aboutLongPressRef.current) {
+                    clearTimeout(aboutLongPressRef.current);
+                    aboutLongPressRef.current = null;
+                  }
+                }}
+                onTouchStart={() => {
+                  aboutLongPressRef.current = setTimeout(() => {
+                    const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
+                    if (isNowDev) {
+                      localStorage.removeItem('vedabase_devmode');
+                      toast.success('开发模式已关闭', { duration: 2000 });
+                    } else {
+                      localStorage.setItem('vedabase_devmode', 'true');
+                      toast.success('🛠 开发模式已激活！重新进入搜索页生效', { duration: 3000 });
+                    }
+                    setShowSettings(false);
+                  }, 3000);
+                }}
+                onTouchEnd={() => {
+                  if (aboutLongPressRef.current) {
+                    clearTimeout(aboutLongPressRef.current);
+                    aboutLongPressRef.current = null;
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -358,11 +407,27 @@ export default function BookshelfPage({
             }}
           >
             {/* Cover image */}
-            <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden' }}>
+            <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden', background: isDark ? '#1a2535' : '#e8f0f8', position: 'relative' }}>
+              {/* 占位符：加载完成前显示 */}
+              {!coverLoaded[book.id] && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isDark ? '#1a2535' : '#e8f0f8',
+                  fontSize: '24px',
+                }} />
+              )}
               <img
                 src={book.cover}
                 alt={book.zhName}
-                style={{ width: '80px', height: '100%', minHeight: '100px', objectFit: 'cover', display: 'block' }}
+                onLoad={() => setCoverLoaded(prev => ({ ...prev, [book.id]: true }))}
+                onError={() => setCoverLoaded(prev => ({ ...prev, [book.id]: true }))}
+                style={{
+                  width: '80px', height: '100%', minHeight: '100px',
+                  objectFit: 'cover', display: 'block',
+                  opacity: coverLoaded[book.id] ? 1 : 0,
+                  transition: 'opacity 0.3s ease',
+                }}
               />
             </div>
             {/* Info */}
