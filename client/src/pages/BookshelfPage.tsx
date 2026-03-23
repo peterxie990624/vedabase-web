@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import AboutDialog from '../components/AboutDialog';
 import type { Language, FontSize, VedaTheme } from '../types';
-import { CDN } from '../constants';
+import { CDN, formatSectionLabel } from '../constants';
 import type { VedaTheme as VT } from '../hooks/useSettings';
 import { toast } from 'sonner';
 import { preloadBGData, preloadSBIndex } from '../hooks/useData';
@@ -70,7 +70,7 @@ export default function BookshelfPage({
   // 封面图加载状态（整个书卡等图片加载完再显示）
   const [coverLoaded, setCoverLoaded] = useState<Record<string, boolean>>({});
   // 上次阅读记录
-  const [lastReading, setLastReading] = useState<{ bookId: string; label: string } | null>(null);
+  const [lastReading, setLastReading] = useState<{ bookId: string; sectionId: string } | null>(null);
 
   useEffect(() => {
     // 检查是否有上次阅读记录
@@ -80,7 +80,7 @@ export default function BookshelfPage({
       try {
         const { chapterId, sectionIndex } = JSON.parse(bgProgress);
         if (chapterId !== undefined && sectionIndex !== undefined) {
-          setLastReading({ bookId: 'bg', label: `BG ${chapterId}.${sectionIndex + 1}` });
+          setLastReading({ bookId: 'bg', sectionId: `${chapterId}.${sectionIndex + 1}` });
           return;
         }
       } catch {}
@@ -89,7 +89,7 @@ export default function BookshelfPage({
       try {
         const { chapterId, sectionIndex } = JSON.parse(sbProgress);
         if (chapterId !== undefined && sectionIndex !== undefined) {
-          setLastReading({ bookId: 'sb', label: `SB c${chapterId}/${sectionIndex + 1}` });
+          setLastReading({ bookId: 'sb', sectionId: `${chapterId}.${sectionIndex + 1}` });
           return;
         }
       } catch {}
@@ -438,7 +438,7 @@ export default function BookshelfPage({
                 {isEn ? 'Continue reading' : '继续上次阅读'}
               </div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: isDark ? '#e8d5a3' : '#2e6fa0' }}>
-                {lastReading.label}
+                {formatSectionLabel(lastReading.bookId, lastReading.sectionId, language)}
               </div>
             </div>
             <ChevronRight size={16} style={{ marginLeft: 'auto', color: isDark ? '#c8a84b' : '#4a7fa5' }} />

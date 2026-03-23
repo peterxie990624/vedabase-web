@@ -6,6 +6,7 @@ import { useBGData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
 import type { Language, FontSize, VedaTheme } from '../types';
+import { formatSectionLabel } from '../constants';
 import { toast } from 'sonner';
 
 interface BGReadPageProps {
@@ -161,7 +162,7 @@ export default function BGReadPage({
     );
   }
 
-  const sectionLabel = `Bg ${section.section_id}`;
+  const sectionLabel = formatSectionLabel('bg', section.section_id, language);
   const bookmarked = isBookmarked('bg', chapterId, section.section_id);
 
   const wfwSanskrit = section.ldw_fc;

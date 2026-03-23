@@ -8,6 +8,7 @@ import type { LoadProgress } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
 import type { Language, FontSize, VedaTheme } from '../types';
+import { formatSectionLabel } from '../constants';
 import { toast } from 'sonner';
 
 interface SBReadPageProps {
@@ -188,7 +189,7 @@ export default function SBReadPage({
     );
   }
 
-  const sectionLabel = `SB ${section.section_id}`;
+  const sectionLabel = formatSectionLabel('sb', section.section_id, language);
   const bookmarked = isBookmarked('sb', chapterId, section.section_id);
 
   const wfwSanskrit = section.ldw_fc;

@@ -9,6 +9,7 @@ import { useBGData, useSBIndex } from '../hooks/useData';
 import type { LoadProgress } from '../hooks/useData';
 import LoadingProgress from '../components/LoadingProgress';
 import type { Language, VedaTheme } from '../types';
+import { formatSectionLabel } from '../constants';
 
 // ---- Types ----
 export interface SearchResult {
@@ -391,7 +392,7 @@ export default function SearchPage({
             chapterId: chId,
             sectionIndex: idx,
             sectionId: String(section.section_id),
-            label: `BG ${section.section_id}`,
+            label: formatSectionLabel('bg', section.section_id, language),
             preview: extractPreview(rawPreview, q, 100),
             searchKeyword: q.trim(),
           });
@@ -440,7 +441,7 @@ export default function SearchPage({
               chapterId: chapter.id,
               sectionIndex: idx,
               sectionId: section.section_id,
-              label: `SB ${section.section_id}`,
+              label: formatSectionLabel('sb', section.section_id, language),
               searchKeyword: q.trim(),
               preview: extractPreview(rawPreview, q, 100),
             });
