@@ -341,17 +341,35 @@ export default function SearchPage({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sbAllSectionsRef = useRef<Record<string, unknown>>({});
+  // 用 ref 记录最新的 onScrollTopChange，避免 useEffect 闭包捕获旧值
+  const onScrollTopChangeRef = useRef(onScrollTopChange);
+  useEffect(() => { onScrollTopChangeRef.current = onScrollTopChange; }, [onScrollTopChange]);
+  // 记录最新滚动位置（用于卸载时保存）
+  const latestScrollTopRef = useRef(0);
 
-  // 监听滚动，超过 100px 时显示回到顶部浮标
+  // 监听滚动：实时同步位置到父组件，并控制回到顶部浮标显示
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 100);
+      const y = window.scrollY;
+      latestScrollTopRef.current = y;
+      setShowScrollTop(y > 100);
+      // 仅在有搜索结果时实时保存（避免搜索首页时覆盖有效位置）
+      if (searched) {
+        onScrollTopChangeRef.current?.(y);
+      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     // 初始检查（恢复滚动位置后可能已经超过阈值）
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      // 组件卸载时保存最后一次滚动位置（切换 tab 时触发）
+      if (searched) {
+        onScrollTopChangeRef.current?.(latestScrollTopRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searched]);
 
   // Progress tracking for search loading
   const [loadProgresses, setLoadProgresses] = useState<LoadProgress[]>([]);
