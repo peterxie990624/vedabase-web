@@ -198,6 +198,11 @@ function VedabaseApp() {
     searched: false,
   });
 
+  // 搜索页滚动位置记忆
+  const [searchScrollTop, setSearchScrollTop] = useState(0);
+  // 搜索页上次点击的结果索引（返回时高亮+滚动到该条目）
+  const [searchLastClickedIdx, setSearchLastClickedIdx] = useState<number | null>(null);
+
   // 爱卡达西阅读位置：独立于路由栈，切换 tab 后能恢复
   const [akadasiSelectedId, setAkadasiSelectedId] = useState<number | null>(null);
 
@@ -296,13 +301,10 @@ function VedabaseApp() {
         setRouteStack(newStack);
         setBookshelfRouteStack(newStack);
       } else if (tab === 'search') {
-        // 重置搜索页到初始状态（有时间戳判断：超过2小时才重置）
-        const lastSearchTime = localStorage.getItem('vedabase_last_search_time');
-        if (lastSearchTime && Date.now() - parseInt(lastSearchTime) < 2 * 60 * 60 * 1000) {
-          // 2小时内，不重置，保留搜索状态
-        } else {
-          setSearchState({ query: '', selectedBook: 'bg', results: [], searched: false });
-        }
+        // 重复点击搜索tab：回到搜索首页（清除搜索结果）
+        setSearchState({ query: '', selectedBook: searchState.selectedBook, results: [], searched: false });
+        setSearchScrollTop(0);
+        setSearchLastClickedIdx(null);
       }
       return;
     }
@@ -366,22 +368,33 @@ function VedabaseApp() {
     }
   }, [push]);
 
-  // 从书签进入阅读页：使用 overlay，不切换 activeTab，返回时回到书签页
+  // 从书签进入阅读页：切换到书架tab，返回时回到书签页
+  // 用户要求：点书签进入节页时tab切到书架，返回时回书签页，再按"上一标签"回进入前的tab
   const handleOpenBookmark = useCallback((bookmark: Bookmark) => {
     const secIdx = bookmark.sectionIndex ?? 0;
     if (bookmark.bookType === 'bg') {
-      setOverlayRoute({
-        route: { page: 'bg-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
-        returnTab: 'bookmarks',
-      });
+      // 切换到书架tab，但记录returnTab为bookmarks
+      setActiveTab('bookshelf');
+      prevTabRef.current = 'bookmarks'; // 上一个tab是书签页
+      const newStack: Route[] = [
+        { page: 'home' },
+        { page: 'bg-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
+      ];
+      setRouteStack(newStack);
+      setBookshelfRouteStack(newStack);
     } else if (bookmark.bookType === 'sb') {
-      setOverlayRoute({
-        route: { page: 'sb-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
-        returnTab: 'bookmarks',
-      });
+      setActiveTab('bookshelf');
+      prevTabRef.current = 'bookmarks';
+      const newStack: Route[] = [
+        { page: 'home' },
+        { page: 'sb-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
+      ];
+      setRouteStack(newStack);
+      setBookshelfRouteStack(newStack);
     } else if (bookmark.bookType === 'akadasi') {
       // 爱卡达西书签：切换到书架 tab 并进入爱卡达西页
       setActiveTab('bookshelf');
+      prevTabRef.current = 'bookmarks';
       const newStack: Route[] = [{ page: 'home' }, { page: 'akadasi' }];
       setRouteStack(newStack);
       setBookshelfRouteStack(newStack);
@@ -389,7 +402,10 @@ function VedabaseApp() {
   }, []);
 
   // 从搜索进入阅读页：使用 overlay，不切换 activeTab，返回时回到搜索页
-  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string }) => {
+  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string; resultIdx?: number; scrollTop?: number }) => {
+    // 记录点击的结果索引和当前滚动位置（返回时恢复）
+    if (result.resultIdx !== undefined) setSearchLastClickedIdx(result.resultIdx);
+    if (result.scrollTop !== undefined) setSearchScrollTop(result.scrollTop);
     if (result.bookType === 'bg') {
       setOverlayRoute({
         route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword },
@@ -517,6 +533,10 @@ function VedabaseApp() {
           onSearchStateChange={setSearchState}
           theme={theme}
           devMode={devMode}
+          savedScrollTop={searchScrollTop}
+          onScrollTopChange={setSearchScrollTop}
+          lastClickedIdx={searchLastClickedIdx}
+          onClearLastClicked={() => setSearchLastClickedIdx(null)}
         />
       );
     }
