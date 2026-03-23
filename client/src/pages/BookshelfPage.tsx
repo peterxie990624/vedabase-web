@@ -78,18 +78,21 @@ export default function BookshelfPage({
     const sbProgress = localStorage.getItem('vedabase_progress_sb');
     if (bgProgress) {
       try {
-        const { chapterId, sectionIndex } = JSON.parse(bgProgress);
+        const { chapterId, sectionIndex, sectionId } = JSON.parse(bgProgress);
         if (chapterId !== undefined && sectionIndex !== undefined) {
-          setLastReading({ bookId: 'bg', sectionId: `${chapterId}.${sectionIndex + 1}` });
+          // 优先使用保存的实际 section_id（支持合并节如 1.21-22）
+          const sid = sectionId || `${chapterId}.${sectionIndex + 1}`;
+          setLastReading({ bookId: 'bg', sectionId: sid });
           return;
         }
       } catch {}
     }
     if (sbProgress) {
       try {
-        const { chapterId, sectionIndex } = JSON.parse(sbProgress);
+        const { chapterId, sectionIndex, sectionId } = JSON.parse(sbProgress);
         if (chapterId !== undefined && sectionIndex !== undefined) {
-          setLastReading({ bookId: 'sb', sectionId: `${chapterId}.${sectionIndex + 1}` });
+          const sid = sectionId || `${chapterId}.${sectionIndex + 1}`;
+          setLastReading({ bookId: 'sb', sectionId: sid });
           return;
         }
       } catch {}
@@ -460,8 +463,8 @@ export default function BookshelfPage({
               boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(74,127,165,0.1)',
               cursor: 'pointer',
               display: 'flex',
-              // 整个书卡等封面图加载完再显示（避免图片闪烁）
-              opacity: coverLoaded[book.id] ? 1 : 0,
+              // 封面图加载完成后渐显
+              opacity: coverLoaded[book.id] ? 1 : 1,
               transition: 'opacity 0.3s ease, transform 0.15s, box-shadow 0.15s',
             }}
             onMouseEnter={e => {
@@ -474,7 +477,19 @@ export default function BookshelfPage({
             }}
           >
             {/* Cover image */}
-            <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden', background: isDark ? '#1a2535' : '#e8f0f8', position: 'relative' }}>
+            <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden', background: isDark ? '#1a2535' : '#e8f0f8', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* 加载动画：封面未加载时显示 "..." */}
+              {!coverLoaded[book.id] && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: isDark ? '#4a6a8a' : '#b0c8dc',
+                  fontSize: '18px', letterSpacing: '4px', fontWeight: 700,
+                  animation: 'veda-ellipsis 1.2s infinite',
+                }}>
+                  ...
+                </div>
+              )}
               <img
                 src={book.cover}
                 alt={book.zhName}
@@ -483,6 +498,8 @@ export default function BookshelfPage({
                 style={{
                   width: '80px', height: '100%', minHeight: '100px',
                   objectFit: 'cover', display: 'block',
+                  opacity: coverLoaded[book.id] ? 1 : 0,
+                  transition: 'opacity 0.3s ease',
                 }}
               />
             </div>

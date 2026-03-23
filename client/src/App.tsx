@@ -368,12 +368,7 @@ function VedabaseApp() {
     // 如果有 overlay（从书签/搜索进入的阅读页），点击任何 tab 都先关闭 overlay
     if (overlayRoute) {
       setOverlayRoute(null);
-      // 切换到搜索 tab：始终重置搜索状态回首页
-      if (tab === 'search') {
-        setSearchState(prev => ({ ...prev, searched: false, results: [], query: '' }));
-        setSearchScrollTop(0);
-        setSearchLastClickedIdx(null);
-      }
+      // 从 overlay 返回时：不重置搜索状态，保留上次搜索结果
       setActiveTab(tab);
       prevTabRef.current = tab;
       if (tab === 'bookshelf') {
@@ -398,12 +393,7 @@ function VedabaseApp() {
       return;
     }
 
-    // 切换到搜索 tab：始终重置搜索状态回首页
-    if (tab === 'search') {
-      setSearchState(prev => ({ ...prev, searched: false, results: [], query: '' }));
-      setSearchScrollTop(0);
-      setSearchLastClickedIdx(null);
-    }
+    // 切换到搜索 tab：保留上次搜索结果（不重置），只有重复点击搜索 tab 才回首页
 
     const prevTab = prevTabRef.current;
     prevTabRef.current = tab;

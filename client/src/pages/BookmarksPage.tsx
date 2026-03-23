@@ -163,7 +163,9 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light' }: Bookm
               <button
                 onClick={e => {
                   e.stopPropagation();
-                  removeBookmark(bookmark.bookType, bookmark.chapterId, bookmark.sectionId);
+                  if (window.confirm(`确认删除书签「${bookmark.title}」？`)) {
+                    removeBookmark(bookmark.bookType, bookmark.chapterId, bookmark.sectionId);
+                  }
                 }}
                 style={{
                   background: 'none',

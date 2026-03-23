@@ -27,9 +27,9 @@ interface BGReadPageProps {
 
 const PROGRESS_KEY = 'vedabase_progress_bg';
 
-function saveProgress(chapterId: number, sectionIndex: number) {
+function saveProgress(chapterId: number, sectionIndex: number, sectionId?: string) {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chapterId, sectionIndex }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chapterId, sectionIndex, sectionId }));
   } catch {}
 }
 
@@ -68,7 +68,7 @@ export default function BGReadPage({
 
   // Save progress whenever position changes
   useEffect(() => {
-    if (section) saveProgress(chapterId, sectionIndex);
+    if (section) saveProgress(chapterId, sectionIndex, String(section.section_id));
   }, [chapterId, sectionIndex, section]);
 
   const goTo = useCallback((newChapterId: number, newSectionIdx: number, direction: 'left' | 'right') => {

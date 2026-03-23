@@ -515,3 +515,10 @@
 [data-veda-theme="dark"] .sanskrit-word {
   color: #e8c060;
 }
+
+/* 书卡封面加载动画 */
+@keyframes veda-ellipsis {
+  0%   { opacity: 0.3; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.3; }
+}

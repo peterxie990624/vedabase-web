@@ -342,12 +342,14 @@ export default function SearchPage({
   const inputRef = useRef<HTMLInputElement>(null);
   const sbAllSectionsRef = useRef<Record<string, unknown>>({});
 
-  // 监听滚动，超过 300px 时显示回到顶部浮标
+  // 监听滚动，超过 100px 时显示回到顶部浮标
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 300);
+      setShowScrollTop(window.scrollY > 100);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
+    // 初始检查（恢复滚动位置后可能已经超过阈值）
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -426,9 +428,28 @@ export default function SearchPage({
     return sbAllSectionsRef.current;
   }, [loadCantoWithProgress]);
 
+  // 英中词义对照：从 words_en_fc 和 words_zh_fc 中提取关键词对应的中文词义
+  // 返回格式："keyword — 中文词义" 或 null（未找到时）
+  const buildWordPairPreview = useCallback((enField: string | null, zhField: string | null, kwLower: string, kwNorm: string): string | null => {
+    if (!enField || !zhField) return null;
+    const enParts = enField.split(';').map(s => s.trim()).filter(Boolean);
+    const zhParts = zhField.split(';').map(s => s.trim()).filter(Boolean);
+    const pairs: string[] = [];
+    enParts.forEach((enWord, i) => {
+      const enLower = enWord.toLowerCase();
+      const enNorm = normalizeSanskrit(enWord);
+      if (enLower.includes(kwLower) || enNorm.includes(kwNorm)) {
+        const zhWord = zhParts[i] || '';
+        if (zhWord) pairs.push(`${enWord} — ${zhWord}`);
+        else pairs.push(enWord);
+      }
+    });
+    return pairs.length > 0 ? pairs.slice(0, 3).join('；') : null;
+  }, []);
+
   // Helper: search BG data
   // 支持：中文关键词搜中文字段，英文关键词搜英文字段，梵文规范化匹配（uvaca 能匹配 uvāca）
-  // 关键词命中词义字段时，预览优先从词义字段截取
+  // 关键词命中词义字段时，预览优先从词义字段截取，并附带英中对照
   const searchBG = useCallback((keyword: string, q: string): SearchResult[] => {
     if (!bgData) return [];
     const found: SearchResult[] = [];
@@ -457,6 +478,13 @@ export default function SearchPage({
         
         if (!textContainsKw(allText)) return;
         
+        // 英文关键词搜索时，尝试构建英中词义对照预览
+        const isEnKeyword = /[a-zA-Z]/.test(q.trim());
+        let wordPairPreview: string | null = null;
+        if (isEnKeyword && section.words_en_fc && section.words_zh_fc) {
+          wordPairPreview = buildWordPairPreview(section.words_en_fc, section.words_zh_fc, kwLower, kwNorm);
+        }
+        
         // 选择预览字段：优先选择包含关键词的字段
         // 选择顺序：词义字段 > 梵文原文 > 当前语言译文 > 当前语言要旨 > 另一语言译文
         const candidates = language === 'zh'
@@ -480,7 +508,9 @@ export default function SearchPage({
             ];
         
         // 找到第一个包含关键词的字段作为预览
-        let rawPreview = candidates.find(c => c && textContainsKw(c)) || candidates.find(Boolean) || '';
+        const rawPreview = candidates.find(c => c && textContainsKw(c)) || candidates.find(Boolean) || '';
+        // 如果有英中对照预览，优先使用（更直观）
+        const preview = wordPairPreview || extractPreview(rawPreview, q, 100);
         
         found.push({
           bookType: 'bg',
@@ -488,16 +518,16 @@ export default function SearchPage({
           sectionIndex: idx,
           sectionId: String(section.section_id),
           label: formatSectionLabel('bg', section.section_id, language),
-          preview: extractPreview(rawPreview, q, 100),
+          preview,
           searchKeyword: q.trim(),
         });
       });
     }
     return found;
-  }, [bgData, language]);
+  }, [bgData, language, buildWordPairPreview]);
 
   // Helper: search SB data
-  // 支持梵文规范化匹配，词义字段优先预览
+  // 支持梵文规范化匹配，词义字段优先预览，英文关键词附带英中对照
   const searchSB = useCallback(async (keyword: string, q: string): Promise<SearchResult[]> => {
     const allSections = await loadAllSBForSearch() as Record<string, Array<{
       id: number; section_id: string;
@@ -515,6 +545,8 @@ export default function SearchPage({
       return normalizeSanskrit(text).includes(kwNorm);
     };
     
+    const isEnKeyword = /[a-zA-Z]/.test(q.trim());
+    
     if (sbIndex) {
       for (const chapter of sbIndex.chapters) {
         const sections = allSections[String(chapter.id)] as Array<{
@@ -530,6 +562,12 @@ export default function SearchPage({
           const allText = zhText + ' ' + enText;
           
           if (!textContainsKw(allText)) return;
+          
+          // 英文关键词搜索时，尝试构建英中词义对照预览
+          let wordPairPreview: string | null = null;
+          if (isEnKeyword && section.words_en_fc && section.words_zh_fc) {
+            wordPairPreview = buildWordPairPreview(section.words_en_fc, section.words_zh_fc, kwLower, kwNorm);
+          }
           
           const candidates = language === 'zh'
             ? [
@@ -552,6 +590,7 @@ export default function SearchPage({
               ];
           
           const rawPreview = candidates.find(c => c && textContainsKw(c)) || candidates.find(Boolean) || '';
+          const preview = wordPairPreview || extractPreview(rawPreview, q, 100);
           
           found.push({
             bookType: 'sb',
@@ -560,13 +599,13 @@ export default function SearchPage({
             sectionId: section.section_id,
             label: formatSectionLabel('sb', section.section_id, language),
             searchKeyword: q.trim(),
-            preview: extractPreview(rawPreview, q, 100),
+            preview,
           });
         });
       }
     }
     return found;
-  }, [sbIndex, language, loadAllSBForSearch]);
+  }, [sbIndex, language, loadAllSBForSearch, buildWordPairPreview]);
 
   const doSearch = useCallback(async (q: string, book?: BookFilter) => {
     const searchBook: BookFilter = book || selectedBook;
@@ -609,7 +648,8 @@ export default function SearchPage({
     inputRef.current?.focus();
   };
 
-  const handleDeleteHistory = (indices: number[]) => {
+  const handleDeleteHistory = (indices: number[], skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm(`确认删除 ${indices.length} 条搜索历史？`)) return;
     const h = getHistory();
     const newH = h.filter((_, i) => !indices.includes(i));
     saveHistory(newH);
@@ -718,7 +758,7 @@ export default function SearchPage({
               </button>
               {selectedForDelete.size > 0 && (
                 <button
-                  onClick={() => handleDeleteHistory(Array.from(selectedForDelete))}
+                  onClick={() => handleDeleteHistory(Array.from(selectedForDelete), false)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e05050', fontSize: '14px', fontWeight: 600 }}
                 >
                   删除({selectedForDelete.size})
@@ -970,7 +1010,12 @@ export default function SearchPage({
                 <span style={{ fontSize: '13px', color: textSecondary, fontWeight: 600 }}>搜索历史</span>
                 {!editMode && (
                   <button
-                    onClick={() => { saveHistory([]); setHistory([]); }}
+                    onClick={() => {
+                      if (window.confirm(`确认清空全部 ${history.length} 条搜索历史？`)) {
+                        saveHistory([]);
+                        setHistory([]);
+                      }
+                    }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: textSecondary, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <Trash2 size={12} /> 清空
@@ -1019,7 +1064,7 @@ export default function SearchPage({
                     <span style={{ flex: 1, fontSize: '14px', color: isDark ? '#c0d0e0' : '#333' }}>{h}</span>
                     {!editMode && (
                       <button
-                        onClick={e => { e.stopPropagation(); handleDeleteHistory([idx]); }}
+                        onClick={e => { e.stopPropagation(); handleDeleteHistory([idx], false); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: textSecondary, padding: '2px' }}
                       >
                         <X size={14} />
@@ -1166,7 +1211,7 @@ export default function SearchPage({
                     </span>
                     <div
                       style={{ fontSize: '0.88rem', color: resultTextColor, lineHeight: 1.6 }}
-                      dangerouslySetInnerHTML={{ __html: highlightText(result.preview, query) }}
+                      dangerouslySetInnerHTML={{ __html: highlightText(result.preview, result.searchKeyword || query) }}
                     />
                   </div>
                 );
@@ -1176,34 +1221,36 @@ export default function SearchPage({
         </div>
       )}
 
-      {/* 回到顶部浮标按鈕 */}
+      {/* 回到顶部浮标按钮 */}
       {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          title="回到顶部"
-          style={{
-            position: 'fixed',
-            bottom: '80px',
-            right: '16px',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: isDark ? 'rgba(26,37,53,0.92)' : 'rgba(255,255,255,0.92)',
-            border: `1px solid ${isDark ? '#2a3a50' : '#d0dde8'}`,
-            boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 12px rgba(74,127,165,0.18)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 150,
-            color: labelColor,
-            fontSize: '18px',
-            lineHeight: 1,
-            transition: 'opacity 0.2s',
-          }}
-        >
-          ↑
-        </button>
+        <div style={{ position: 'fixed', bottom: '80px', left: 0, right: 0, maxWidth: '640px', margin: '0 auto', pointerEvents: 'none', zIndex: 150 }}>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="回到顶部"
+            style={{
+              position: 'absolute',
+              right: '16px',
+              bottom: 0,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: isDark ? 'rgba(26,37,53,0.92)' : 'rgba(255,255,255,0.92)',
+              border: `1px solid ${isDark ? '#2a3a50' : '#d0dde8'}`,
+              boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 12px rgba(74,127,165,0.18)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'all',
+              color: labelColor,
+              fontSize: '18px',
+              lineHeight: 1,
+              transition: 'opacity 0.2s',
+            }}
+          >
+            ↑
+          </button>
+        </div>
       )}
     </div>
   );
