@@ -72,21 +72,61 @@ function addToHistory(query: string) {
   saveHistory(h.slice(0, MAX_HISTORY));
 }
 
+// 梵文规范化：将带变音符号的梵文字母转为基本拉丁字母（用于搜索匹配）
+// 例：ā→a, ī→i, ū→u, ṭ→t, ḍ→d, ṇ→n, ñ→n, ś→s, ṣ→s, ḥ→h, ṛ→r, ṁ/ṃ→m
+function normalizeSanskrit(text: string): string {
+  return text
+    .replace(/[āàáâãäå]/g, 'a')
+    .replace(/[ēèéêë]/g, 'e')
+    .replace(/[īìíîï]/g, 'i')
+    .replace(/[ōòóôõö]/g, 'o')
+    .replace(/[ūùúûü]/g, 'u')
+    .replace(/[ṭṫ]/g, 't')
+    .replace(/[ḍḋ]/g, 'd')
+    .replace(/[ṇṅñ]/g, 'n')
+    .replace(/[śşš]/g, 's')
+    .replace(/[ṣṡ]/g, 's')
+    .replace(/[ḥḣ]/g, 'h')
+    .replace(/[ṛṝ]/g, 'r')
+    .replace(/[ṁṃṀṂ]/g, 'm')
+    .replace(/[ḷḹ]/g, 'l')
+    .replace(/[čć]/g, 'c')
+    .replace(/[ḏ]/g, 'd')
+    .replace(/[ṯ]/g, 't')
+    .toLowerCase();
+}
+
 // Extract preview snippet: find the sentence containing the keyword
-// 关键词不在句首时，截取关键词所在完整句子，超长时从中间截取并加"..."
+// 关键词不在句首时，截取关键词所在完整句子，超长时从中间截取并加“...”
+// 支持梵文规范化匹配（用户输入 uvaca 能匹配 uvāca）
 function extractPreview(text: string, keyword: string, maxLen = 120): string {
   const clean = text.replace(/<[^>]+>/g, '').trim();
   if (!keyword) return clean.slice(0, maxLen) + (clean.length > maxLen ? '...' : '');
+  
+  // 尝试直接匹配（包括原始梵文字母）
   const lower = clean.toLowerCase();
   const kwLower = keyword.toLowerCase();
-  const idx = lower.indexOf(kwLower);
+  let idx = lower.indexOf(kwLower);
+  
+  // 如果直接匹配失败，尝试梵文规范化匹配
+  let useNormalized = false;
+  let normalizedClean = '';
+  if (idx === -1) {
+    normalizedClean = normalizeSanskrit(clean);
+    const normalizedKw = normalizeSanskrit(keyword);
+    idx = normalizedClean.indexOf(normalizedKw);
+    if (idx !== -1) useNormalized = true;
+  }
+  
   if (idx === -1) return clean.slice(0, maxLen) + (clean.length > maxLen ? '...' : '');
+
+  const kwLen = useNormalized ? normalizeSanskrit(keyword).length : kwLower.length;
 
   // Try to find the sentence containing the keyword
   // Sentence boundaries: Chinese/English period, exclamation, question mark, newline
   const sentenceEnd = /[.!?\n。！？]/;
   let start = idx;
-  let end = idx + kwLower.length;
+  let end = idx + kwLen;
 
   // Expand backward to find sentence start
   while (start > 0 && !sentenceEnd.test(clean[start - 1])) {
@@ -103,9 +143,9 @@ function extractPreview(text: string, keyword: string, maxLen = 120): string {
 
   // If snippet is too long, extract centered window around keyword
   if (snippet.length > maxLen) {
-    const halfLen = Math.floor((maxLen - kwLower.length) / 2);
+    const halfLen = Math.floor((maxLen - kwLen) / 2);
     const s = Math.max(0, idx - halfLen);
-    const e = Math.min(clean.length, idx + kwLower.length + halfLen);
+    const e = Math.min(clean.length, idx + kwLen + halfLen);
     snippet = clean.slice(s, e);
     if (s > 0) snippet = '...' + snippet;
     if (e < clean.length) snippet = snippet + '...';
@@ -116,15 +156,42 @@ function extractPreview(text: string, keyword: string, maxLen = 120): string {
   return snippet;
 }
 
-// 高亮文本中的关键词（大小写不敏感）
+// 高亮文本中的关键词（大小写不敏感 + 梵文规范化匹配）
 // 使用 span 而不是 mark，避免 Tailwind/浏览器默认 mark 样式干扰
 function highlightText(text: string, keyword: string): string {
   if (!keyword || !text) return text;
-  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(
-    new RegExp(escaped, 'gi'),
-    match => `<span style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${match}</span>`
-  );
+  
+  // 先尝试直接匹配（包括原始梵文字母）
+  const escapedDirect = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const directRegex = new RegExp(escapedDirect, 'gi');
+  if (directRegex.test(text)) {
+    return text.replace(
+      new RegExp(escapedDirect, 'gi'),
+      match => `<span style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${match}</span>`
+    );
+  }
+  
+  // 梵文规范化匹配：逐字扫描，找到匹配的原始字符串并高亮
+  const normalizedKw = normalizeSanskrit(keyword);
+  if (!normalizedKw) return text;
+  
+  let result = '';
+  let i = 0;
+  const normalizedText = normalizeSanskrit(text);
+  
+  while (i < text.length) {
+    if (normalizedText.slice(i, i + normalizedKw.length) === normalizedKw) {
+      const original = text.slice(i, i + normalizedKw.length);
+      result += `<span style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${original}</span>`;
+      i += normalizedKw.length;
+    } else {
+      result += text[i];
+      i++;
+    }
+  }
+  
+  // 如果没有任何匹配，返回原始文本
+  return result === text ? text : result;
 }
 
 // SB has 12 cantos, each loaded individually during search
@@ -271,8 +338,18 @@ export default function SearchPage({
   const [history, setHistory] = useState<string[]>(getHistory);
   const [editMode, setEditMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<number>>(new Set());
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sbAllSectionsRef = useRef<Record<string, unknown>>({});
+
+  // 监听滚动，超过 300px 时显示回到顶部浮标
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Progress tracking for search loading
   const [loadProgresses, setLoadProgresses] = useState<LoadProgress[]>([]);
@@ -350,11 +427,21 @@ export default function SearchPage({
   }, [loadCantoWithProgress]);
 
   // Helper: search BG data
-  // 支持：中文关键词搜中文字段，英文关键词搜英文字段，两者都搜
+  // 支持：中文关键词搜中文字段，英文关键词搜英文字段，梵文规范化匹配（uvaca 能匹配 uvāca）
+  // 关键词命中词义字段时，预览优先从词义字段截取
   const searchBG = useCallback((keyword: string, q: string): SearchResult[] => {
     if (!bgData) return [];
     const found: SearchResult[] = [];
     const kwLower = keyword.toLowerCase();
+    const kwNorm = normalizeSanskrit(keyword);
+    
+    // 辅助函数：检查文本是否包含关键词（支持梵文规范化）
+    const textContainsKw = (text: string): boolean => {
+      if (!text) return false;
+      if (text.toLowerCase().includes(kwLower)) return true;
+      return normalizeSanskrit(text).includes(kwNorm);
+    };
+    
     for (const [chIdStr, sections] of Object.entries(bgData.sections)) {
       const chId = parseInt(chIdStr);
       (sections as Array<{
@@ -362,47 +449,55 @@ export default function SearchPage({
         yw_zh: string | null; yw_en: string | null;
         yz_zh: string | null; yz_en: string | null;
         words_zh_fc: string | null; words_en_fc: string | null;
+        ldw_fd: string | null;  // 梵文原文（BG）
       }>).forEach((section, idx) => {
         const zhText = [section.yw_zh, section.yz_zh, section.words_zh_fc].filter(Boolean).join(' ');
-        const enText = [section.yw_en, section.yz_en, section.words_en_fc].filter(Boolean).join(' ');
-        const searchText = (zhText + ' ' + enText).toLowerCase();
-
-        if (searchText.includes(kwLower)) {
-          // 根据语言和关键词匹配情况选择预览文本
-          // 如果中文模式：优先中文预览，但如果关键词在英文中，也用中文预览（显示对应内容）
-          let rawPreview: string;
-          if (language === 'zh') {
-            rawPreview = section.yw_zh || section.yz_zh || section.yw_en || '';
-          } else {
-            rawPreview = section.yw_en || section.yz_en || '';
-          }
-          // 如果选定语言的预览文本中没有关键词，尝试用另一语言的预览
-          const previewLower = rawPreview.toLowerCase();
-          if (!previewLower.includes(kwLower)) {
-            // 关键词在另一语言字段中，用包含关键词的字段做预览
-            const altPreview = language === 'zh'
-              ? (section.yw_en || section.yz_en || '')
-              : (section.yw_zh || section.yz_zh || '');
-            if (altPreview.toLowerCase().includes(kwLower)) {
-              rawPreview = altPreview;
-            }
-          }
-          found.push({
-            bookType: 'bg',
-            chapterId: chId,
-            sectionIndex: idx,
-            sectionId: String(section.section_id),
-            label: formatSectionLabel('bg', section.section_id, language),
-            preview: extractPreview(rawPreview, q, 100),
-            searchKeyword: q.trim(),
-          });
-        }
+        const enText = [section.yw_en, section.yz_en, section.words_en_fc, section.ldw_fd].filter(Boolean).join(' ');
+        const allText = zhText + ' ' + enText;
+        
+        if (!textContainsKw(allText)) return;
+        
+        // 选择预览字段：优先选择包含关键词的字段
+        // 选择顺序：词义字段 > 梵文原文 > 当前语言译文 > 当前语言要旨 > 另一语言译文
+        const candidates = language === 'zh'
+          ? [
+              section.words_zh_fc,  // 中文词义
+              section.words_en_fc,  // 英文词义（梵文匹配时用）
+              section.ldw_fd,       // 梵文原文
+              section.yw_zh,        // 中文译文
+              section.yz_zh,        // 中文要旨
+              section.yw_en,        // 英文译文
+              section.yz_en,        // 英文要旨
+            ]
+          : [
+              section.words_en_fc,  // 英文词义
+              section.words_zh_fc,  // 中文词义
+              section.ldw_fd,       // 梵文原文
+              section.yw_en,        // 英文译文
+              section.yz_en,        // 英文要旨
+              section.yw_zh,        // 中文译文
+              section.yz_zh,        // 中文要旨
+            ];
+        
+        // 找到第一个包含关键词的字段作为预览
+        let rawPreview = candidates.find(c => c && textContainsKw(c)) || candidates.find(Boolean) || '';
+        
+        found.push({
+          bookType: 'bg',
+          chapterId: chId,
+          sectionIndex: idx,
+          sectionId: String(section.section_id),
+          label: formatSectionLabel('bg', section.section_id, language),
+          preview: extractPreview(rawPreview, q, 100),
+          searchKeyword: q.trim(),
+        });
       });
     }
     return found;
   }, [bgData, language]);
 
   // Helper: search SB data
+  // 支持梵文规范化匹配，词义字段优先预览
   const searchSB = useCallback(async (keyword: string, q: string): Promise<SearchResult[]> => {
     const allSections = await loadAllSBForSearch() as Record<string, Array<{
       id: number; section_id: string;
@@ -412,40 +507,61 @@ export default function SearchPage({
     }>>;
     const found: SearchResult[] = [];
     const kwLower = keyword.toLowerCase();
+    const kwNorm = normalizeSanskrit(keyword);
+    
+    const textContainsKw = (text: string): boolean => {
+      if (!text) return false;
+      if (text.toLowerCase().includes(kwLower)) return true;
+      return normalizeSanskrit(text).includes(kwNorm);
+    };
+    
     if (sbIndex) {
       for (const chapter of sbIndex.chapters) {
-        const sections = allSections[String(chapter.id)] || [];
+        const sections = allSections[String(chapter.id)] as Array<{
+          id: number; section_id: string;
+          yw_zh: string | null; yw_en: string | null;
+          yz_zh: string | null; yz_en: string | null;
+          words_zh_fc: string | null; words_en_fc: string | null;
+          ldw: string | null;  // 梵文原文（SB）
+        }> || [];
         sections.forEach((section, idx) => {
           const zhText = [section.yw_zh, section.yz_zh, section.words_zh_fc].filter(Boolean).join(' ');
-          const enText = [section.yw_en, section.yz_en, section.words_en_fc].filter(Boolean).join(' ');
-          const searchText = (zhText + ' ' + enText).toLowerCase();
-
-          if (searchText.includes(kwLower)) {
-            let rawPreview: string;
-            if (language === 'zh') {
-              rawPreview = section.yw_zh || section.yz_zh || section.yw_en || '';
-            } else {
-              rawPreview = section.yw_en || section.yz_en || '';
-            }
-            const previewLower = rawPreview.toLowerCase();
-            if (!previewLower.includes(kwLower)) {
-              const altPreview = language === 'zh'
-                ? (section.yw_en || section.yz_en || '')
-                : (section.yw_zh || section.yz_zh || '');
-              if (altPreview.toLowerCase().includes(kwLower)) {
-                rawPreview = altPreview;
-              }
-            }
-            found.push({
-              bookType: 'sb',
-              chapterId: chapter.id,
-              sectionIndex: idx,
-              sectionId: section.section_id,
-              label: formatSectionLabel('sb', section.section_id, language),
-              searchKeyword: q.trim(),
-              preview: extractPreview(rawPreview, q, 100),
-            });
-          }
+          const enText = [section.yw_en, section.yz_en, section.words_en_fc, section.ldw].filter(Boolean).join(' ');
+          const allText = zhText + ' ' + enText;
+          
+          if (!textContainsKw(allText)) return;
+          
+          const candidates = language === 'zh'
+            ? [
+                section.words_zh_fc,  // 中文词义
+                section.words_en_fc,  // 英文词义
+                section.ldw,          // 梵文原文
+                section.yw_zh,        // 中文译文
+                section.yz_zh,        // 中文要旨
+                section.yw_en,        // 英文译文
+                section.yz_en,        // 英文要旨
+              ]
+            : [
+                section.words_en_fc,  // 英文词义
+                section.words_zh_fc,  // 中文词义
+                section.ldw,          // 梵文原文
+                section.yw_en,        // 英文译文
+                section.yz_en,        // 英文要旨
+                section.yw_zh,        // 中文译文
+                section.yz_zh,        // 中文要旨
+              ];
+          
+          const rawPreview = candidates.find(c => c && textContainsKw(c)) || candidates.find(Boolean) || '';
+          
+          found.push({
+            bookType: 'sb',
+            chapterId: chapter.id,
+            sectionIndex: idx,
+            sectionId: section.section_id,
+            label: formatSectionLabel('sb', section.section_id, language),
+            searchKeyword: q.trim(),
+            preview: extractPreview(rawPreview, q, 100),
+          });
         });
       }
     }
@@ -1058,6 +1174,36 @@ export default function SearchPage({
             </div>
           )}
         </div>
+      )}
+
+      {/* 回到顶部浮标按鈕 */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="回到顶部"
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            right: '16px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: isDark ? 'rgba(26,37,53,0.92)' : 'rgba(255,255,255,0.92)',
+            border: `1px solid ${isDark ? '#2a3a50' : '#d0dde8'}`,
+            boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 12px rgba(74,127,165,0.18)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 150,
+            color: labelColor,
+            fontSize: '18px',
+            lineHeight: 1,
+            transition: 'opacity 0.2s',
+          }}
+        >
+          ↑
+        </button>
       )}
     </div>
   );

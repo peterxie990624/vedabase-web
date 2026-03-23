@@ -34,9 +34,9 @@ type Route =
 
 // ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
 
-function routeToHash(route: Route, tab: TabType): string {
+function routeToHash(route: Route, tab: TabType, searchQuery?: string): string {
   if (tab === 'bookmarks') return '#/bookmarks';
-  if (tab === 'search') return '#/search';
+  if (tab === 'search') return searchQuery ? `#/search?q=${encodeURIComponent(searchQuery)}` : '#/search';
   if (tab === 'calendar') return '#/calendar';
 
   switch (route.page) {
@@ -261,15 +261,16 @@ function VedabaseApp() {
   // 当有 overlayRoute 时，currentRoute 指向 overlay 中的路由
   const currentRoute = overlayRoute ? overlayRoute.route : routeStack[routeStack.length - 1];
 
-  // ─── 会话持久化：每次状态变化时保存当前位置 ─────────────────────────────
+  // ─── 会话持久化：每次状态变化时保存当前位置 ──────────────────────────────────────────────────────────────────
   useEffect(() => {
+    const searchQuery = (activeTab === 'search' && searchState.searched) ? searchState.query : undefined;
     const hash = overlayRoute
       ? routeToHash(overlayRoute.route, 'bookshelf')
-      : routeToHash(currentRoute, activeTab);
+      : routeToHash(currentRoute, activeTab, searchQuery);
     saveSession(activeTab, hash);
-  }, [currentRoute, activeTab, overlayRoute]);
+  }, [currentRoute, activeTab, overlayRoute, searchState.searched, searchState.query]);
 
-  // ─── 会话恢复：页面加载时检查上次位置 ──────────────────────────────────
+  // ─── 会话恢复：页面加载时检查上次位置 ──────────────────────────────────────────────
   // （仅在初始 hash 为根路径时才恢复，避免覆盖直接链接跳转）
   useEffect(() => {
     const currentHash = window.location.hash || '#/';
@@ -490,11 +491,13 @@ function VedabaseApp() {
     }
   }, [openSectionFromNonBookshelf]);
 
-  // 从搜索进入阅读页：使用 overlay，不切换 activeTab，返回时回到搜索页
+  // 从搜索进入阅读页：使用 overlay，切换 activeTab 到书架（显示书架tab激活），返回时回到搜索页
   const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string; resultIdx?: number; scrollTop?: number }) => {
     // 记录点击的结果索引和当前滚动位置（返回时恢复）
     if (result.resultIdx !== undefined) setSearchLastClickedIdx(result.resultIdx);
     if (result.scrollTop !== undefined) setSearchScrollTop(result.scrollTop);
+    // 切换到书架 tab（显示书架激活），overlay 记录 returnTab 为 search（返回时切回搜索页）
+    setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
       setOverlayRoute({
         route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword },
