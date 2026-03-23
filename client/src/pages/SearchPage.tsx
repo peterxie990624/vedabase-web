@@ -116,12 +116,13 @@ function extractPreview(text: string, keyword: string, maxLen = 120): string {
 }
 
 // 高亮文本中的关键词（大小写不敏感）
+// 使用 span 而不是 mark，避免 Tailwind/浏览器默认 mark 样式干扰
 function highlightText(text: string, keyword: string): string {
   if (!keyword || !text) return text;
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return text.replace(
     new RegExp(escaped, 'gi'),
-    match => `<mark class="search-highlight" style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:600">${match}</mark>`
+    match => `<span style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${match}</span>`
   );
 }
 
@@ -233,9 +234,13 @@ export default function SearchPage({
 
     // 使用 requestAnimationFrame 确保 DOM 已渲染
     requestAnimationFrame(() => {
-      // 如果有上次点击的条目，滚动到该条目（让它在屏幕顶部）
+      // 如果有上次点击的条目，滚动到该条目（让它在屏幕顶部，减去56px固定导航栏高度）
       if (lastClickedIdx !== null && lastClickedIdx >= 0 && resultItemRefs.current[lastClickedIdx]) {
-        resultItemRefs.current[lastClickedIdx]?.scrollIntoView({ block: 'start', behavior: 'instant' });
+        const el = resultItemRefs.current[lastClickedIdx];
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 56 - 8;
+          window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+        }
       } else if (savedScrollTop > 0) {
         // 否则恢复上次滚动位置
         window.scrollTo({ top: savedScrollTop, behavior: 'instant' });

@@ -11,6 +11,7 @@ import { preloadBGData, preloadSBIndex } from '../hooks/useData';
 
 interface BookshelfPageProps {
   onSelectBook: (bookId: string) => void;
+  onContinueReading?: (bookId: string) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   fontSize: FontSize;
@@ -55,6 +56,7 @@ const books = [
 
 export default function BookshelfPage({
   onSelectBook,
+  onContinueReading,
   language,
   setLanguage,
   fontSize,
@@ -65,8 +67,34 @@ export default function BookshelfPage({
   const [showAbout, setShowAbout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
-  // 封面图加载状态
+  // 封面图加载状态（整个书卡等图片加载完再显示）
   const [coverLoaded, setCoverLoaded] = useState<Record<string, boolean>>({});
+  // 上次阅读记录
+  const [lastReading, setLastReading] = useState<{ bookId: string; label: string } | null>(null);
+
+  useEffect(() => {
+    // 检查是否有上次阅读记录
+    const bgProgress = localStorage.getItem('vedabase_progress_bg');
+    const sbProgress = localStorage.getItem('vedabase_progress_sb');
+    if (bgProgress) {
+      try {
+        const { chapterId, sectionIndex } = JSON.parse(bgProgress);
+        if (chapterId !== undefined && sectionIndex !== undefined) {
+          setLastReading({ bookId: 'bg', label: `BG ${chapterId}.${sectionIndex + 1}` });
+          return;
+        }
+      } catch {}
+    }
+    if (sbProgress) {
+      try {
+        const { chapterId, sectionIndex } = JSON.parse(sbProgress);
+        if (chapterId !== undefined && sectionIndex !== undefined) {
+          setLastReading({ bookId: 'sb', label: `SB c${chapterId}/${sectionIndex + 1}` });
+          return;
+        }
+      } catch {}
+    }
+  }, []);
   // 开发模式：长按"关于"按钮激活
   const aboutLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -379,6 +407,43 @@ export default function BookshelfPage({
 
       {/* Books list */}
       <div style={{ padding: '16px' }}>
+        {/* 回到上次阅读按钮 */}
+        {lastReading && onContinueReading && (
+          <button
+            onClick={() => onContinueReading(lastReading.bookId)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              width: '100%',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              background: isDark ? 'rgba(200,168,75,0.1)' : 'rgba(74,127,165,0.08)',
+              border: `1.5px solid ${isDark ? 'rgba(200,168,75,0.3)' : 'rgba(74,127,165,0.2)'}`,
+              borderRadius: '10px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(200,168,75,0.18)' : 'rgba(74,127,165,0.14)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(200,168,75,0.1)' : 'rgba(74,127,165,0.08)';
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>📖</span>
+            <div>
+              <div style={{ fontSize: '12px', color: textSecondary, marginBottom: '2px' }}>
+                {isEn ? 'Continue reading' : '继续上次阅读'}
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: isDark ? '#e8d5a3' : '#2e6fa0' }}>
+                {lastReading.label}
+              </div>
+            </div>
+            <ChevronRight size={16} style={{ marginLeft: 'auto', color: isDark ? '#c8a84b' : '#4a7fa5' }} />
+          </button>
+        )}
         <div style={{ color: textSecondary, fontSize: '0.85rem', marginBottom: '12px', fontWeight: 500 }}>
           {isEn ? 'Bookshelf / 书架' : '书架'}
         </div>
@@ -395,7 +460,9 @@ export default function BookshelfPage({
               boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(74,127,165,0.1)',
               cursor: 'pointer',
               display: 'flex',
-              transition: 'transform 0.15s, box-shadow 0.15s',
+              // 整个书卡等封面图加载完再显示（避免图片闪烁）
+              opacity: coverLoaded[book.id] ? 1 : 0,
+              transition: 'opacity 0.3s ease, transform 0.15s, box-shadow 0.15s',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
@@ -408,15 +475,6 @@ export default function BookshelfPage({
           >
             {/* Cover image */}
             <div style={{ width: '80px', minHeight: '100px', flexShrink: 0, overflow: 'hidden', background: isDark ? '#1a2535' : '#e8f0f8', position: 'relative' }}>
-              {/* 占位符：加载完成前显示 */}
-              {!coverLoaded[book.id] && (
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isDark ? '#1a2535' : '#e8f0f8',
-                  fontSize: '24px',
-                }} />
-              )}
               <img
                 src={book.cover}
                 alt={book.zhName}
@@ -425,8 +483,6 @@ export default function BookshelfPage({
                 style={{
                   width: '80px', height: '100%', minHeight: '100px',
                   objectFit: 'cover', display: 'block',
-                  opacity: coverLoaded[book.id] ? 1 : 0,
-                  transition: 'opacity 0.3s ease',
                 }}
               />
             </div>

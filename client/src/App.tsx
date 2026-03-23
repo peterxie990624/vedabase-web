@@ -18,6 +18,7 @@ import type { SearchState } from './pages/SearchPage';
 import CalendarPage from './pages/CalendarPage';
 import { useSettings } from './hooks/useSettings';
 import type { TabType, Bookmark } from './types';
+import { Info, X } from 'lucide-react';
 
 // Route types
 type Route =
@@ -157,12 +158,59 @@ function hashToState(hash: string): { stack: Route[]; tab: TabType } {
   return { stack: [{ page: 'home' }], tab: 'bookshelf' };
 }
 
+// ─── Session restore key ─────────────────────────────────────────────────────
+const SESSION_KEY = 'vedabase_session';
+
+interface SessionData {
+  tab: TabType;
+  hash: string;
+  timestamp: number;
+}
+
+function saveSession(tab: TabType, hash: string) {
+  const data: SessionData = { tab, hash, timestamp: Date.now() };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+function loadSession(): SessionData | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SessionData;
+  } catch { return null; }
+}
+
 // ─── Dev mode detection ──────────────────────────────────────────────────────
-// Dev mode is activated by entering the password "vedadev" in the app
-// (stored in localStorage as 'vedabase_devmode')
 function isDevMode(): boolean {
   return localStorage.getItem('vedabase_devmode') === 'true' || import.meta.env.DEV;
 }
+
+// 开发模式功能说明
+const DEV_MODE_FEATURES = `开发模式功能说明（开发/测试模式合并）
+
+【开发模式专有功能】
+• 全局浮动 DEV 圆钮（右下角，始终显示）
+• 搜索页：详细加载进度、数据来源标记
+• 搜索页：无结果时显示加载进度详情
+• 阅读页：错误时显示 DevPanel（资源状态、环境信息）
+• 激活方式：书架页"设置"菜单中长按"关于"按钮3秒
+• 关闭方式：再次长按"关于"按钮3秒
+
+【测试工具（点击 DEV 圆钮展开）】
+• 清除上次打开时间戳（测试2小时限时记忆）
+• 查看时间戳状态（距今分钟数）
+• 模拟超时（将时间戳设为2小时前）
+• 清除会话记录（测试关闭重开恢复功能）
+• 查看当前会话状态
+
+【会话恢复功能（生产模式也有）】
+• 关闭网页前自动保存当前位置（tab + 节页路径）
+• 重新打开时恢复到上次位置
+• 书架页显示"回到上次阅读"快捷按钮
+
+【生产模式（默认）】
+• 仅显示用户界面，无调试信息
+• 会话恢复功能正常工作`;
 
 // ─── Main App Component ──────────────────────────────────────────────────────
 
@@ -176,18 +224,17 @@ function VedabaseApp() {
   const [activeTab, setActiveTab] = useState<TabType>(initial.tab);
   const [routeStack, setRouteStack] = useState<Route[]>(initial.stack);
   const [devMode, setDevMode] = useState(isDevMode);
+  const [showDevPanel, setShowDevPanel] = useState(false);
 
   // ─── 书架路由栈：切换 tab 时保留阅读位置 ────────────────────────────────
-  // 用于"从非书架tab切回书架"时恢复阅读位置
   const [bookshelfRouteStack, setBookshelfRouteStack] = useState<Route[]>(
     initial.tab === 'bookshelf' ? initial.stack : [{ page: 'home' }]
   );
 
   // ─── 覆盖路由：书签/搜索进入阅读页时，不切换 activeTab ─────────────────
-  // 这样返回时能正确回到书签/搜索页
   type OverlayRoute = {
     route: Route;
-    returnTab: TabType; // 返回时切回哪个 tab
+    returnTab: TabType;
   };
   const [overlayRoute, setOverlayRoute] = useState<OverlayRoute | null>(null);
 
@@ -214,6 +261,32 @@ function VedabaseApp() {
   // 当有 overlayRoute 时，currentRoute 指向 overlay 中的路由
   const currentRoute = overlayRoute ? overlayRoute.route : routeStack[routeStack.length - 1];
 
+  // ─── 会话持久化：每次状态变化时保存当前位置 ─────────────────────────────
+  useEffect(() => {
+    const hash = overlayRoute
+      ? routeToHash(overlayRoute.route, 'bookshelf')
+      : routeToHash(currentRoute, activeTab);
+    saveSession(activeTab, hash);
+  }, [currentRoute, activeTab, overlayRoute]);
+
+  // ─── 会话恢复：页面加载时检查上次位置 ──────────────────────────────────
+  // （仅在初始 hash 为根路径时才恢复，避免覆盖直接链接跳转）
+  useEffect(() => {
+    const currentHash = window.location.hash || '#/';
+    if (currentHash === '#/' || currentHash === '') {
+      const session = loadSession();
+      if (session && session.hash && session.hash !== '#/') {
+        // 恢复上次位置
+        const restored = hashToState(session.hash);
+        setActiveTab(restored.tab);
+        setRouteStack(restored.stack);
+        if (restored.tab === 'bookshelf') {
+          setBookshelfRouteStack(restored.stack);
+        }
+      }
+    }
+  }, []); // 只在挂载时运行一次
+
   useEffect(() => {
     document.documentElement.setAttribute('data-veda-theme', theme);
     if (theme === 'dark') {
@@ -234,7 +307,6 @@ function VedabaseApp() {
   useEffect(() => {
     // 更新 URL hash（仅用于显示，不驱动路由）
     if (overlayRoute) {
-      // overlay 时 URL 显示阅读页地址，但不影响路由状态
       const hash = routeToHash(overlayRoute.route, 'bookshelf');
       if (window.location.hash !== hash) {
         window.history.replaceState(null, '', hash);
@@ -258,7 +330,7 @@ function VedabaseApp() {
   }, []);
 
   const pop = useCallback(() => {
-    // 如果有 overlay（从书签/搜索进入的阅读页），返回时关闭 overlay 并切回原 tab
+    // 如果有 overlay（从搜索进入的阅读页），返回时关闭 overlay 并切回搜索页
     if (overlayRoute) {
       const returnTab = overlayRoute.returnTab;
       setOverlayRoute(null);
@@ -270,6 +342,15 @@ function VedabaseApp() {
       if (prev.length <= 1) return prev;
       const newStack = prev.slice(0, -1);
       setBookshelfRouteStack(newStack);
+
+      // 如果是从非书架 tab（书签/日历）进入节页，返回到书架首页时切回来源 tab
+      if (newStack.length === 1 && newStack[0].page === 'home' && nonBookshelfSourceTabRef.current) {
+        const returnTab = nonBookshelfSourceTabRef.current;
+        nonBookshelfSourceTabRef.current = null;
+        // 延迟切换，确保路由更新完成后再切 tab
+        setTimeout(() => setActiveTab(returnTab), 0);
+      }
+
       return newStack;
     });
   }, [overlayRoute]);
@@ -283,15 +364,22 @@ function VedabaseApp() {
   }, []);
 
   const handleTabChange = useCallback((tab: TabType) => {
-    // 如果有 overlay，点击任何 tab 都先关闭 overlay
+    // 如果有 overlay（从书签/搜索进入的阅读页），点击任何 tab 都先关闭 overlay
     if (overlayRoute) {
       setOverlayRoute(null);
-      if (tab === overlayRoute.returnTab) {
-        // 点击的就是来源 tab，直接切回
-        setActiveTab(tab);
-        prevTabRef.current = tab;
-        return;
+      // 切换到搜索 tab：始终重置搜索状态回首页
+      if (tab === 'search') {
+        setSearchState(prev => ({ ...prev, searched: false, results: [], query: '' }));
+        setSearchScrollTop(0);
+        setSearchLastClickedIdx(null);
       }
+      setActiveTab(tab);
+      prevTabRef.current = tab;
+      if (tab === 'bookshelf') {
+        // 如果点的是书架，恢复上次书架位置
+        setRouteStack(bookshelfRouteStack);
+      }
+      return;
     }
 
     if (tab === activeTab) {
@@ -309,25 +397,28 @@ function VedabaseApp() {
       return;
     }
 
+    // 切换到搜索 tab：始终重置搜索状态回首页
+    if (tab === 'search') {
+      setSearchState(prev => ({ ...prev, searched: false, results: [], query: '' }));
+      setSearchScrollTop(0);
+      setSearchLastClickedIdx(null);
+    }
+
     const prevTab = prevTabRef.current;
     prevTabRef.current = tab;
     setActiveTab(tab);
 
     if (tab === 'bookshelf') {
       // 从非书架 tab 切回书架：恢复上次阅读位置
-      // 从书架 tab 内部（不可能，因为 tab === activeTab 已处理）
-      // 判断：如果 prevTab 不是 bookshelf，则恢复
       if (prevTab !== 'bookshelf') {
-        // 恢复书架路由栈（包含上次阅读位置）
         setRouteStack(bookshelfRouteStack);
       } else {
-        // 直接点书架 tab（不可能到这里，已在上面 tab === activeTab 处理）
         const newStack: Route[] = [{ page: 'home' }];
         setRouteStack(newStack);
         setBookshelfRouteStack(newStack);
       }
     }
-  }, [activeTab, overlayRoute, bookshelfRouteStack]);
+  }, [activeTab, overlayRoute, bookshelfRouteStack, searchState.selectedBook]);
 
   const handleSelectBook = useCallback((bookId: string) => {
     if (bookId === 'bg') {
@@ -366,40 +457,38 @@ function VedabaseApp() {
       } catch {}
       push({ page: 'sb-cantos' });
     }
-  }, [push]);
+  }, [push]);  // 记录从非书架 tab 进入节页的来源 tab（返回时用）
+  const nonBookshelfSourceTabRef = useRef<TabType | null>(null);
 
-  // 从书签进入阅读页：切换到书架tab，返回时回到书签页
-  // 用户要求：点书签进入节页时tab切到书架，返回时回书签页，再按"上一标签"回进入前的tab
+  // ─── 从非书架 tab 进入节页：切换到书架tab，返回时回原 tab ————————————————————
+  // 适用于：书签页、日历页 进入节页
+  const openSectionFromNonBookshelf = useCallback((
+    route: Route,
+    sourceTab: TabType
+  ) => {
+    setActiveTab('bookshelf');
+    prevTabRef.current = sourceTab; // 记录来源tab
+    nonBookshelfSourceTabRef.current = sourceTab; // 返回时切回该 tab
+    const newStack: Route[] = [{ page: 'home' }, route];
+    setRouteStack(newStack);
+    setBookshelfRouteStack(newStack);
+  }, []); // 从书签进入阅读页
   const handleOpenBookmark = useCallback((bookmark: Bookmark) => {
     const secIdx = bookmark.sectionIndex ?? 0;
     if (bookmark.bookType === 'bg') {
-      // 切换到书架tab，但记录returnTab为bookmarks
-      setActiveTab('bookshelf');
-      prevTabRef.current = 'bookmarks'; // 上一个tab是书签页
-      const newStack: Route[] = [
-        { page: 'home' },
+      openSectionFromNonBookshelf(
         { page: 'bg-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
-      ];
-      setRouteStack(newStack);
-      setBookshelfRouteStack(newStack);
+        'bookmarks'
+      );
     } else if (bookmark.bookType === 'sb') {
-      setActiveTab('bookshelf');
-      prevTabRef.current = 'bookmarks';
-      const newStack: Route[] = [
-        { page: 'home' },
+      openSectionFromNonBookshelf(
         { page: 'sb-read', chapterId: bookmark.chapterId, sectionIndex: secIdx },
-      ];
-      setRouteStack(newStack);
-      setBookshelfRouteStack(newStack);
+        'bookmarks'
+      );
     } else if (bookmark.bookType === 'akadasi') {
-      // 爱卡达西书签：切换到书架 tab 并进入爱卡达西页
-      setActiveTab('bookshelf');
-      prevTabRef.current = 'bookmarks';
-      const newStack: Route[] = [{ page: 'home' }, { page: 'akadasi' }];
-      setRouteStack(newStack);
-      setBookshelfRouteStack(newStack);
+      openSectionFromNonBookshelf({ page: 'akadasi' }, 'bookmarks');
     }
-  }, []);
+  }, [openSectionFromNonBookshelf]);
 
   // 从搜索进入阅读页：使用 overlay，不切换 activeTab，返回时回到搜索页
   const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string; resultIdx?: number; scrollTop?: number }) => {
@@ -654,6 +743,9 @@ function VedabaseApp() {
     }
   };
 
+  const isDark = theme === 'dark';
+  const SEARCH_TIME_KEY = 'vedabase_last_search_time';
+
   return (
     <>
       <div
@@ -669,8 +761,175 @@ function VedabaseApp() {
         {renderContent()}
       </div>
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} theme={theme} />
+
+      {/* ─── 全局浮动 DEV 圆钮 ─────────────────────────────────────────── */}
+      {devMode && (
+        <>
+          {/* DEV 圆钮 */}
+          <button
+            onClick={() => setShowDevPanel(v => !v)}
+            title="开发模式工具"
+            style={{
+              position: 'fixed',
+              bottom: '76px', // 在底部导航栏上方
+              right: 'calc(50% - 320px + 12px)', // 在 640px 容器右侧内
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: isDark ? 'rgba(90,216,138,0.15)' : 'rgba(42,138,74,0.1)',
+              border: `2px solid ${isDark ? '#5ad88a' : '#2a8a4a'}`,
+              color: isDark ? '#5ad88a' : '#2a8a4a',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              letterSpacing: '0.02em',
+              boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.15)',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+            }}
+          >
+            DEV
+          </button>
+
+          {/* DEV 面板 */}
+          {showDevPanel && (
+            <div
+              style={{
+                position: 'fixed',
+                bottom: '120px',
+                right: 'calc(50% - 320px + 12px)',
+                width: '280px',
+                background: isDark ? '#1a2535' : '#ffffff',
+                border: `1px solid ${isDark ? '#2a3a50' : '#e0eaf2'}`,
+                borderRadius: '12px',
+                padding: '16px',
+                zIndex: 9998,
+                boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.6)' : '0 8px 32px rgba(0,0,0,0.15)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 700, color: isDark ? '#5ad88a' : '#2a8a4a', fontSize: '13px' }}>
+                  🛠 开发模式工具
+                </span>
+                <button
+                  onClick={() => setShowDevPanel(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: isDark ? '#8aa0b4' : '#6a8aa0', padding: '2px' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* 功能说明按钮 */}
+              <details style={{ marginBottom: '12px' }}>
+                <summary style={{
+                  cursor: 'pointer', fontSize: '12px', color: isDark ? '#8aa0b4' : '#6a8aa0',
+                  display: 'flex', alignItems: 'center', gap: '4px', userSelect: 'none',
+                  listStyle: 'none',
+                }}>
+                  <Info size={12} /> 查看开发模式功能说明
+                </summary>
+                <pre style={{
+                  marginTop: '8px', fontSize: '11px', color: isDark ? '#c0d0e0' : '#444',
+                  whiteSpace: 'pre-wrap', lineHeight: 1.6, fontFamily: 'monospace',
+                  background: isDark ? '#0f1923' : '#f5f7fa',
+                  borderRadius: '6px', padding: '8px',
+                }}>
+                  {DEV_MODE_FEATURES}
+                </pre>
+              </details>
+
+              {/* 测试工具 */}
+              <div style={{ fontSize: '11px', color: isDark ? '#8aa0b4' : '#6a8aa0', marginBottom: '8px', fontWeight: 600 }}>
+                测试工具
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem(SEARCH_TIME_KEY);
+                    alert('已清除上次打开时间戳！\n切换到其他tab再切回搜索，将不会恢复上次搜索状态。');
+                  }}
+                  style={devBtnStyle(isDark)}
+                >
+                  🕐 清除搜索时间戳（测试2h限时记忆）
+                </button>
+                <button
+                  onClick={() => {
+                    const ts = localStorage.getItem(SEARCH_TIME_KEY);
+                    if (ts) {
+                      const diff = Math.round((Date.now() - parseInt(ts)) / 1000 / 60);
+                      alert(`上次搜索时间：${new Date(parseInt(ts)).toLocaleString()}\n距今：${diff} 分钟\n${diff >= 120 ? '（已超过2小时，下次切回会重置）' : '（未超过2小时，切回会恢复）'}`);
+                    } else {
+                      alert('无时间戳记录（从未搜索或已清除）');
+                    }
+                  }}
+                  style={devBtnStyle(isDark)}
+                >
+                  📊 查看搜索时间戳状态
+                </button>
+                <button
+                  onClick={() => {
+                    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000 - 1000;
+                    localStorage.setItem(SEARCH_TIME_KEY, String(twoHoursAgo));
+                    alert('已设置"2小时前"时间戳！\n切换tab再切回搜索，将重置到搜索首页。');
+                  }}
+                  style={devBtnStyle(isDark)}
+                >
+                  ⏩ 模拟搜索超时（设为2h前）
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem(SESSION_KEY);
+                    alert('已清除会话记录！\n刷新页面后将不会恢复上次位置。');
+                  }}
+                  style={devBtnStyle(isDark)}
+                >
+                  🗑 清除会话记录（测试重开恢复）
+                </button>
+                <button
+                  onClick={() => {
+                    const session = loadSession();
+                    if (session) {
+                      const diff = Math.round((Date.now() - session.timestamp) / 1000 / 60);
+                      alert(`当前会话：\nTab: ${session.tab}\nHash: ${session.hash}\n距今：${diff} 分钟`);
+                    } else {
+                      alert('无会话记录');
+                    }
+                  }}
+                  style={devBtnStyle(isDark)}
+                >
+                  📍 查看当前会话状态
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </>
   );
+}
+
+// DEV 面板按钮样式
+function devBtnStyle(isDark: boolean): React.CSSProperties {
+  return {
+    padding: '7px 10px',
+    borderRadius: '6px',
+    border: `1px solid ${isDark ? '#2a3a50' : '#e0eaf2'}`,
+    background: isDark ? '#0f1923' : '#f5f7fa',
+    color: isDark ? '#c0d0e0' : '#444',
+    cursor: 'pointer',
+    fontSize: '11px',
+    textAlign: 'left',
+    width: '100%',
+  };
 }
 
 function App() {
