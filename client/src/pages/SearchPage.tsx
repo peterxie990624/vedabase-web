@@ -605,10 +605,18 @@ export default function SearchPage({
       
       // 7. 检查英文要旨字段
       if (section.yz_en && textContainsKw(section.yz_en)) {
+        // 中文模式下尝试从映射表查询
+        let highlightKeyword = keyword;
+        if (language === 'zh') {
+          const mapped = wordMapping[keyword.toLowerCase()];
+          if (mapped) {
+            highlightKeyword = mapped;
+          }
+        }
         return {
           matchLocation: 'purport',
-          highlightKeyword: keyword,
-          isMissingChinese: false,
+          highlightKeyword: highlightKeyword,
+          isMissingChinese: !wordMapping[keyword.toLowerCase()],
         };
       }
       
@@ -827,10 +835,18 @@ export default function SearchPage({
       
       // 7. 检查英文要旨字段
       if (section.yz_en && textContainsKw(section.yz_en)) {
+        // 中文模式下尝试从映射表查询
+        let highlightKeyword = keyword;
+        if (language === 'zh') {
+          const mapped = wordMapping[keyword.toLowerCase()];
+          if (mapped) {
+            highlightKeyword = mapped;
+          }
+        }
         return {
           matchLocation: 'purport',
-          highlightKeyword: keyword,
-          isMissingChinese: false,
+          highlightKeyword: highlightKeyword,
+          isMissingChinese: !wordMapping[keyword.toLowerCase()],
         };
       }
       
