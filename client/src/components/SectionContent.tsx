@@ -172,7 +172,8 @@ export default function SectionContent({
   };
 
   // Highlight search keyword in text
-  // v2: 支持梵文规范化匹配、多位置高亮
+  // v3: 支持中文直接匹配 + 梵文规范化匹配、多位置高亮
+  // 重要：中文模式下搜英文时，highlightKeyword已被映射为中文，必须用直接匹配
   const highlightText = (html: string, location?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'): string => {
     // 使用highlightKeyword（中文模式下搜英文时会映射到中文），如果没有则使用searchKeyword
     const keyword = highlightKeyword || searchKeyword;
@@ -183,7 +184,8 @@ export default function SectionContent({
       return html;
     }
     
-    // 先尝试直接匹配（包括原始梵文字母）
+    // 先尝试直接匹配（对中文、英文、梵文都有效）
+    // 这是最重要的一步，因为中文关键词无法通过梵文规范化匹配
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const directRegex = new RegExp(escaped, 'gi');
     if (directRegex.test(html)) {
@@ -194,8 +196,9 @@ export default function SectionContent({
     }
     
     // 梵文规范化匹配：逐字扫描，找到匹配的原始字符串并高亮
+    // 注意：对于中文关键词，normalizeSanskrit会返回空字符串，此时直接返回html
     const normalizedKw = normalizeSanskrit(keyword);
-    if (!normalizedKw) return html;
+    if (!normalizedKw) return html;  // 中文关键词无法规范化，返回原始html（直接匹配已失败）
     
     let result = '';
     let i = 0;
