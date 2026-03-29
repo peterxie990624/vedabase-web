@@ -558,22 +558,6 @@ export default function SearchPage({
       
       // 5. 检查英文译文字段
       if (section.yw_en && textContainsKw(section.yw_en)) {
-        // 英文译文命中：中文模式下尝试从中文译文映射
-        if (language === 'zh' && section.yw_zh) {
-          return {
-            matchLocation: 'translation',
-            highlightKeyword: section.yw_zh,
-            isMissingChinese: false,
-          };
-        }
-        // 中文模式搜英文但无中文译文
-        if (language === 'zh') {
-          return {
-            matchLocation: 'translation',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
-        }
         return {
           matchLocation: 'translation',
           highlightKeyword: keyword,
@@ -592,21 +576,6 @@ export default function SearchPage({
       
       // 7. 检查英文要旨字段
       if (section.yz_en && textContainsKw(section.yz_en)) {
-        // 英文要旨命中：中文模式下尝试从中文要旨映射
-        if (language === 'zh' && section.yz_zh) {
-          return {
-            matchLocation: 'purport',
-            highlightKeyword: section.yz_zh,
-            isMissingChinese: false,
-          };
-        }
-        if (language === 'zh') {
-          return {
-            matchLocation: 'purport',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
-        }
         return {
           matchLocation: 'purport',
           highlightKeyword: keyword,
@@ -783,22 +752,6 @@ export default function SearchPage({
       
       // 5. 检查英文译文字段
       if (section.yw_en && textContainsKw(section.yw_en)) {
-        // 英文译文命中：中文模式下尝试从中文译文映射
-        if (language === 'zh' && section.yw_zh) {
-          return {
-            matchLocation: 'translation',
-            highlightKeyword: section.yw_zh,
-            isMissingChinese: false,
-          };
-        }
-        // 中文模式搜英文但无中文译文
-        if (language === 'zh') {
-          return {
-            matchLocation: 'translation',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
-        }
         return {
           matchLocation: 'translation',
           highlightKeyword: keyword,
@@ -817,21 +770,6 @@ export default function SearchPage({
       
       // 7. 检查英文要旨字段
       if (section.yz_en && textContainsKw(section.yz_en)) {
-        // 英文要旨命中：中文模式下尝试从中文要旨映射
-        if (language === 'zh' && section.yz_zh) {
-          return {
-            matchLocation: 'purport',
-            highlightKeyword: section.yz_zh,
-            isMissingChinese: false,
-          };
-        }
-        if (language === 'zh') {
-          return {
-            matchLocation: 'purport',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
-        }
         return {
           matchLocation: 'purport',
           highlightKeyword: keyword,
