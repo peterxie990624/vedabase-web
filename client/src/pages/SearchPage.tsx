@@ -23,6 +23,8 @@ export interface SearchResult {
   searchKeyword?: string;
   // 中英文映射和多位置高亮支持
   highlightKeyword?: string;  // 要高亮的关键词（中文优先，英文次之）
+  highlightKeywordZh?: string;  // 中文高亮关键词（用于中文模式）
+  highlightKeywordEn?: string;  // 英文高亮关键词（用于英文模式）
   matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'; // 关键词匹配的位置
   isMissingChinese?: boolean; // 是否中文翻译缺失（用于显示标记）
 }
@@ -489,9 +491,12 @@ export default function SearchPage({
     };
     
     // 辅助函数：确定匹配位置和高亮关键词
+    // 返回中英文两个高亮关键词，以便中英文切换时能正常高亮
     const getMatchInfo = (section: any): {
       matchLocation: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport';
-      highlightKeyword: string;
+      highlightKeyword: string;  // 向后兼容：优先使用中文
+      highlightKeywordZh: string;  // 中文高亮关键词
+      highlightKeywordEn: string;  // 英文高亮关键词
       isMissingChinese: boolean;
     } | null => {
       // 优先级顺序：词义 > 梵文 > 译文 > 要旨
@@ -501,13 +506,15 @@ export default function SearchPage({
         return {
           matchLocation: 'wordmeaning',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
       
       // 2. 检查英文词义字段
       if (section.words_en_fc && textContainsKw(section.words_en_fc)) {
-        // 中文模式搜英文：使用映射表查询对应的中文词汇
+        // 中文模式掐英文：使用映射表查询对应的中文词汇
         if (language === 'zh' && isEnKeyword) {
           // 先尝试直接查询映射表
           const mappedZhWord = (wordMapping as Record<string, string>)[kwLower];
@@ -515,6 +522,8 @@ export default function SearchPage({
             return {
               matchLocation: 'wordmeaning',
               highlightKeyword: mappedZhWord,
+              highlightKeywordZh: mappedZhWord,
+              highlightKeywordEn: keyword,
               isMissingChinese: false,
             };
           }
@@ -540,6 +549,8 @@ export default function SearchPage({
               return {
                 matchLocation: 'wordmeaning',
                 highlightKeyword: matchedZhWord,
+                highlightKeywordZh: matchedZhWord,
+                highlightKeywordEn: keyword,
                 isMissingChinese: false,
               };
             }
@@ -549,29 +560,37 @@ export default function SearchPage({
           return {
             matchLocation: 'wordmeaning',
             highlightKeyword: keyword,
+            highlightKeywordZh: keyword,
+            highlightKeywordEn: keyword,
             isMissingChinese: true,
           };
         }
         return {
           matchLocation: 'wordmeaning',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
       
-      // 3. 检查梵文字段
+      // 3. 检查梅文字段
       if (section.ldw_fd && textContainsKw(section.ldw_fd)) {
-        // 梵文命中：中文模式下尝试从中文译文映射
+        // 梅文命中：中文模式下尝试从中文译文映射
         if (language === 'zh' && section.yw_zh) {
           return {
             matchLocation: 'sanskrit',
             highlightKeyword: section.yw_zh,
+            highlightKeywordZh: section.yw_zh,
+            highlightKeywordEn: keyword,
             isMissingChinese: false,
           };
         }
         return {
           matchLocation: 'sanskrit',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
@@ -581,6 +600,8 @@ export default function SearchPage({
         return {
           matchLocation: 'translation',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
@@ -590,6 +611,8 @@ export default function SearchPage({
         return {
           matchLocation: 'translation',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
@@ -599,6 +622,8 @@ export default function SearchPage({
         return {
           matchLocation: 'purport',
           highlightKeyword: keyword,
+          highlightKeywordZh: keyword,
+          highlightKeywordEn: keyword,
           isMissingChinese: false,
         };
       }
@@ -606,16 +631,18 @@ export default function SearchPage({
       // 7. 检查英文要旨字段
       if (section.yz_en && textContainsKw(section.yz_en)) {
         // 中文模式下尝试从映射表查询
-        let highlightKeyword = keyword;
+        let highlightKeywordZh = keyword;
         if (language === 'zh') {
           const mapped = wordMapping[keyword.toLowerCase()];
           if (mapped) {
-            highlightKeyword = mapped;
+            highlightKeywordZh = mapped;
           }
         }
         return {
           matchLocation: 'purport',
-          highlightKeyword: highlightKeyword,
+          highlightKeyword: highlightKeywordZh,
+          highlightKeywordZh: highlightKeywordZh,
+          highlightKeywordEn: keyword,
           isMissingChinese: !wordMapping[keyword.toLowerCase()],
         };
       }

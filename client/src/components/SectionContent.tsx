@@ -13,7 +13,9 @@ interface SectionContentProps {
   onShare?: () => void;
   searchKeyword?: string;
   // Phase 2: 多位置高亮支持
-  highlightKeyword?: string;  // 要高亮的关键词（可能与searchKeyword不同）
+  highlightKeyword?: string;  // 要高亮的关键词（可能与 searchKeyword 不同）
+  highlightKeywordZh?: string;  // 中文高亮关键词（用于中文模式）
+  highlightKeywordEn?: string;  // 英文高亮关键词（用于英文模式）
   matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'; // 关键词匹配的位置
 }
 
@@ -172,11 +174,13 @@ export default function SectionContent({
   };
 
   // Highlight search keyword in text
-  // v3: 支持中文直接匹配 + 梵文规范化匹配、多位置高亮
-  // 重要：中文模式下搜英文时，highlightKeyword已被映射为中文，必须用直接匹配
+  // v4: 支持中英文切换时的高亮
+  // 重要：根据当前语言模式选择对应的高亮关键词
   const highlightText = (html: string, location?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'): string => {
-    // 使用highlightKeyword（中文模式下搜英文时会映射到中文），如果没有则使用searchKeyword
-    const keyword = highlightKeyword || searchKeyword;
+    // 根据当前语言选择对应的高亮关键词
+    let keyword = language === 'zh' ? highlightKeywordZh : highlightKeywordEn;
+    // 如果没有特定语言的高亮关键词，使用通用的
+    if (!keyword) keyword = highlightKeyword || searchKeyword;
     if (!keyword) return html;
     
     // 如果指定了matchLocation，只在匹配的位置高亮

@@ -547,6 +547,8 @@ function VedabaseApp() {
           devMode={devMode}
           searchKeyword={(route as any).searchKeyword}
           highlightKeyword={(route as any).highlightKeyword}
+          highlightKeywordZh={(route as any).highlightKeywordZh}
+          highlightKeywordEn={(route as any).highlightKeywordEn}
           matchLocation={(route as any).matchLocation}
         />
       );
@@ -594,6 +596,8 @@ function VedabaseApp() {
           devMode={devMode}
           searchKeyword={(route as any).searchKeyword}
           highlightKeyword={(route as any).highlightKeyword}
+          highlightKeywordZh={(route as any).highlightKeywordZh}
+          highlightKeywordEn={(route as any).highlightKeywordEn}
           matchLocation={(route as any).matchLocation}
         />
       );

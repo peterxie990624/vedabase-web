@@ -25,6 +25,8 @@ interface BGReadPageProps {
   searchKeyword?: string;
   // Phase 2: 多位置高亮支持
   highlightKeyword?: string;
+  highlightKeywordZh?: string;  // 中文高亮关键词
+  highlightKeywordEn?: string;  // 英文高亮关键词
   matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport';
 }
 
@@ -46,6 +48,8 @@ export default function BGReadPage({
   onGoToChapter,
   searchKeyword,
   highlightKeyword,
+  highlightKeywordZh,
+  highlightKeywordEn,
   matchLocation,
 }: BGReadPageProps) {
   const { data, loading, error } = useBGData();
@@ -268,6 +272,8 @@ export default function BGReadPage({
           onShare={handleShare}
           searchKeyword={searchKeyword}
           highlightKeyword={highlightKeyword}
+          highlightKeywordZh={highlightKeywordZh}
+          highlightKeywordEn={highlightKeywordEn}
           matchLocation={matchLocation}
         />
       </div>
