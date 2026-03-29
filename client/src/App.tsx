@@ -25,11 +25,11 @@ type Route =
   | { page: 'home' }
   | { page: 'bg-chapters' }
   | { page: 'bg-sections'; chapterId: number }
-  | { page: 'bg-read'; chapterId: number; sectionIndex: number; searchKeyword?: string }
+  | { page: 'bg-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
   | { page: 'sb-cantos' }
   | { page: 'sb-chapters'; cantoId: number }
   | { page: 'sb-sections'; chapterId: number }
-  | { page: 'sb-read'; chapterId: number; sectionIndex: number; searchKeyword?: string }
+  | { page: 'sb-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
   | { page: 'akadasi'; selectedId?: number };
 
 // ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
@@ -482,7 +482,7 @@ function VedabaseApp() {
   }, [openSectionFromNonBookshelf]);
 
   // 从搜索进入阅读页：使用 overlay，切换 activeTab 到书架（显示书架tab激活），返回时回到搜索页
-  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string; resultIdx?: number; scrollTop?: number }) => {
+  const handleSearchResult = useCallback((result: { bookType: 'bg' | 'sb'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'; resultIdx?: number; scrollTop?: number }) => {
     // 记录点击的结果索引和当前滚动位置（返回时恢复）
     if (result.resultIdx !== undefined) setSearchLastClickedIdx(result.resultIdx);
     if (result.scrollTop !== undefined) setSearchScrollTop(result.scrollTop);
@@ -490,12 +490,12 @@ function VedabaseApp() {
     setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
       setOverlayRoute({
-        route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword },
+        route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, matchLocation: result.matchLocation },
         returnTab: 'search',
       });
     } else if (result.bookType === 'sb') {
       setOverlayRoute({
-        route: { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword },
+        route: { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, matchLocation: result.matchLocation },
         returnTab: 'search',
       });
     }
@@ -546,6 +546,8 @@ function VedabaseApp() {
           theme={theme}
           devMode={devMode}
           searchKeyword={(route as any).searchKeyword}
+          highlightKeyword={(route as any).highlightKeyword}
+          matchLocation={(route as any).matchLocation}
         />
       );
     }
@@ -591,6 +593,8 @@ function VedabaseApp() {
           theme={theme}
           devMode={devMode}
           searchKeyword={(route as any).searchKeyword}
+          highlightKeyword={(route as any).highlightKeyword}
+          matchLocation={(route as any).matchLocation}
         />
       );
     }

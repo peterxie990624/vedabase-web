@@ -23,6 +23,9 @@ interface BGReadPageProps {
   devMode?: boolean;
   onGoToChapter?: (chapterId: number) => void;
   searchKeyword?: string;
+  // Phase 2: 多位置高亮支持
+  highlightKeyword?: string;
+  matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport';
 }
 
 const PROGRESS_KEY = 'vedabase_progress_bg';
@@ -42,6 +45,8 @@ export default function BGReadPage({
   devMode = false,
   onGoToChapter,
   searchKeyword,
+  highlightKeyword,
+  matchLocation,
 }: BGReadPageProps) {
   const { data, loading, error } = useBGData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -262,6 +267,8 @@ export default function BGReadPage({
           theme={theme}
           onShare={handleShare}
           searchKeyword={searchKeyword}
+          highlightKeyword={highlightKeyword}
+          matchLocation={matchLocation}
         />
       </div>
 

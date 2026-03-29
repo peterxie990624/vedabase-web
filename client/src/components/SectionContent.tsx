@@ -12,6 +12,9 @@ interface SectionContentProps {
   theme?: VedaTheme;
   onShare?: () => void;
   searchKeyword?: string;
+  // Phase 2: 多位置高亮支持
+  highlightKeyword?: string;  // 要高亮的关键词（可能与searchKeyword不同）
+  matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'; // 关键词匹配的位置
 }
 
 const fontSizePx: Record<FontSize, number> = {
@@ -43,6 +46,29 @@ function parseWordForWord(sanskrit: string, translation: string): Array<{ sk: st
   return result;
 }
 
+// 梵文规范化：将带变音符号的梵文字母转为基本拉丁字母（用于搜索匹配）
+function normalizeSanskrit(text: string): string {
+  return text
+    .replace(/[āàáâãäå]/g, 'a')
+    .replace(/[ēèéêë]/g, 'e')
+    .replace(/[īìíîï]/g, 'i')
+    .replace(/[ōòóôõö]/g, 'o')
+    .replace(/[ūùúûü]/g, 'u')
+    .replace(/[ṭṫ]/g, 't')
+    .replace(/[ḍḋ]/g, 'd')
+    .replace(/[ṇṅñ]/g, 'n')
+    .replace(/[śşš]/g, 's')
+    .replace(/[ṣṡ]/g, 's')
+    .replace(/[ḥḣ]/g, 'h')
+    .replace(/[ṛṝ]/g, 'r')
+    .replace(/[ṁṃṀṂ]/g, 'm')
+    .replace(/[ḷḹ]/g, 'l')
+    .replace(/[čć]/g, 'c')
+    .replace(/[ḏ]/g, 'd')
+    .replace(/[ṯ]/g, 't')
+    .toLowerCase();
+}
+
 function sanitizePurport(html: string): string {
   return html
     .replace(/<script[^>]*>.*?<\/script>/gi, '')
@@ -70,12 +96,14 @@ export default function SectionContent({
   theme = 'light',
   onShare,
   searchKeyword,
+  highlightKeyword,
+  matchLocation,
 }: SectionContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to first highlighted match when searchKeyword is provided
   useEffect(() => {
-    if (!searchKeyword) return;
+    if (!searchKeyword && !highlightKeyword) return;
     const timer = setTimeout(() => {
       const el = contentRef.current;
       if (!el) return;
@@ -85,7 +113,8 @@ export default function SectionContent({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchKeyword]);
+  }, [searchKeyword, highlightKeyword]);
+
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -143,13 +172,48 @@ export default function SectionContent({
   };
 
   // Highlight search keyword in text
-  const highlightText = (html: string): string => {
-    if (!searchKeyword) return html;
-    const escaped = searchKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return html.replace(
-      new RegExp(escaped, 'gi'),
-      match => `<mark class="search-highlight" style="background:#ffd700;color:#1a1a1a;border-radius:2px;padding:0 1px">${match}</mark>`
-    );
+  // v2: 支持梵文规范化匹配、多位置高亮
+  const highlightText = (html: string, location?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'): string => {
+    // 使用highlightKeyword（中文模式下搜英文时会映射到中文），如果没有则使用searchKeyword
+    const keyword = highlightKeyword || searchKeyword;
+    if (!keyword) return html;
+    
+    // 如果指定了matchLocation，只在匹配的位置高亮
+    if (matchLocation && location && matchLocation !== location) {
+      return html;
+    }
+    
+    // 先尝试直接匹配（包括原始梵文字母）
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const directRegex = new RegExp(escaped, 'gi');
+    if (directRegex.test(html)) {
+      return html.replace(
+        new RegExp(escaped, 'gi'),
+        match => `<mark class="search-highlight" style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${match}</mark>`
+      );
+    }
+    
+    // 梵文规范化匹配：逐字扫描，找到匹配的原始字符串并高亮
+    const normalizedKw = normalizeSanskrit(keyword);
+    if (!normalizedKw) return html;
+    
+    let result = '';
+    let i = 0;
+    const normalizedHtml = normalizeSanskrit(html);
+    
+    while (i < html.length) {
+      if (normalizedHtml.slice(i, i + normalizedKw.length) === normalizedKw) {
+        const original = html.slice(i, i + normalizedKw.length);
+        result += `<mark class="search-highlight" style="background:#d4a017;color:#1a1a1a;border-radius:2px;padding:0 2px;font-weight:700;display:inline">${original}</mark>`;
+        i += normalizedKw.length;
+      } else {
+        result += html[i];
+        i++;
+      }
+    }
+    
+    // 如果没有任何匹配，返回原始文本
+    return result === html ? html : result;
   };
 
   return (
@@ -169,9 +233,8 @@ export default function SectionContent({
               lineHeight: 1.9,
               color: isDark ? '#d8d0b8' : undefined,
             }}
-          >
-            {parsedVerse}
-          </pre>
+            dangerouslySetInnerHTML={{ __html: highlightText(parsedVerse, 'sanskrit') }}
+          />
         </div>
       )}
 
@@ -182,13 +245,16 @@ export default function SectionContent({
             <React.Fragment key={i}>
               {pair.sk && (
                 <>
-                  <span className="sanskrit-word" style={isDark ? { color: '#e8c060' } : undefined}>
-                    {pair.sk}
-                  </span>
+                  <span 
+                    className="sanskrit-word" 
+                    style={isDark ? { color: '#e8c060' } : undefined}
+                    dangerouslySetInnerHTML={{ __html: highlightText(pair.sk, 'wordmeaning') }}
+                  />
                   {pair.tr && (
-                    <span style={{ color: isDark ? '#a8b8c8' : 'var(--veda-text)' }}>
-                      {' '}-{pair.tr}{' '}
-                    </span>
+                    <span 
+                      style={{ color: isDark ? '#a8b8c8' : 'var(--veda-text)' }}
+                      dangerouslySetInnerHTML={{ __html: ' -' + highlightText(pair.tr, 'wordmeaning') + ' ' }}
+                    />
                   )}
                 </>
               )}
@@ -213,13 +279,13 @@ export default function SectionContent({
             <div
               className="translation-text"
               style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
-              dangerouslySetInnerHTML={{ __html: highlightText(sanitizePurport(translation)) }}
+              dangerouslySetInnerHTML={{ __html: highlightText(sanitizePurport(translation), 'translation') }}
             />
           ) : (
             <div
               className="translation-text"
               style={{ fontSize: `${fsPx}px`, paddingLeft: '8px', color: isDark ? '#7ab8d8' : undefined }}
-              dangerouslySetInnerHTML={{ __html: highlightText(translation) }}
+              dangerouslySetInnerHTML={{ __html: highlightText(translation, 'translation') }}
             />
           )}
         </div>
@@ -235,7 +301,7 @@ export default function SectionContent({
           <div
             className="purport-text"
             style={{ fontSize: `${fsPx}px`, color: isDark ? '#c0b8a8' : undefined }}
-            dangerouslySetInnerHTML={{ __html: highlightText(cleanPurport) }}
+            dangerouslySetInnerHTML={{ __html: highlightText(cleanPurport, 'purport') }}
           />
         </div>
       )}

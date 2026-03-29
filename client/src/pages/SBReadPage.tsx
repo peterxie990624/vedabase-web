@@ -25,6 +25,9 @@ interface SBReadPageProps {
   devMode?: boolean;
   onGoToCanto?: (cantoId: number) => void;
   searchKeyword?: string;
+  // Phase 2: 多位置高亮支持
+  highlightKeyword?: string;
+  matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport';
 }
 
 const PROGRESS_KEY = 'vedabase_progress_sb';
@@ -44,6 +47,8 @@ export default function SBReadPage({
   devMode = false,
   onGoToCanto,
   searchKeyword,
+  highlightKeyword,
+  matchLocation,
 }: SBReadPageProps) {
   const [progresses, setProgresses] = useState<LoadProgress[]>([]);
   const onProgress = useCallback((p: LoadProgress) => {
@@ -290,6 +295,8 @@ export default function SBReadPage({
           theme={theme}
           onShare={handleShare}
           searchKeyword={searchKeyword}
+          highlightKeyword={highlightKeyword}
+          matchLocation={matchLocation}
         />
       </div>
 
