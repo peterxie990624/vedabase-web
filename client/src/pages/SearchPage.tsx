@@ -507,21 +507,46 @@ export default function SearchPage({
       // 2. 检查英文词义字段
       if (section.words_en_fc && textContainsKw(section.words_en_fc)) {
         // 中文模式搜英文：尝试从中文词义映射
-        if (language === 'zh' && isEnKeyword && section.words_zh_fc) {
-          const zhWords = section.words_zh_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
-          return {
-            matchLocation: 'wordmeaning',
-            highlightKeyword: zhWords[0] || keyword,
-            isMissingChinese: false,
-          };
-        }
-        // 中文模式搜英文但无中文词义 → 标记缺失
         if (language === 'zh' && isEnKeyword) {
-          return {
-            matchLocation: 'wordmeaning',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
+          if (section.words_zh_fc) {
+            // 找到匹配的英文词，然后从中文词义中提取对应的词
+            const enWords = section.words_en_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
+            const zhWords = section.words_zh_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
+            
+            // 找到第一个包含关键词的英文词
+            let matchedZhWord = '';
+            for (let i = 0; i < enWords.length; i++) {
+              const enWord = enWords[i];
+              const enLower = enWord.toLowerCase();
+              const enNorm = normalizeSanskrit(enWord);
+              if (enLower.includes(kwLower) || enNorm.includes(kwNorm)) {
+                matchedZhWord = zhWords[i] || '';
+                break;
+              }
+            }
+            
+            if (matchedZhWord) {
+              return {
+                matchLocation: 'wordmeaning',
+                highlightKeyword: matchedZhWord,
+                isMissingChinese: false,
+              };
+            } else {
+              // 找到了英文但没有对应的中文
+              return {
+                matchLocation: 'wordmeaning',
+                highlightKeyword: keyword,
+                isMissingChinese: true,
+              };
+            }
+          } else {
+            // 中文模式搜英文但无中文词义 → 标记缺失
+            return {
+              matchLocation: 'wordmeaning',
+              highlightKeyword: keyword,
+              isMissingChinese: true,
+            };
+          }
         }
         return {
           matchLocation: 'wordmeaning',
@@ -701,21 +726,46 @@ export default function SearchPage({
       // 2. 检查英文词义字段
       if (section.words_en_fc && textContainsKw(section.words_en_fc)) {
         // 中文模式搜英文：尝试从中文词义映射
-        if (language === 'zh' && isEnKeyword && section.words_zh_fc) {
-          const zhWords = section.words_zh_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
-          return {
-            matchLocation: 'wordmeaning',
-            highlightKeyword: zhWords[0] || keyword,
-            isMissingChinese: false,
-          };
-        }
-        // 中文模式搜英文但无中文词义 → 标记缺失
         if (language === 'zh' && isEnKeyword) {
-          return {
-            matchLocation: 'wordmeaning',
-            highlightKeyword: keyword,
-            isMissingChinese: true,
-          };
+          if (section.words_zh_fc) {
+            // 找到匹配的英文词，然后从中文词义中提取对应的词
+            const enWords = section.words_en_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
+            const zhWords = section.words_zh_fc.split(';').map((s: string) => s.trim()).filter(Boolean);
+            
+            // 找到第一个包含关键词的英文词
+            let matchedZhWord = '';
+            for (let i = 0; i < enWords.length; i++) {
+              const enWord = enWords[i];
+              const enLower = enWord.toLowerCase();
+              const enNorm = normalizeSanskrit(enWord);
+              if (enLower.includes(kwLower) || enNorm.includes(kwNorm)) {
+                matchedZhWord = zhWords[i] || '';
+                break;
+              }
+            }
+            
+            if (matchedZhWord) {
+              return {
+                matchLocation: 'wordmeaning',
+                highlightKeyword: matchedZhWord,
+                isMissingChinese: false,
+              };
+            } else {
+              // 找到了英文但没有对应的中文
+              return {
+                matchLocation: 'wordmeaning',
+                highlightKeyword: keyword,
+                isMissingChinese: true,
+              };
+            }
+          } else {
+            // 中文模式搜英文但无中文词义 → 标记缺失
+            return {
+              matchLocation: 'wordmeaning',
+              highlightKeyword: keyword,
+              isMissingChinese: true,
+            };
+          }
         }
         return {
           matchLocation: 'wordmeaning',
