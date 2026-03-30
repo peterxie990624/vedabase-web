@@ -83,13 +83,15 @@ GitHub 账号：3431503934@qq.com / Peterxie1
 | 字体大小 | ✅ | 4档（sm/md/lg/xl），设置持久化 |
 | 书签收藏 | ✅ | 精确跳转到具体节，localStorage持久化 |
 | 全文搜索 | ✅ | 含历史记录、关键词高亮、截取预览、中英文映射 |
-| 左右滑动翻页 | ✅ | 手势+键盘导航 |
+| 屏幕导航 | ✅ | 触摸滑动、键盘导航（点击屏幕左右已禁用） |
 | GitHub Pages 部署 | ✅ | 自动 CI/CD，推送即部署 |
 | jsDelivr CDN 加速 | ✅ | 国内无需翻墙，自动检测并切换 |
 | 搜索进度条 | ✅ | 显示正在加载哪篇、来源、耗时 |
 | 开发模式调试面板 | ✅ | 仅 pnpm dev 时显示，含错误诊断 |
 | 多位置高亮 | ✅ | 支持梵文、逐词、译文、要旨四个位置的高亮 |
 | 中英文词汇映射 | ✅ | 英文搜索时自动映射到中文，中文模式下高亮中文翻译 |
+| 高亮颜色 | ✅ | 查坦尼亚金色（#d4a017），深色模式下为 #b8860b |
+| 搜索历史记忆 | ✅ | 2 小时内记忆搜索历史，超时后清除 |
 
 ### 最近修复的 Bug（2026-03-30）
 
@@ -98,17 +100,24 @@ GitHub 账号：3431503934@qq.com / Peterxie1
 | 英文模式下搜索结果不高亮 | 2df791c | SearchPage 中 highlightKeywordZh/En 未传递到 SearchResult |
 | 导航返回后高亮消失 | 395fa4f | 非overlay模式下高亮参数丢失 |
 | useEffect 依赖不对 | 395fa4f | 依赖了 searchKeyword 而非 currentKeyword |
+| 点击屏幕左右翻页 | 5a5fc40 | 已注释掉，保留触摸滑动和键盘导航 |
+| vedabooks.net 网址 | 36727fb | 已从关于页面移除 |
 
 ### 已修复的历史 Bug
 
-| Bug | 状态 |
-|-----|------|
-| 书签精确跳转（之前跳到章节开头） | ✅ 已修复 |
-| 深色主题下导航栏白色背景 | ✅ 已修复 |
-| 列表页面硬编码白色背景 | ✅ 已修复 |
-| GitHub Pages 数据路径（404） | ✅ 已修复 |
-| 搜索返回逻辑（从阅读页返回搜索结果） | ✅ 已修复 |
-| 中文模式下搜索英文关键词的高亮 | ✅ 已修复 |
+| Bug | 状态 | 版本 |
+|-----|------|------|
+| 书签精确跳转（之前跳到章节开头） | ✅ 已修复 | v1.0 |
+| 深色主题下导航栏白色背景 | ✅ 已修复 | v1.0 |
+| 列表页面硬编码白色背景 | ✅ 已修复 | v1.0 |
+| GitHub Pages 数据路径（404） | ✅ 已修复 | v1.0 |
+| 搜索返回逻辑（从阅读页返回搜索结果） | ✅ 已修复 | v1.6 |
+| 中文模式下搜索英文关键词的高亮 | ✅ 已修复 | v1.7 |
+| 搜索高亮颜色 | ✅ 已修复 | v1.6 |
+| 搜索结果预览截取 | ✅ 已修复 | v1.6 |
+| 封面图加载闪烁 | ✅ 已修复 | v1.6 |
+| 开发模式激活 | ✅ 已修复 | v1.6 |
+| Tab 切换记忆 | ✅ 已修复 | v1.6 |
 
 ---
 
@@ -164,8 +173,13 @@ vedabase-web/
 ├── docs/
 │   └── chat_logs/                 # 对话记录存档
 │       ├── 2026-03-14_session.md
+│       ├── 2026-03-22_session.md
+│       ├── 2026-03-23_v1.6_fixes.md
 │       ├── 2026-03-29_v1.7_multi_highlight.md
-│       ├── fix_chinese_highlight_2026-03-29.md
+│       ├── 2026-03-30_highlight_fix/
+│       │   ├── CODE_CHANGES_DETAILED.md
+│       │   ├── HIGHLIGHT_FLOW_ANALYSIS.md
+│       │   └── PROBLEM_DIAGNOSIS_COMPLETE.md
 │       └── ...
 ├── .github/workflows/
 │   └── deploy.yml                 # GitHub Actions 自动部署配置
@@ -175,9 +189,6 @@ vedabase-web/
 ├── pnpm-lock.yaml                 # pnpm 锁定文件
 ├── HANDOVER.md                    # 本文档
 ├── CHANGELOG.md                   # 版本更新日志
-├── CODE_CHANGES_DETAILED.md       # 最近修复的代码对比
-├── PROBLEM_DIAGNOSIS_COMPLETE.md  # 最近修复的问题诊断
-├── HIGHLIGHT_FLOW_ANALYSIS.md     # 高亮功能数据流分析
 └── todo.md                        # 待办事项
 ```
 
@@ -233,13 +244,13 @@ git push origin main
 **修复**：在 SearchPage.tsx 的 BG 和 SB 搜索中，添加这两个字段的传递
 
 **相关文档**：
-- `CODE_CHANGES_DETAILED.md` - 详细的代码对比
-- `PROBLEM_DIAGNOSIS_COMPLETE.md` - 完整的诊断过程
-- `HIGHLIGHT_FLOW_ANALYSIS.md` - 高亮功能数据流分析
+- `docs/chat_logs/2026-03-30_highlight_fix/CODE_CHANGES_DETAILED.md` - 详细的代码对比
+- `docs/chat_logs/2026-03-30_highlight_fix/PROBLEM_DIAGNOSIS_COMPLETE.md` - 完整的诊断过程
+- `docs/chat_logs/2026-03-30_highlight_fix/HIGHLIGHT_FLOW_ANALYSIS.md` - 高亮功能数据流分析
 
 ---
 
 > 详细对话记录请查看 `docs/chat_logs/` 目录下的 session 文件。
 
 *文档更新时间：2026-03-30*  
-*项目版本：v1.8（搜索高亮完全修复）*
+*项目版本：v1.8（搜索高亮完全修复、屏幕点击翻页禁用、vedabooks.net移除）*
