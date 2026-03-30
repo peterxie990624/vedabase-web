@@ -105,6 +105,16 @@ export default function SectionContent({
 }: SectionContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // 根据当前语言动态生成高亮关键词
+  // 这样当语言切换时，高亮关键词会自动更新
+  const currentKeyword = useMemo(() => {
+    if (language === 'zh') {
+      return highlightKeywordZh || highlightKeyword || searchKeyword;
+    } else {
+      return highlightKeywordEn || highlightKeyword || searchKeyword;
+    }
+  }, [language, highlightKeywordZh, highlightKeywordEn, highlightKeyword, searchKeyword]);
+
   // Auto-scroll to first highlighted match when searchKeyword is provided
   // 注意：添加language依赖，当语言切换时也需要重新滚动到高亮位置
   useEffect(() => {
@@ -124,7 +134,7 @@ export default function SectionContent({
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [searchKeyword, highlightKeyword, highlightKeywordZh, highlightKeywordEn, language]);
+  }, [searchKeyword, highlightKeyword, currentKeyword]);
 
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
@@ -181,16 +191,6 @@ export default function SectionContent({
     borderBottom: '1px solid var(--veda-border)',
     color: 'var(--veda-blue)',
   };
-
-  // 根据当前语言动态生成高亮关键词
-  // 这样当语言切换时，高亮关键词会自动更新
-  const currentKeyword = useMemo(() => {
-    if (language === 'zh') {
-      return highlightKeywordZh || highlightKeyword || searchKeyword;
-    } else {
-      return highlightKeywordEn || highlightKeyword || searchKeyword;
-    }
-  }, [language, highlightKeywordZh, highlightKeywordEn, highlightKeyword, searchKeyword]);
 
   // Highlight search keyword in text
   // v4: 支持中英文切换时的高亮
