@@ -27,11 +27,22 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
   const isDark = theme === 'dark';
 
   // 直接使用保存的中英文title和preview，无需动态生成
-  const displayBookmarks = bookmarks.map(bookmark => ({
-    ...bookmark,
-    displayTitle: language === 'zh' ? bookmark.title_zh : bookmark.title_en,
-    displayPreview: language === 'zh' ? bookmark.preview_zh : bookmark.preview_en,
-  }));
+  // 对于旧书签（没有title_zh等字段），使用title和preview作为fallback
+  const displayBookmarks = bookmarks.map(bookmark => {
+    const displayTitle = language === 'zh' 
+      ? (bookmark.title_zh || bookmark.title)
+      : (bookmark.title_en || bookmark.title);
+    
+    const displayPreview = language === 'zh' 
+      ? (bookmark.preview_zh || bookmark.preview)
+      : (bookmark.preview_en || bookmark.preview);
+    
+    return {
+      ...bookmark,
+      displayTitle: displayTitle || '',
+      displayPreview: displayPreview || '',
+    };
+  });
 
   const navBg = isDark ? '#1a2535' : 'white';
   const navBorder = isDark ? '#2a3a50' : 'var(--veda-border)';
