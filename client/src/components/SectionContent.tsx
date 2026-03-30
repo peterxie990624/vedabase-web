@@ -99,6 +99,8 @@ export default function SectionContent({
   onShare,
   searchKeyword,
   highlightKeyword,
+  highlightKeywordZh,
+  highlightKeywordEn,
   matchLocation,
 }: SectionContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
