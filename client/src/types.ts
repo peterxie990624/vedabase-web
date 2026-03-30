@@ -101,8 +101,12 @@ export interface Bookmark {
   chapterId: number;
   sectionId?: string | number;
   sectionIndex?: number;   // exact section index for precise navigation
-  title: string;
-  preview: string;
+  title: string;           // 保留用于向后兼容
+  preview: string;         // 保留用于向后兼容
+  title_zh: string;        // 中文标题
+  preview_zh: string;      // 中文详情（纯文本，无HTML标签）
+  title_en: string;        // 英文标题
+  preview_en: string;      // 英文详情（纯文本，无HTML标签）
   timestamp: number;
 }
 

@@ -3,6 +3,17 @@ import type { Bookmark } from '../types';
 
 const STORAGE_KEY = 'vedabase_bookmarks';
 
+// 清理HTML标签，只保留纯文本
+function stripHtmlTags(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')  // 移除所有HTML标签
+    .replace(/&nbsp;/g, ' ')  // 替换非断行空格
+    .replace(/&lt;/g, '<')    // 替换HTML实体
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
 function loadBookmarks(): Bookmark[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -27,7 +38,19 @@ export function useBookmarks() {
         b.sectionId === bookmark.sectionId
       );
       if (exists) return prev;
-      const newBookmarks = [{ ...bookmark, timestamp: Date.now() }, ...prev];
+      
+      // 清理preview中的HTML标签
+      const cleanedPreview_zh = stripHtmlTags(bookmark.preview_zh).substring(0, 50) + '...';
+      const cleanedPreview_en = stripHtmlTags(bookmark.preview_en).substring(0, 50) + '...';
+      
+      const newBookmark = {
+        ...bookmark,
+        preview_zh: cleanedPreview_zh,
+        preview_en: cleanedPreview_en,
+        timestamp: Date.now()
+      };
+      
+      const newBookmarks = [newBookmark, ...prev];
       saveBookmarks(newBookmarks);
       return newBookmarks;
     });

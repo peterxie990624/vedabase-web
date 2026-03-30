@@ -1,9 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
 import { useBookmarks } from '../hooks/useBookmarks';
-import { useBGData } from '../hooks/useData';
-import { useSBCantoData } from '../hooks/useData';
 import type { Bookmark, VedaTheme } from '../types';
 import { CDN } from '../constants';
 
@@ -27,65 +24,14 @@ const bookTypeCoverImg: Record<string, string> = {
 
 export default function BookmarksPage({ onOpenBookmark, theme = 'light', language = 'zh' }: BookmarksPageProps) {
   const { bookmarks, removeBookmark } = useBookmarks();
-  const { data: bgData } = useBGData();
-  const { data: sbData } = useSBCantoData();
   const isDark = theme === 'dark';
 
-  // 根据当前语言动态生成书签的title和preview
-  const displayBookmarks = useMemo(() => {
-    return bookmarks.map(bookmark => {
-      let displayTitle = bookmark.title;
-      let displayPreview = bookmark.preview;
-
-      try {
-        if (bookmark.bookType === 'bg' && bgData && bgData.chapters && bgData.sections) {
-          const chapter = bgData.chapters.find(c => c.id === bookmark.chapterId);
-          if (chapter) {
-            displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
-          }
-          
-          // 根据当前语言动态生成preview（只有当数据完全加载时才生成）
-          if (bookmark.sectionIndex !== undefined) {
-            const sections = bgData.sections[String(bookmark.chapterId)];
-            if (sections && sections[bookmark.sectionIndex]) {
-              const section = sections[bookmark.sectionIndex];
-              // 获取对应语言的要旨作为preview
-              const sectionPreview = language === 'zh' 
-                ? (section.yz_zh || section.yw_zh || '')
-                : (section.yz_en || section.yw_en || '');
-              if (sectionPreview) {
-                displayPreview = sectionPreview.substring(0, 50) + '...';
-              }
-            }
-          }
-        } else if (bookmark.bookType === 'sb' && sbData && sbData.chapters && sbData.sections) {
-          const chapter = sbData.chapters.find(c => c.id === bookmark.chapterId);
-          if (chapter) {
-            displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
-          }
-          
-          // 根据当前语言动态生成preview（只有当数据完全加载时才生成）
-          if (bookmark.sectionIndex !== undefined) {
-            const sections = sbData.sections[String(bookmark.chapterId)];
-            if (sections && sections[bookmark.sectionIndex]) {
-              const section = sections[bookmark.sectionIndex];
-              // 获取对应语言的要旨作为preview
-              const sectionPreview = language === 'zh' 
-                ? (section.yz_zh || section.yw_zh || '')
-                : (section.yz_en || section.yw_en || '');
-              if (sectionPreview) {
-                displayPreview = sectionPreview.substring(0, 50) + '...';
-              }
-            }
-          }
-        }
-      } catch (e) {
-        // 如果获取失败，使用原始值
-      }
-
-      return { ...bookmark, displayTitle, displayPreview };
-    });
-  }, [bookmarks, bgData, sbData, language]);
+  // 直接使用保存的中英文title和preview，无需动态生成
+  const displayBookmarks = bookmarks.map(bookmark => ({
+    ...bookmark,
+    displayTitle: language === 'zh' ? bookmark.title_zh : bookmark.title_en,
+    displayPreview: language === 'zh' ? bookmark.preview_zh : bookmark.preview_en,
+  }));
 
   const navBg = isDark ? '#1a2535' : 'white';
   const navBorder = isDark ? '#2a3a50' : 'var(--veda-border)';

@@ -236,14 +236,25 @@ export default function BGReadPage({
         showBookmark
         isBookmarked={bookmarked}
         onBookmark={() => {
-          const preview = (translation || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          // 获取当前语言的title和preview
+          const currentTitle = language === 'zh' ? sectionLabel : (section.en_title || sectionLabel);
+          const currentPreview = (language === 'zh' ? translation : (section.yw_en || translation) || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          
+          // 获取另一种语言的title和preview
+          const otherTitle = language === 'zh' ? (section.en_title || sectionLabel) : sectionLabel;
+          const otherPreview = (language === 'zh' ? (section.yw_en || translation) : translation || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          
           toggleBookmark({
             bookType: 'bg',
             chapterId,
             sectionId: section.section_id,
             sectionIndex,
-            title: sectionLabel,
-            preview,
+            title: currentTitle,  // 向后兼容
+            preview: currentPreview,  // 向后兼容
+            title_zh: language === 'zh' ? currentTitle : otherTitle,
+            preview_zh: language === 'zh' ? currentPreview : otherPreview,
+            title_en: language === 'zh' ? otherTitle : currentTitle,
+            preview_en: language === 'zh' ? otherPreview : currentPreview,
           });
         }}
         showNavigation
