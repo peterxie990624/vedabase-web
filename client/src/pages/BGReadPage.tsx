@@ -240,10 +240,10 @@ export default function BGReadPage({
           const title_zh = formatSectionLabel('bg', section.section_id, 'zh');
           const title_en = formatSectionLabel('bg', section.section_id, 'en');
           
-          // 中文preview（总是使用中文的translation）
-          const preview_zh = (translation || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          // 中文preview（总是使用section.yw_zh，不管当前语言）
+          const preview_zh = (section.yw_zh || '').replace(/<[^>]+>/g, '').slice(0, 50);
           
-          // 英文preview（总是使用英文的section.yw_en）
+          // 英文preview（总是使用section.yw_en，不管当前语言）
           const preview_en = (section.yw_en || '').replace(/<[^>]+>/g, '').slice(0, 50);
           
           toggleBookmark({
