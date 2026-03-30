@@ -121,10 +121,10 @@ export default function SectionContent({
     }
   }, [language, highlightKeywordZh, highlightKeywordEn, highlightKeyword, searchKeyword]);
 
-  // Auto-scroll to first highlighted match when searchKeyword is provided
-  // 当语言切换时，滚动到对应语言的高亮位置
+  // Auto-scroll to first highlighted match when currentKeyword is provided
+  // 当语言切换或关键词变化时，滚动到对应语言的高亮位置
   useEffect(() => {
-    if (!searchKeyword && !highlightKeyword) return;
+    if (!currentKeyword) return;
     
     // 使用多层延迟确保 DOM 已更新
     // 当语言切换时，React 需要时间重新渲染内容
@@ -140,7 +140,7 @@ export default function SectionContent({
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [searchKeyword, highlightKeyword, language, currentKeyword]);
+  }, [currentKeyword, language]);
 
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';

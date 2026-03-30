@@ -521,7 +521,7 @@ function VedabaseApp() {
               setRouteStack(prev => {
                 const newStack = [
                   ...prev.slice(0, -1),
-                  { page: 'bg-read' as const, chapterId: chId, sectionIndex: secIdx },
+                  { page: 'bg-read' as const, chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword, highlightKeyword: (route as any).highlightKeyword, highlightKeywordZh: (route as any).highlightKeywordZh, highlightKeywordEn: (route as any).highlightKeywordEn, matchLocation: (route as any).matchLocation },
                 ];
                 setBookshelfRouteStack(newStack);
                 return newStack;
@@ -570,7 +570,7 @@ function VedabaseApp() {
               setRouteStack(prev => {
                 const newStack = [
                   ...prev.slice(0, -1),
-                  { page: 'sb-read' as const, chapterId: chId, sectionIndex: secIdx },
+                  { page: 'sb-read' as const, chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword, highlightKeyword: (route as any).highlightKeyword, highlightKeywordZh: (route as any).highlightKeywordZh, highlightKeywordEn: (route as any).highlightKeywordEn, matchLocation: (route as any).matchLocation },
                 ];
                 setBookshelfRouteStack(newStack);
                 return newStack;
