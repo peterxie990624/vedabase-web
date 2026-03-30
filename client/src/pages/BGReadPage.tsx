@@ -66,6 +66,8 @@ export default function BGReadPage({
   const touchStartY = useRef<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showToc, setShowToc] = useState(false);
+  const tocContainerRef = useRef<HTMLDivElement>(null);
+  const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -138,6 +140,58 @@ export default function BGReadPage({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [goNext, goPrev, hasNext, hasPrev]);
+
+  // 处理目录滑动时的浮动块显示
+  useEffect(() => {
+    if (!showToc || !tocContainerRef.current) return;
+
+    const handleScroll = () => {
+      const container = tocContainerRef.current;
+      if (!container) return;
+
+      // 查找第一个超出顶部的章标题
+      const chapterElements = container.querySelectorAll('[data-chapter-id]');
+      let visibleChapter: string | null = null;
+
+      for (const el of chapterElements) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        // 如果元素顶部在容器顶部以下，则该元素可见
+        if (rect.top >= containerRect.top + 60) {
+          visibleChapter = el.getAttribute('data-chapter-title');
+          break;
+        }
+      }
+
+      setStickyChapterTitle(visibleChapter);
+    };
+
+    const container = tocContainerRef.current;
+    container.addEventListener('scroll', handleScroll);
+    // 初始化时调用一次
+    handleScroll();
+
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [showToc]);
+
+  // 打开目录时自动滑动到当前章节
+  useEffect(() => {
+    if (!showToc || !tocContainerRef.current) return;
+
+    // 延迟执行以确保DOM已更新
+    const timer = setTimeout(() => {
+      const container = tocContainerRef.current;
+      if (!container) return;
+
+      // 查找当前章的元素
+      const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+      if (currentChapterEl) {
+        currentChapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [showToc, chapterId]);
 
   const handleFontSize = (size: FontSize) => setFontSize(size);
 
@@ -299,6 +353,14 @@ export default function BGReadPage({
         />
       </div>
 
+      {DEV_MODE && (
+        <DevPanel
+          resources={[{ name: '博伽梵歌数据', url: `${import.meta.env.BASE_URL}data/bg_data.json`, loading, error: error || null, source: 'jsdelivr' as const }]}
+          env={{ BASE_URL: import.meta.env.BASE_URL, 主题: theme || 'light', 语言: language || 'zh', 章节ID: String(chapterId), 节索引: String(sectionIndex) }}
+          isDark={isDark}
+        />
+      )}
+
       {/* TOC Overlay */}
       {showToc && (
         <div
@@ -306,6 +368,7 @@ export default function BGReadPage({
           onClick={() => setShowToc(false)}
         >
           <div
+            ref={tocContainerRef}
             style={{
               width: '80%',
               maxWidth: '360px',
@@ -319,7 +382,7 @@ export default function BGReadPage({
             onClick={e => e.stopPropagation()}
           >
             {/* TOC header */}
-            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 1 }}>
+            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 10 }}>
               <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
                 {isEn ? 'Table of Contents' : '目录'}
               </div>
@@ -328,14 +391,42 @@ export default function BGReadPage({
               </div>
             </div>
 
+            {/* 浮动块：显示当前章标题 */}
+            {stickyChapterTitle && (
+              <div style={{
+                position: 'sticky',
+                top: '60px',
+                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
+                padding: '12px 16px',
+                zIndex: 9,
+                backdropFilter: 'blur(4px)',
+              }}>
+                <div style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: isDark ? '#d4a017' : '#b8860b',
+                  fontFamily: "'Noto Serif SC', serif",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {stickyChapterTitle}
+                </div>
+              </div>
+            )}
+
             {/* Chapters */}
             {chapters.map(ch => {
               const chSections = allSections[String(ch.id)] || [];
               const isCurrentChapter = ch.id === chapterId;
+              const chapterTitle = isEn ? ch.en_title : ch.zh_title;
               return (
                 <div key={ch.id}>
                   {/* Chapter title — clickable to go to sections page */}
                   <div
+                    data-chapter-id={ch.id}
+                    data-chapter-title={chapterTitle}
                     style={{
                       padding: '10px 16px',
                       background: isCurrentChapter ? tocActiveBg : 'transparent',
@@ -354,7 +445,7 @@ export default function BGReadPage({
                   >
                     <div style={{ fontSize: '0.8rem', color: tocTextSecondary }}>{ch.zh_name}</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                      {isEn ? ch.en_title : ch.zh_title}
+                      {chapterTitle}
                     </div>
                   </div>
 

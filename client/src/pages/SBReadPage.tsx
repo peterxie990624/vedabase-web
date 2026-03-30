@@ -80,6 +80,9 @@ export default function SBReadPage({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [showToc, setShowToc] = useState(false);
+  const tocContainerRef = useRef<HTMLDivElement>(null);
+  const [stickyCantoTitle, setStickyCantoTitle] = useState<string | null>(null);
+  const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -155,6 +158,67 @@ export default function SBReadPage({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [goNext, goPrev, hasNext, hasPrev]);
+
+  // 处理目录滑动时的浮动块显示
+  useEffect(() => {
+    if (!showToc || !tocContainerRef.current) return;
+
+    const handleScroll = () => {
+      const container = tocContainerRef.current;
+      if (!container) return;
+
+      // 查找第一个超出顶部的篇和章标题
+      const cantoElements = container.querySelectorAll('[data-canto-id]');
+      const chapterElements = container.querySelectorAll('[data-chapter-id]');
+      
+      let visibleCanto: string | null = null;
+      let visibleChapter: string | null = null;
+
+      for (const el of cantoElements) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (rect.top >= containerRect.top + 60) {
+          visibleCanto = el.getAttribute('data-canto-title');
+          break;
+        }
+      }
+
+      for (const el of chapterElements) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (rect.top >= containerRect.top + 110) {
+          visibleChapter = el.getAttribute('data-chapter-title');
+          break;
+        }
+      }
+
+      setStickyCantoTitle(visibleCanto);
+      setStickyChapterTitle(visibleChapter);
+    };
+
+    const container = tocContainerRef.current;
+    container.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [showToc]);
+
+  // 打开目录时自动滑动到当前章节
+  useEffect(() => {
+    if (!showToc || !tocContainerRef.current) return;
+
+    const timer = setTimeout(() => {
+      const container = tocContainerRef.current;
+      if (!container) return;
+
+      const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+      if (currentChapterEl) {
+        currentChapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [showToc, chapterId]);
 
   const handleFontSize = (size: FontSize) => setFontSize(size);
   const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
@@ -240,18 +304,6 @@ export default function SBReadPage({
 
   // Handle tap on left/right 1/3 of screen to navigate
   // 已注释掉点击屏幕左右翻页功能
-  // const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-  //   const target = e.target as HTMLElement;
-  //   if (target.closest('button, a, mark, .purport-text')) return;
-  //   const rect = e.currentTarget.getBoundingClientRect();
-  //   const x = e.clientX - rect.left;
-  //   const third = rect.width / 3;
-  //   if (x < third && hasPrev) {
-  //     goPrev();
-  //   } else if (x > third * 2 && hasNext) {
-  //     goNext();
-  //   }
-  // };
   const handleContentClick = () => {};
 
   return (
@@ -307,7 +359,6 @@ export default function SBReadPage({
         key={`${chapterId}-${sectionIndex}`}
         className={animClass}
         style={{ paddingTop: '56px', paddingBottom: '80px', minHeight: '100vh' }}
-        // onClick={handleContentClick}  // 已注释掉点击屏幕左右翻页功能
       >
         <SectionContent
           verseText={section.ldw}
@@ -327,6 +378,17 @@ export default function SBReadPage({
         />
       </div>
 
+      {DEV_MODE && (
+        <DevPanel
+          resources={[
+            { name: '博伽瓦谭目录', url: `${import.meta.env.BASE_URL}data/sb_index.json`, loading: indexLoading, error: indexError, source: 'jsdelivr' as const },
+            { name: cantoId ? `博伽瓦谭第${cantoId}篇` : '章节数据', url: cantoId ? `${import.meta.env.BASE_URL}data/sb/canto_${cantoId}.json` : undefined, loading: cantoLoading, error: cantoError || (!cantoLoading && !cantoData && cantoId ? '数据为空' : null), source: 'jsdelivr' as const },
+          ]}
+          env={{ BASE_URL: import.meta.env.BASE_URL, 主题: theme || 'light', 语言: language || 'zh', 章节ID: String(chapterId), 篇ID: String(cantoId), 节索引: String(sectionIndex) }}
+          isDark={isDark}
+        />
+      )}
+
       {/* TOC Overlay */}
       {showToc && (
         <div
@@ -334,6 +396,7 @@ export default function SBReadPage({
           onClick={() => setShowToc(false)}
         >
           <div
+            ref={tocContainerRef}
             style={{
               width: '80%',
               maxWidth: '360px',
@@ -347,7 +410,7 @@ export default function SBReadPage({
             onClick={e => e.stopPropagation()}
           >
             {/* TOC header */}
-            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 1 }}>
+            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 11 }}>
               <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
                 {isEn ? 'Table of Contents' : '目录'}
               </div>
@@ -356,13 +419,66 @@ export default function SBReadPage({
               </div>
             </div>
 
-            {/* Cantos — clickable to go to canto's chapter list */}
+            {/* 浮动块：显示当前篇标题 */}
+            {stickyCantoTitle && (
+              <div style={{
+                position: 'sticky',
+                top: '60px',
+                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
+                padding: '12px 16px',
+                zIndex: 10,
+                backdropFilter: 'blur(4px)',
+              }}>
+                <div style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: isDark ? '#d4a017' : '#b8860b',
+                  fontFamily: "'Noto Serif SC', serif",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {stickyCantoTitle}
+                </div>
+              </div>
+            )}
+
+            {/* 浮动块：显示当前章标题 */}
+            {stickyChapterTitle && (
+              <div style={{
+                position: 'sticky',
+                top: stickyCantoTitle ? '110px' : '60px',
+                background: isDark ? 'rgba(15, 25, 35, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                padding: '10px 16px 10px 24px',
+                zIndex: 9,
+                backdropFilter: 'blur(4px)',
+              }}>
+                <div style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: isDark ? '#c8a84b' : '#a08030',
+                  fontFamily: "'Noto Serif SC', serif",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {stickyChapterTitle}
+                </div>
+              </div>
+            )}
+
+            {/* Cantos */}
             {cantos.map(canto => {
               const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
               const isCurrentCanto = cantoId === canto.id;
+              const cantoTitle = isEn ? canto.en_name : canto.zh_name;
               return (
                 <div key={canto.id}>
                   <div
+                    data-canto-id={canto.id}
+                    data-canto-title={cantoTitle}
                     style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, cursor: 'pointer' }}
                     onClick={() => {
                       setShowToc(false);
@@ -370,15 +486,18 @@ export default function SBReadPage({
                     }}
                   >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {isEn ? canto.en_name : canto.zh_name}
+                      {cantoTitle}
                     </div>
                   </div>
                   {cantoChapters.map(ch => {
                     const isCurrentChapter = ch.id === chapterId;
                     const chSections = isCurrentChapter ? sections : [];
+                    const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
                     return (
                       <div key={ch.id}>
                         <div
+                          data-chapter-id={ch.id}
+                          data-chapter-title={chapterTitle}
                           style={{
                             padding: '10px 16px',
                             background: isCurrentChapter ? tocActiveBg : 'transparent',
@@ -387,7 +506,6 @@ export default function SBReadPage({
                           }}
                           onClick={() => {
                             setShowToc(false);
-                            // 点击章标题 → 跳转到该章的节列表页
                             if (onGoToCanto) {
                               onGoToCanto(ch.canto_id);
                             } else {
@@ -397,7 +515,7 @@ export default function SBReadPage({
                         >
                           <div style={{ fontSize: '0.78rem', color: tocTextSecondary }}>{isEn ? ch.en_name : ch.zh_name}</div>
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                            {isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '')}
+                            {chapterTitle}
                           </div>
                         </div>
 
