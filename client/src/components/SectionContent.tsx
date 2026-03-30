@@ -176,14 +176,22 @@ export default function SectionContent({
     color: 'var(--veda-blue)',
   };
 
+  // 根据当前语言动态生成高亮关键词
+  // 这样当语言切换时，高亮关键词会自动更新
+  const currentKeyword = useMemo(() => {
+    if (language === 'zh') {
+      return highlightKeywordZh || highlightKeyword || searchKeyword;
+    } else {
+      return highlightKeywordEn || highlightKeyword || searchKeyword;
+    }
+  }, [language, highlightKeywordZh, highlightKeywordEn, highlightKeyword, searchKeyword]);
+
   // Highlight search keyword in text
   // v4: 支持中英文切换时的高亮
   // 重要：根据当前语言模式选择对应的高亮关键词
   const highlightText = (html: string, location?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport'): string => {
-    // 根据当前语言选择对应的高亮关键词
-    let keyword = language === 'zh' ? highlightKeywordZh : highlightKeywordEn;
-    // 如果没有特定语言的高亮关键词，使用通用的
-    if (!keyword) keyword = highlightKeyword || searchKeyword;
+    // 使用动态生成的高亮关键词
+    let keyword = currentKeyword;
     if (!keyword) return html;
     
     // 如果指定了matchLocation，只在匹配的位置高亮
