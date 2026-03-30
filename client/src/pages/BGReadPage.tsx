@@ -236,25 +236,27 @@ export default function BGReadPage({
         showBookmark
         isBookmarked={bookmarked}
         onBookmark={() => {
-          // 获取当前语言的title和preview
-          const currentTitle = language === 'zh' ? sectionLabel : (section.en_title || sectionLabel);
-          const currentPreview = (language === 'zh' ? translation : (section.yw_en || translation) || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          // 直接使用formatSectionLabel生成中英文标题，确保正确
+          const title_zh = formatSectionLabel('bg', section.section_id, 'zh');
+          const title_en = formatSectionLabel('bg', section.section_id, 'en');
           
-          // 获取另一种语言的title和preview
-          const otherTitle = language === 'zh' ? (section.en_title || sectionLabel) : sectionLabel;
-          const otherPreview = (language === 'zh' ? (section.yw_en || translation) : translation || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          // 中文preview（总是使用中文的translation）
+          const preview_zh = (translation || '').replace(/<[^>]+>/g, '').slice(0, 50);
+          
+          // 英文preview（总是使用英文的section.yw_en）
+          const preview_en = (section.yw_en || '').replace(/<[^>]+>/g, '').slice(0, 50);
           
           toggleBookmark({
             bookType: 'bg',
             chapterId,
             sectionId: section.section_id,
             sectionIndex,
-            title: currentTitle,  // 向后兼容
-            preview: currentPreview,  // 向后兼容
-            title_zh: language === 'zh' ? currentTitle : otherTitle,
-            preview_zh: language === 'zh' ? currentPreview : otherPreview,
-            title_en: language === 'zh' ? otherTitle : currentTitle,
-            preview_en: language === 'zh' ? otherPreview : currentPreview,
+            title: language === 'zh' ? title_zh : title_en,  // 向后兼容
+            preview: language === 'zh' ? preview_zh : preview_en,  // 向后兼容
+            title_zh: title_zh,
+            preview_zh: preview_zh,
+            title_en: title_en,
+            preview_en: preview_en,
           });
         }}
         showNavigation
