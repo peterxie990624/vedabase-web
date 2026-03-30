@@ -514,7 +514,7 @@ function VedabaseApp() {
           onNavigate={(chId, secIdx) => {
             if (overlayRoute) {
               setOverlayRoute({
-                route: { page: 'bg-read', chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword },
+                route: { page: 'bg-read', chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword, highlightKeyword: (route as any).highlightKeyword, highlightKeywordZh: (route as any).highlightKeywordZh, highlightKeywordEn: (route as any).highlightKeywordEn, matchLocation: (route as any).matchLocation },
                 returnTab: overlayRoute.returnTab,
               });
             } else {
@@ -563,7 +563,7 @@ function VedabaseApp() {
           onNavigate={(chId, secIdx) => {
             if (overlayRoute) {
               setOverlayRoute({
-                route: { page: 'sb-read', chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword },
+                route: { page: 'sb-read', chapterId: chId, sectionIndex: secIdx, searchKeyword: (route as any).searchKeyword, highlightKeyword: (route as any).highlightKeyword, highlightKeywordZh: (route as any).highlightKeywordZh, highlightKeywordEn: (route as any).highlightKeywordEn, matchLocation: (route as any).matchLocation },
                 returnTab: overlayRoute.returnTab,
               });
             } else {
