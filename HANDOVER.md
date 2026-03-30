@@ -13,16 +13,19 @@
 每次开启新的 Manus 对话任务时，读取本文档后，主动询问用户是否按照本节工作原则来进行本次开发，确认后再开始工作。
 
 **原则二：对话结束后保存记录**
-参考peterxie990624/vedabase-web/blob/main/docs/chat_logs/2026-03-14_session.md的内容来保存下一次的对话记录。每次对话结束前，将本次完整对话记录保存到 `docs/chat_logs/` 目录下（以日期命名，如 `2026-03-14_session.md`），并推送到 GitHub，方便用户回顾学习。
+参考 `docs/chat_logs/` 目录下的 session 文件格式来保存下一次的对话记录。每次对话结束前，将本次完整对话记录保存到 `docs/chat_logs/` 目录下（以日期命名，如 `2026-03-30_session.md`），并推送到 GitHub，方便用户回顾学习。
 
-**原则三：遇到不确定或有建议时先沟通**
+**原则三：及时更新项目现状**
+在与用户交流过程中，根据项目进程，在有必要时更新本文档中的"项目现状"和"目录结构"内容。当发现新增功能、修复重要 Bug、或项目结构有变化时，应主动提议更新这两个部分，并在用户确认后修改并推送到 GitHub。
+
+**原则四：遇到不确定或有建议时先沟通**
 遇到以下情况时，不直接动手，先与用户多轮交流直到明确意图，再开始工作：
 - 用户需求表述不清楚
 - 有多种实现方案值得用户选择
 - 发现某个样式、交互或功能参考主流网站后值得改进
 - 某项改动是否需要同步更新"设置 - 关于 App"页面
 
-**原则四：工作原则本身的维护**
+**原则五：工作原则本身的维护**
 在与用户交流过程中，如果发现有值得新增到工作原则的内容，或现有原则不够全面、需要改善，先与用户确认措辞，经用户同意后再更新本节内容并推送到 GitHub。
 
 ---
@@ -57,7 +60,14 @@ GitHub 账号：3431503934@qq.com / Peterxie1
 
 ---
 
-## 二、项目现状（截至 2026-03-14）
+## 二、项目现状（截至 2026-03-30）
+
+### 项目架构概览
+
+**技术栈**：React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui  
+**数据存储**：纯 JSON 文件（无数据库），存储在 `client/public/data/`  
+**部署方式**：GitHub Pages + GitHub Actions（推送即部署）  
+**国内加速**：jsDelivr CDN（自动检测并切换）
 
 ### 已完成功能
 
@@ -71,14 +81,24 @@ GitHub 账号：3431503934@qq.com / Peterxie1
 | 中英双语 | ✅ | 即时切换，设置持久化 |
 | 字体大小 | ✅ | 4档（sm/md/lg/xl），设置持久化 |
 | 书签收藏 | ✅ | 精确跳转到具体节，localStorage持久化 |
-| 全文搜索 | ✅ | 含历史记录、关键词高亮、截取预览 |
+| 全文搜索 | ✅ | 含历史记录、关键词高亮、截取预览、中英文映射 |
 | 左右滑动翻页 | ✅ | 手势+键盘导航 |
 | GitHub Pages 部署 | ✅ | 自动 CI/CD，推送即部署 |
 | jsDelivr CDN 加速 | ✅ | 国内无需翻墙，自动检测并切换 |
 | 搜索进度条 | ✅ | 显示正在加载哪篇、来源、耗时 |
 | 开发模式调试面板 | ✅ | 仅 pnpm dev 时显示，含错误诊断 |
+| 多位置高亮 | ✅ | 支持梵文、逐词、译文、要旨四个位置的高亮 |
+| 中英文词汇映射 | ✅ | 英文搜索时自动映射到中文，中文模式下高亮中文翻译 |
 
-### 已修复的 Bug
+### 最近修复的 Bug（2026-03-30）
+
+| Bug | 提交 | 说明 |
+|-----|------|------|
+| 英文模式下搜索结果不高亮 | 2df791c | SearchPage 中 highlightKeywordZh/En 未传递到 SearchResult |
+| 导航返回后高亮消失 | 395fa4f | 非overlay模式下高亮参数丢失 |
+| useEffect 依赖不对 | 395fa4f | 依赖了 searchKeyword 而非 currentKeyword |
+
+### 已修复的历史 Bug
 
 | Bug | 状态 |
 |-----|------|
@@ -87,61 +107,77 @@ GitHub 账号：3431503934@qq.com / Peterxie1
 | 列表页面硬编码白色背景 | ✅ 已修复 |
 | GitHub Pages 数据路径（404） | ✅ 已修复 |
 | 搜索返回逻辑（从阅读页返回搜索结果） | ✅ 已修复 |
+| 中文模式下搜索英文关键词的高亮 | ✅ 已修复 |
 
 ---
 
-## 三、待完成事项（todo.md）
-
-### 高优先级
-
-- [x] **SB 中文逐词释义**：数据库有 `words_zh_fc` 字段但代码中未使用；中文模式下应显示"英文词 + 中文释义"标签对
-- [x] **底部导航书签 bug（bug01）**：从阅读页直接点底部书签标签 → 书签页布局错乱
-
-### 中优先级
-
-- [x] **爱卡达西深色主题**：AkadasiPage 部分样式未完全适配深色主题
-- [x] **书架页真实封面图**：BG 封面用 `e4.png`，SB 封面用 `ux.png`（CDN 已有资源）
-- [x] **应用 Logo**：替换顶部 OM 图标，CDN 已有资源
-
-### 低优先级
-
-- [x] **爱卡达西封面图生成**：莲花/梵文风格图片
-- [x] **设置菜单优化**：左上角齿轮图标下拉菜单（语言、字号、风格切换）
-
----
-
-## 四、技术架构
+## 三、技术架构
 
 ### 目录结构
 
 ```
-vedabase_web/
-├── client/
+vedabase-web/
+├── client/                        # 前端应用
 │   ├── public/
-│   │   └── data/              # 所有 JSON 数据文件
-│   │       ├── bg_data.json   # 博伽梵歌（2.8MB）
-│   │       ├── sb_index.json  # SB目录（77KB）
-│   │       ├── sb/            # SB分篇数据（共40MB）
-│   │       │   ├── canto_1.json ~ canto_12.json
-│   │       ├── akadasi_data.json  # 爱卡达西（326KB）
-│   │       └── calendar_data.json # 日历（26KB）
+│   │   ├── data/                  # 所有 JSON 数据文件
+│   │   │   ├── bg_data.json       # 博伽梵歌（2.8MB）
+│   │   │   ├── sb_index.json      # SB 目录索引（77KB）
+│   │   │   ├── sb/                # SB 分篇数据（共40MB）
+│   │   │   │   ├── canto_1.json ~ canto_12.json
+│   │   │   ├── akadasi_data.json  # 爱卡达西（326KB）
+│   │   │   └── calendar_data.json # 韦达日历（26KB）
+│   │   └── __manus__/             # Manus 调试工具
 │   └── src/
-│       ├── App.tsx            # 路由、状态管理
-│       ├── pages/             # 页面组件
-│       ├── components/        # 通用组件
-│       │   ├── TopNav.tsx     # 顶部导航（CSS变量主题）
-│       │   ├── BottomNav.tsx  # 底部标签栏
-│       │   ├── DevPanel.tsx   # 开发模式调试面板
-│       │   └── LoadingProgress.tsx  # 加载进度条
-│       ├── hooks/
-│       │   ├── useData.ts     # 数据加载（jsDelivr CDN优先）
-│       │   └── useSettings.ts # 主题/语言/字体设置
-│       └── index.css          # 全局样式 + CSS变量主题
+│       ├── App.tsx                # 主应用、路由、状态管理
+│       ├── main.tsx               # 入口文件
+│       ├── index.css              # 全局样式 + CSS变量主题
+│       ├── const.ts               # 常量定义
+│       ├── types.ts               # TypeScript 类型定义
+│       ├── pages/                 # 页面组件
+│       │   ├── BGReadPage.tsx      # 博伽梵歌阅读页
+│       │   ├── SBReadPage.tsx      # 圣典博伽瓦谭阅读页
+│       │   ├── SearchPage.tsx      # 全文搜索页
+│       │   ├── BookshelfPage.tsx   # 书架页
+│       │   ├── BookmarkPage.tsx    # 书签页
+│       │   ├── AkadasiPage.tsx     # 爱卡达西页
+│       │   └── CalendarPage.tsx    # 韦达日历页
+│       ├── components/            # 通用组件
+│       │   ├── TopNav.tsx         # 顶部导航（CSS变量主题）
+│       │   ├── BottomNav.tsx      # 底部标签栏
+│       │   ├── SectionContent.tsx # 节内容显示（含高亮逻辑）
+│       │   ├── DevPanel.tsx       # 开发模式调试面板
+│       │   ├── LoadingProgress.tsx # 加载进度条
+│       │   └── ...
+│       ├── contexts/              # React Context
+│       │   └── SettingsContext.tsx # 全局设置（主题、语言、字号）
+│       ├── hooks/                 # 自定义 Hook
+│       │   ├── useData.ts         # 数据加载（jsDelivr CDN优先）
+│       │   ├── useSettings.ts     # 主题/语言/字体设置
+│       │   └── ...
+│       └── lib/                   # 工具函数库
+│           ├── wordMapping.ts     # 英文-中文词汇映射表
+│           ├── normalizeSanskrit.ts # 梵文规范化函数
+│           └── ...
+├── server/                        # 后端服务（可选）
+│   └── index.ts
+├── docs/
+│   └── chat_logs/                 # 对话记录存档
+│       ├── 2026-03-14_session.md
+│       ├── 2026-03-29_v1.7_multi_highlight.md
+│       ├── fix_chinese_highlight_2026-03-29.md
+│       └── ...
 ├── .github/workflows/
-│   └── deploy.yml             # GitHub Actions 自动部署
-├── vite.config.ts             # base: /vedabase-web/（GitHub Pages）
-├── todo.md                    # 待办事项
-└── CHANGELOG.md               # 版本更新日志
+│   └── deploy.yml                 # GitHub Actions 自动部署配置
+├── vite.config.ts                 # Vite 配置（base: /vedabase-web/）
+├── tsconfig.json                  # TypeScript 配置
+├── package.json                   # 项目依赖
+├── pnpm-lock.yaml                 # pnpm 锁定文件
+├── HANDOVER.md                    # 本文档
+├── CHANGELOG.md                   # 版本更新日志
+├── CODE_CHANGES_DETAILED.md       # 最近修复的代码对比
+├── PROBLEM_DIAGNOSIS_COMPLETE.md  # 最近修复的问题诊断
+├── HIGHLIGHT_FLOW_ANALYSIS.md     # 高亮功能数据流分析
+└── todo.md                        # 待办事项
 ```
 
 ### 关键技术决策
@@ -153,6 +189,7 @@ vedabase_web/
 | 路由 | 自定义 routeStack 数组，无需 React Router |
 | 持久化 | localStorage（书签、设置），无后端 |
 | 部署 | GitHub Actions → GitHub Pages，推送即部署 |
+| 高亮系统 | 支持四个位置（梵文/逐词/译文/要旨）、中英文映射、自动滚动 |
 
 ### CDN 地址
 
@@ -163,12 +200,31 @@ GitHub Pages: https://peterxie990624.github.io/vedabase-web
 
 ---
 
+## 四、待完成事项（todo.md）
+
+### 高优先级
+
+- [ ] **搜索结果合并**：同一节的多个中文命中需要合并为一条搜索结果
+- [ ] **自动滑动优化**：搜索英文或梵文时自动滚动到第一个高亮位置
+
+### 中优先级
+
+- [ ] **中文缺失标记**：完善中文缺失时的"[无中文翻译]"标记显示
+- [ ] **搜索性能优化**：大数据量搜索时的性能优化
+
+### 低优先级
+
+- [ ] **UI 细节优化**：搜索结果页面的样式微调
+- [ ] **无障碍支持**：添加 ARIA 标签和键盘导航支持
+
+---
+
 ## 五、自动推送配置说明
 
 **当前配置：每次修改代码后，运行以下命令即可自动部署：**
 
 ```bash
-cd /home/ubuntu/vedabase_web
+cd /home/ubuntu/vedabase-web
 git add -A
 git commit -m "你的修改说明"
 git push origin main
@@ -184,7 +240,24 @@ git push origin main
 
 ---
 
+## 六、最近修复的问题详解
+
+### 搜索高亮问题（2026-03-30）
+
+**问题**：在英文模式搜索"devotee"时，进入节页面后看不到高亮
+
+**根本原因**：SearchPage 中构造 SearchResult 时，虽然 `getMatchInfo()` 生成了 `highlightKeywordZh` 和 `highlightKeywordEn`，但没有传递到 SearchResult 对象
+
+**修复**：在 SearchPage.tsx 的 BG 和 SB 搜索中，添加这两个字段的传递
+
+**相关文档**：
+- `CODE_CHANGES_DETAILED.md` - 详细的代码对比
+- `PROBLEM_DIAGNOSIS_COMPLETE.md` - 完整的诊断过程
+- `HIGHLIGHT_FLOW_ANALYSIS.md` - 高亮功能数据流分析
+
+---
+
 > 详细对话记录请查看 `docs/chat_logs/` 目录下的 session 文件。
 
-*文档生成时间：2026-03-22*
-*项目版本：v1.4（设置同步+Toast提示+目录面板+阅读进度记忆+分享功能+导航返回修复+全局字号+搜索历史全选）*
+*文档更新时间：2026-03-30*  
+*项目版本：v1.8（搜索高亮完全修复）*
