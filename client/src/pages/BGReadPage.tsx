@@ -44,6 +44,11 @@ export default function BGReadPage({
   onBack,
   onHome,
   onNavigate,
+  language = 'zh',
+  setLanguage,
+  fontSize = 'md',
+  setFontSize,
+  theme = 'dark',
   devMode = false,
   onGoToChapter,
   searchKeyword,
@@ -54,7 +59,8 @@ export default function BGReadPage({
 }: BGReadPageProps) {
   const { data, loading, error } = useBGData();
   const { toggleBookmark, isBookmarked } = useBookmarks();
-  const { language, setLanguage, fontSize, setFontSize, theme } = useSettings();
+  // 注意：不再使用useSettings，而是从Props获取language/fontSize/theme
+  // 这样确保语言状态在App.tsx中集中管理，避免状态不同步
   const [animClass, setAnimClass] = useState('fade-in');
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
