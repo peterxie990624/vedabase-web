@@ -83,7 +83,7 @@ export default function AboutDialog({ open, onClose, theme = 'light', language =
         </p>
         <ul style={{ color: textColor, lineHeight: 2, fontSize: '14px', paddingLeft: '20px' }}>
           <li>
-            <strong>{isEn ? 'Veda Library Android App' : '韦达书库安卓APP'}</strong>（vedabooks.net）
+            <strong>{isEn ? 'Veda Library Android App' : '韦达书库安卓APP'}</strong>
             {isEn
               ? ' — Original database with bilingual scripture content and Vedic calendar'
               : ' — 原始数据库，包含中英双语经典内容及韦达日历'}
