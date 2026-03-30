@@ -104,6 +104,12 @@ export default function SectionContent({
   matchLocation,
 }: SectionContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [, forceUpdate] = React.useState({});
+  
+  // 当language改变时，强制重新渲染
+  React.useEffect(() => {
+    forceUpdate({});
+  }, [language]);
 
   // 根据当前语言动态生成高亮关键词
   // 这样当语言切换时，高亮关键词会自动更新
@@ -134,7 +140,7 @@ export default function SectionContent({
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [searchKeyword, highlightKeyword, language]);
+  }, [searchKeyword, highlightKeyword, language, currentKeyword]);
 
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
