@@ -2,7 +2,7 @@ import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { useBookmarks } from '../hooks/useBookmarks';
 import type { Bookmark, VedaTheme } from '../types';
-import { CDN } from '../constants';
+import { CDN, formatSectionLabel } from '../constants';
 
 interface BookmarksPageProps {
   onOpenBookmark: (bookmark: Bookmark) => void;
@@ -26,16 +26,35 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
   const { bookmarks, removeBookmark } = useBookmarks();
   const isDark = theme === 'dark';
 
-  // 直接使用保存的中英文title和preview，无需动态生成
-  // 对于旧书签（没有title_zh等字段），使用title和preview作为fallback
+  // 对于新书签，使用保存的中英文内容
+  // 对于旧书签，使用formatSectionLabel生成title，preview使用保存的值
   const displayBookmarks = bookmarks.map(bookmark => {
-    const displayTitle = language === 'zh' 
-      ? (bookmark.title_zh || bookmark.title)
-      : (bookmark.title_en || bookmark.title);
+    let displayTitle = '';
+    let displayPreview = '';
     
-    const displayPreview = language === 'zh' 
-      ? (bookmark.preview_zh || bookmark.preview)
-      : (bookmark.preview_en || bookmark.preview);
+    if (language === 'zh') {
+      // 中文模式
+      if (bookmark.title_zh) {
+        // 新书签：使用保存的中文title
+        displayTitle = bookmark.title_zh;
+        displayPreview = bookmark.preview_zh || '';
+      } else {
+        // 旧书签：使用formatSectionLabel生成中文title
+        displayTitle = formatSectionLabel(bookmark.bookType, bookmark.sectionId || '', 'zh');
+        displayPreview = bookmark.preview || '';
+      }
+    } else {
+      // 英文模式
+      if (bookmark.title_en) {
+        // 新书签：使用保存的英文title
+        displayTitle = bookmark.title_en;
+        displayPreview = bookmark.preview_en || '';
+      } else {
+        // 旧书签：使用formatSectionLabel生成英文title
+        displayTitle = formatSectionLabel(bookmark.bookType, bookmark.sectionId || '', 'en');
+        displayPreview = bookmark.preview || '';
+      }
+    }
     
     return {
       ...bookmark,
