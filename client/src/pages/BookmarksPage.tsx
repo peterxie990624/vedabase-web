@@ -7,6 +7,7 @@ import { CDN } from '../constants';
 interface BookmarksPageProps {
   onOpenBookmark: (bookmark: Bookmark) => void;
   theme?: VedaTheme;
+  language?: 'zh' | 'en';
 }
 
 const bookTypeLabel: Record<string, string> = {
@@ -21,7 +22,7 @@ const bookTypeCoverImg: Record<string, string> = {
   akadasi: CDN.COVER_EKADASI,
 };
 
-export default function BookmarksPage({ onOpenBookmark, theme = 'light' }: BookmarksPageProps) {
+export default function BookmarksPage({ onOpenBookmark, theme = 'light', language = 'zh' }: BookmarksPageProps) {
   const { bookmarks, removeBookmark } = useBookmarks();
   const isDark = theme === 'dark';
 
@@ -157,6 +158,7 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light' }: Bookm
                 </div>
                 <div style={{ fontSize: '0.75rem', color: bookLabelColor, marginTop: '4px' }}>
                   {bookTypeLabel[bookmark.bookType]}
+                  {language === 'en' && <span style={{ marginLeft: '8px', fontSize: '0.7rem', opacity: 0.7 }}>(中文版本)</span>}
                 </div>
               </div>
               {/* Delete */}

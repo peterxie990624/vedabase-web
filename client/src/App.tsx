@@ -612,7 +612,7 @@ function VedabaseApp() {
     }
 
     if (activeTab === 'bookmarks') {
-      return <BookmarksPage onOpenBookmark={handleOpenBookmark} theme={theme} />;
+      return <BookmarksPage onOpenBookmark={handleOpenBookmark} theme={theme} language={language} />;
     }
     if (activeTab === 'search') {
       return (

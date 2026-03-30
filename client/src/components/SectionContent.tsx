@@ -106,6 +106,7 @@ export default function SectionContent({
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to first highlighted match when searchKeyword is provided
+  // 注意：添加language依赖，当语言切换时也需要重新滚动到高亮位置
   useEffect(() => {
     if (!searchKeyword && !highlightKeyword) return;
     const timer = setTimeout(() => {
@@ -117,7 +118,7 @@ export default function SectionContent({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchKeyword, highlightKeyword]);
+  }, [searchKeyword, highlightKeyword, language]);
 
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
