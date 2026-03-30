@@ -681,6 +681,8 @@ export default function SearchPage({
           preview,
           searchKeyword: q.trim(),
           highlightKeyword: matchInfo.highlightKeyword,
+          highlightKeywordZh: matchInfo.highlightKeywordZh,
+          highlightKeywordEn: matchInfo.highlightKeywordEn,
           matchLocation: matchInfo.matchLocation,
           isMissingChinese: matchInfo.isMissingChinese,
         });
@@ -909,6 +911,8 @@ export default function SearchPage({
             searchKeyword: q.trim(),
             preview,
             highlightKeyword: matchInfo.highlightKeyword,
+            highlightKeywordZh: matchInfo.highlightKeywordZh,
+            highlightKeywordEn: matchInfo.highlightKeywordEn,
             matchLocation: matchInfo.matchLocation,
             isMissingChinese: matchInfo.isMissingChinese,
           });
