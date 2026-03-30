@@ -25,11 +25,11 @@ type Route =
   | { page: 'home' }
   | { page: 'bg-chapters' }
   | { page: 'bg-sections'; chapterId: number }
-  | { page: 'bg-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
+  | { page: 'bg-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; highlightKeywordZh?: string; highlightKeywordEn?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
   | { page: 'sb-cantos' }
   | { page: 'sb-chapters'; cantoId: number }
   | { page: 'sb-sections'; chapterId: number }
-  | { page: 'sb-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
+  | { page: 'sb-read'; chapterId: number; sectionIndex: number; searchKeyword?: string; highlightKeyword?: string; highlightKeywordZh?: string; highlightKeywordEn?: string; matchLocation?: 'sanskrit' | 'translation' | 'wordmeaning' | 'purport' }
   | { page: 'akadasi'; selectedId?: number };
 
 // ─── Hash 解析与序列化 ───────────────────────────────────────────────────────
