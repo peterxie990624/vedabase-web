@@ -109,14 +109,20 @@ export default function SectionContent({
   // 注意：添加language依赖，当语言切换时也需要重新滚动到高亮位置
   useEffect(() => {
     if (!searchKeyword && !highlightKeyword) return;
+    
+    // 使用多层延迟确保 DOM 已更新
+    // 当语言切换时，React 需要时间重新渲染高亮元素
     const timer = setTimeout(() => {
-      const el = contentRef.current;
-      if (!el) return;
-      const mark = el.querySelector('mark.search-highlight') as HTMLElement | null;
-      if (mark) {
-        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 300);
+      requestAnimationFrame(() => {
+        const el = contentRef.current;
+        if (!el) return;
+        const mark = el.querySelector('mark.search-highlight') as HTMLElement | null;
+        if (mark) {
+          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }, 100);
+    
     return () => clearTimeout(timer);
   }, [searchKeyword, highlightKeyword, highlightKeywordZh, highlightKeywordEn, language]);
 
