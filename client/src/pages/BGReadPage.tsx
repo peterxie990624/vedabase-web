@@ -209,19 +209,21 @@ export default function BGReadPage({
   const tocActiveBg = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(46,111,160,0.08)';
 
   // Handle tap on left/right 1/3 of screen to navigate
-  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    // Don't trigger if clicking on interactive elements
-    if (target.closest('button, a, mark, .purport-text')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const third = rect.width / 3;
-    if (x < third && hasPrev) {
-      goPrev();
-    } else if (x > third * 2 && hasNext) {
-      goNext();
-    }
-  };
+  // 已注释掉点击屏幕左右翻页功能
+  // const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  //   const target = e.target as HTMLElement;
+  //   // Don't trigger if clicking on interactive elements
+  //   if (target.closest('button, a, mark, .purport-text')) return;
+  //   const rect = e.currentTarget.getBoundingClientRect();
+  //   const x = e.clientX - rect.left;
+  //   const third = rect.width / 3;
+  //   if (x < third && hasPrev) {
+  //     goPrev();
+  //   } else if (x > third * 2 && hasNext) {
+  //     goNext();
+  //   }
+  // };
+  const handleContentClick = () => {};
 
   return (
     <div
@@ -277,7 +279,7 @@ export default function BGReadPage({
         key={`${chapterId}-${sectionIndex}`}
         className={animClass}
         style={{ paddingTop: '56px', paddingBottom: '80px', minHeight: '100vh' }}
-        onClick={handleContentClick}
+        // onClick={handleContentClick}  // 已注释掉点击屏幕左右翻页功能
       >
         <SectionContent
           verseText={section.ldw_fd}
