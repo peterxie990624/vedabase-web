@@ -18,15 +18,20 @@
 
 ## 诊断过程
 
-### 第一步：回滚到稳定版本（commit 0b2ab4a）
+### 第一步：回滚到稳定版本（commit df71b41）
 
 用户反馈"突然修复了又不好用了"，表明之前的修改引入了新问题。
 
-**回滚的提交：**
-- ❌ f0614bc: 在handleSearchResult中传入highlightKeywordZh/En参数
-- ❌ 0b2ab4a: 在onNavigate中保留所有高亮参数
+**操作过程：**
+1. 首先回滚到 0b2ab4a（修复问题二：导航节页面时高亮参数丢失）
+2. 然后又回滚到 df71b41（修复highlightText函数中matchLocation的限制逻辑）
+3. 从 df71b41 开始重新分析和修复
 
-**回滚到：** df71b41（修复highlightText函数中matchLocation的限制逻辑）
+**被回滚掉的提交：**
+- ❌ 0b2ab4a: 修复问题二：导航节页面时高亮参数丢失
+- ❌ f0614bc: 修复关键问题：在handleSearchResult中传入highlightKeywordZh/En参数
+
+**最终回滚到：** df71b41（修复highlightText函数中matchLocation的限制逻辑）
 
 ### 第二步：系统性数据流追踪
 
@@ -306,7 +311,7 @@ found.push({
 
 | 提交 | 内容 | 状态 |
 |------|------|------|
-| 0b2ab4a | 修复问题二：导航节页面时高亮参数丢失 | 部分工作 |
+| 0b2ab4a | 修复问题二：导航节页面时高亮参数丢失 | 被回滚 |
 | df71b41 | 修复highlightText函数中matchLocation的限制逻辑 | 基础 |
 | 395fa4f | 修复高亮和滚动问题：1. 修改SectionContent的useEffect依赖，2. 在非overlay模式下保留高亮参数 | 必要但不充分 |
 | 2df791c | 修复关键问题：在SearchPage中传递highlightKeywordZh和highlightKeywordEn到SearchResult | ✅ 最终解决 |
