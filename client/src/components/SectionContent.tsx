@@ -118,7 +118,7 @@ export default function SectionContent({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchKeyword, highlightKeyword, highlightKeywordZh, highlightKeywordEn, language, currentKeyword]);
+  }, [searchKeyword, highlightKeyword, highlightKeywordZh, highlightKeywordEn, language]);
 
   const fsPx = fontSizePx[fontSize];
   const isDark = theme === 'dark';
