@@ -490,12 +490,12 @@ function VedabaseApp() {
     setActiveTab('bookshelf');
     if (result.bookType === 'bg') {
       setOverlayRoute({
-        route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, matchLocation: result.matchLocation },
+        route: { page: 'bg-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, highlightKeywordZh: result.highlightKeywordZh, highlightKeywordEn: result.highlightKeywordEn, matchLocation: result.matchLocation },
         returnTab: 'search',
       });
     } else if (result.bookType === 'sb') {
       setOverlayRoute({
-        route: { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, matchLocation: result.matchLocation },
+        route: { page: 'sb-read', chapterId: result.chapterId, sectionIndex: result.sectionIndex, searchKeyword: result.searchKeyword, highlightKeyword: result.highlightKeyword, highlightKeywordZh: result.highlightKeywordZh, highlightKeywordEn: result.highlightKeywordEn, matchLocation: result.matchLocation },
         returnTab: 'search',
       });
     }
