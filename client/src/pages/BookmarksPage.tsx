@@ -38,15 +38,15 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
       let displayPreview = bookmark.preview;
 
       try {
-        if (bookmark.bookType === 'bg' && bgData) {
-          const chapter = bgData.chapters?.find(c => c.id === bookmark.chapterId);
+        if (bookmark.bookType === 'bg' && bgData && bgData.chapters && bgData.sections) {
+          const chapter = bgData.chapters.find(c => c.id === bookmark.chapterId);
           if (chapter) {
             displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
           }
           
-          // 根据当前语言动态生成preview
+          // 根据当前语言动态生成preview（只有当数据完全加载时才生成）
           if (bookmark.sectionIndex !== undefined) {
-            const sections = bgData.sections?.[String(bookmark.chapterId)];
+            const sections = bgData.sections[String(bookmark.chapterId)];
             if (sections && sections[bookmark.sectionIndex]) {
               const section = sections[bookmark.sectionIndex];
               // 获取对应语言的要旨作为preview
@@ -58,15 +58,15 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
               }
             }
           }
-        } else if (bookmark.bookType === 'sb' && sbData) {
-          const chapter = sbData.chapters?.find(c => c.id === bookmark.chapterId);
+        } else if (bookmark.bookType === 'sb' && sbData && sbData.chapters && sbData.sections) {
+          const chapter = sbData.chapters.find(c => c.id === bookmark.chapterId);
           if (chapter) {
             displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
           }
           
-          // 根据当前语言动态生成preview
+          // 根据当前语言动态生成preview（只有当数据完全加载时才生成）
           if (bookmark.sectionIndex !== undefined) {
-            const sections = sbData.sections?.[String(bookmark.chapterId)];
+            const sections = sbData.sections[String(bookmark.chapterId)];
             if (sections && sections[bookmark.sectionIndex]) {
               const section = sections[bookmark.sectionIndex];
               // 获取对应语言的要旨作为preview
