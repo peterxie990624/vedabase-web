@@ -43,10 +43,40 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
           if (chapter) {
             displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
           }
+          
+          // 根据当前语言动态生成preview
+          if (bookmark.sectionIndex !== undefined) {
+            const sections = bgData.sections?.[String(bookmark.chapterId)];
+            if (sections && sections[bookmark.sectionIndex]) {
+              const section = sections[bookmark.sectionIndex];
+              // 获取对应语言的要旨作为preview
+              const sectionPreview = language === 'zh' 
+                ? (section.yz_zh || section.yw_zh || '')
+                : (section.yz_en || section.yw_en || '');
+              if (sectionPreview) {
+                displayPreview = sectionPreview.substring(0, 50) + '...';
+              }
+            }
+          }
         } else if (bookmark.bookType === 'sb' && sbData) {
           const chapter = sbData.chapters?.find(c => c.id === bookmark.chapterId);
           if (chapter) {
             displayTitle = language === 'zh' ? chapter.zh_title : chapter.en_title;
+          }
+          
+          // 根据当前语言动态生成preview
+          if (bookmark.sectionIndex !== undefined) {
+            const sections = sbData.sections?.[String(bookmark.chapterId)];
+            if (sections && sections[bookmark.sectionIndex]) {
+              const section = sections[bookmark.sectionIndex];
+              // 获取对应语言的要旨作为preview
+              const sectionPreview = language === 'zh' 
+                ? (section.yz_zh || section.yw_zh || '')
+                : (section.yz_en || section.yw_en || '');
+              if (sectionPreview) {
+                displayPreview = sectionPreview.substring(0, 50) + '...';
+              }
+            }
           }
         }
       } catch (e) {
@@ -185,7 +215,7 @@ export default function BookmarksPage({ onOpenBookmark, theme = 'light', languag
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {bookmark.preview}...
+                  {bookmark.displayPreview}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: bookLabelColor, marginTop: '4px' }}>
                   {bookTypeLabel[bookmark.bookType]}
