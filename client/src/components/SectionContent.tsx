@@ -206,10 +206,9 @@ export default function SectionContent({
     let keyword = currentKeyword;
     if (!keyword) return html;
     
-    // 如果指定了matchLocation，只在匹配的位置高亮
-    if (matchLocation && location && matchLocation !== location) {
-      return html;
-    }
+    // 注意：移除了matchLocation的限制
+    // 原因：即使关键词在其他位置被找到，用户仍然希望在当前显示的所有位置都能看到高亮
+    // 例如：在要旨中搜索到的词，用户切换到译文时，也希望看到该词被高亮（如果存在的话）
     
     // 先尝试直接匹配（对中文、英文、梵文都有效）
     // 这是最重要的一步，因为中文关键词无法通过梵文规范化匹配
