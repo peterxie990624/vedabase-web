@@ -83,6 +83,8 @@ export default function SBReadPage({
   const tocContainerRef = useRef<HTMLDivElement>(null);
   const [stickyCantoTitle, setStickyCantoTitle] = useState<string | null>(null);
   const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
+  const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
+  const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -220,8 +222,28 @@ export default function SBReadPage({
     return () => clearTimeout(timer);
   }, [showToc, chapterId]);
 
+  // 当打开TOC时，展开当前篇
+  useEffect(() => {
+    if (showToc && cantoId) {
+      setCurrentCantoId(cantoId);
+      setExpandedCantos(prev => new Set([...prev, cantoId]));
+    }
+  }, [showToc, cantoId]);
+
   const handleFontSize = (size: FontSize) => setFontSize(size);
   const toggleLang = () => setLanguage(language === 'zh' ? 'en' : 'zh');
+
+  const toggleCantoExpand = (id: number) => {
+    setExpandedCantos(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const DEV_MODE = devMode || import.meta.env.DEV;
   const uniqueUrls = Array.from(new Set(progresses.map(p => p.url)));
@@ -423,7 +445,7 @@ export default function SBReadPage({
             {stickyCantoTitle && (
               <div style={{
                 position: 'sticky',
-                top: '60px',
+                top: '0px',
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
                 padding: '12px 16px',
@@ -448,15 +470,15 @@ export default function SBReadPage({
             {stickyChapterTitle && (
               <div style={{
                 position: 'sticky',
-                top: stickyCantoTitle ? '110px' : '60px',
-                background: isDark ? 'rgba(15, 25, 35, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                top: stickyCantoTitle ? '60px' : '0px',
+                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-                padding: '10px 16px 10px 24px',
+                padding: '10px 16px',
                 zIndex: 9,
                 backdropFilter: 'blur(4px)',
               }}>
                 <div style={{
-                  fontSize: '0.78rem',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
                   color: isDark ? '#c8a84b' : '#a08030',
                   fontFamily: "'Noto Serif SC', serif",
@@ -473,31 +495,41 @@ export default function SBReadPage({
             {cantos.map(canto => {
               const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
               const isCurrentCanto = cantoId === canto.id;
-              const cantoTitle = isEn ? canto.en_name : canto.zh_name;
+              const isExpanded = expandedCantos.has(canto.id);
+              // 组合篇名和副标题
+              const cantoLabel = isEn ? canto.en_name : canto.zh_name;
+              const cantoSubtitle = isEn ? (canto.en_subtitle || '') : (canto.zh_subtitle || '');
+              const cantoTitle = cantoSubtitle ? `${cantoLabel} ${cantoSubtitle}` : cantoLabel;
               return (
                 <div key={canto.id}>
                   <div
                     data-canto-id={canto.id}
                     data-canto-title={cantoTitle}
-                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, cursor: 'pointer' }}
-                    onClick={() => {
-                      setShowToc(false);
-                      if (onGoToCanto) onGoToCanto(canto.id);
+                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCantoExpand(canto.id);
                     }}
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
                       {cantoTitle}
                     </div>
+                    <div style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : tocTextSecondary, marginLeft: '8px' }}>
+                      {isExpanded ? '▼' : '▶'}
+                    </div>
                   </div>
-                  {cantoChapters.map(ch => {
+                  {isExpanded && cantoChapters.map(ch => {
                     const isCurrentChapter = ch.id === chapterId;
                     const chSections = isCurrentChapter ? sections : [];
+                    // 组合章名和章节标题
+                    const chapterName = isEn ? ch.en_name : ch.zh_name;
                     const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
+                    const fullChapterTitle = `${chapterName} ${chapterTitle}`;
                     return (
                       <div key={ch.id}>
                         <div
                           data-chapter-id={ch.id}
-                          data-chapter-title={chapterTitle}
+                          data-chapter-title={fullChapterTitle}
                           style={{
                             padding: '10px 16px',
                             background: isCurrentChapter ? tocActiveBg : 'transparent',
@@ -513,14 +545,13 @@ export default function SBReadPage({
                             }
                           }}
                         >
-                          <div style={{ fontSize: '0.78rem', color: tocTextSecondary }}>{isEn ? ch.en_name : ch.zh_name}</div>
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                            {chapterTitle}
+                            {fullChapterTitle}
                           </div>
                         </div>
 
                         {/* Sections for current chapter only */}
-                        {isCurrentChapter && chSections.map((sec, idx) => (
+                        {isCurrentChapter && chSections && chSections.map((sec, idx) => (
                           <div
                             key={sec.id}
                             style={{
