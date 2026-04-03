@@ -441,53 +441,44 @@ export default function SBReadPage({
               </div>
             </div>
 
-            {/* 浮动块：显示当前篇标题 */}
-            {stickyCantoTitle && (
+            {/* 浮动块：显示当前篇和章标题 */}
+            {(stickyCantoTitle || stickyChapterTitle) && (
               <div style={{
                 position: 'sticky',
                 top: '60px',
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
-                padding: '12px 16px',
+                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                padding: '10px 16px',
                 zIndex: 10,
                 backdropFilter: 'blur(4px)',
               }}>
-                <div style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  color: isDark ? '#d4a017' : '#b8860b',
-                  fontFamily: "'Noto Serif SC', serif",
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {stickyCantoTitle}
-                </div>
-              </div>
-            )}
-
-            {/* 浮动块：显示当前章标题 */}
-            {stickyChapterTitle && (
-              <div style={{
-                position: 'sticky',
-                top: stickyCantoTitle ? '120px' : '60px',
-                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-                padding: '8px 16px',
-                zIndex: 9,
-                backdropFilter: 'blur(4px)',
-              }}>
-                <div style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: isDark ? '#c8a84b' : '#a08030',
-                  fontFamily: "'Noto Serif SC', serif",
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {stickyChapterTitle}
-                </div>
+                {stickyCantoTitle && (
+                  <div style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: isDark ? '#d4a017' : '#b8860b',
+                    fontFamily: "'Noto Serif SC', serif",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginBottom: stickyChapterTitle ? '6px' : '0',
+                  }}>
+                    {stickyCantoTitle}
+                  </div>
+                )}
+                {stickyChapterTitle && (
+                  <div style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: isDark ? '#c8a84b' : '#a08030',
+                    fontFamily: "'Noto Serif SC', serif",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {stickyChapterTitle}
+                  </div>
+                )}
               </div>
             )}
 
