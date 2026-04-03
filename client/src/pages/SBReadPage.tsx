@@ -169,28 +169,28 @@ export default function SBReadPage({
       const container = tocContainerRef.current;
       if (!container) return;
 
-      // 查找第一个超出顶部的篇和章标题
+      // 查找最后一个已经滑出顶部的篇和章标题（即当前正在滑出的）
       const cantoElements = container.querySelectorAll('[data-canto-id]');
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       
       let visibleCanto: string | null = null;
       let visibleChapter: string | null = null;
 
+      // 找最后一个已经滑出顶部的篇（rect.top < containerRect.top + 60）
       for (const el of cantoElements) {
         const rect = el.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
-        if (rect.top >= containerRect.top + 60) {
+        if (rect.top < containerRect.top + 60) {
           visibleCanto = el.getAttribute('data-canto-title');
-          break;
         }
       }
 
+      // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 120）
       for (const el of chapterElements) {
         const rect = el.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
-        if (rect.top >= containerRect.top + 110) {
+        if (rect.top < containerRect.top + 120) {
           visibleChapter = el.getAttribute('data-chapter-title');
-          break;
         }
       }
 
