@@ -445,7 +445,7 @@ export default function SBReadPage({
             {stickyCantoTitle && (
               <div style={{
                 position: 'sticky',
-                top: '0px',
+                top: '60px',
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
                 padding: '12px 16px',
@@ -470,15 +470,15 @@ export default function SBReadPage({
             {stickyChapterTitle && (
               <div style={{
                 position: 'sticky',
-                top: stickyCantoTitle ? '60px' : '0px',
+                top: stickyCantoTitle ? '120px' : '60px',
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-                padding: '10px 16px',
+                padding: '8px 16px',
                 zIndex: 9,
                 backdropFilter: 'blur(4px)',
               }}>
                 <div style={{
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: isDark ? '#c8a84b' : '#a08030',
                   fontFamily: "'Noto Serif SC', serif",
