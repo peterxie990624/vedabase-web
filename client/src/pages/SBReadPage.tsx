@@ -514,7 +514,7 @@ export default function SBReadPage({
                 background: isDark ? 'rgba(212, 160, 23, 0.05)' : 'rgba(168, 128, 48, 0.05)',
               }}>
               <div style={{
-                fontSize: '0.8rem',
+                fontSize: '0.95rem',
                 fontWeight: 700,
                 color: isDark ? '#d4a017' : '#b8860b',
                 fontFamily: "'Noto Serif SC', serif",
@@ -523,6 +523,7 @@ export default function SBReadPage({
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
                 pointerEvents: 'auto',
+                paddingLeft: '0px',
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -557,7 +558,7 @@ export default function SBReadPage({
                 background: isDark ? 'rgba(200, 168, 75, 0.05)' : 'rgba(160, 128, 48, 0.05)',
               }}>
                 <div style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: isDark ? '#c8a84b' : '#a08030',
                   fontFamily: "'Noto Serif SC', serif",
@@ -566,6 +567,7 @@ export default function SBReadPage({
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
                   pointerEvents: 'auto',
+                  paddingLeft: '20px',
                 }}
                 onClick={(e) => {
                 e.stopPropagation();
