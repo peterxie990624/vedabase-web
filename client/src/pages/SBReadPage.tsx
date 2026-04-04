@@ -585,6 +585,7 @@ export default function SBReadPage({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      // 滑动目录到该章的位置，不导航
                       const targetChapter = chapters.find(ch => {
                         const chapterName = isEn ? ch.en_name : ch.zh_name;
                         const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
@@ -592,7 +593,13 @@ export default function SBReadPage({
                         return fullTitle === stickyChapterTitle;
                       });
                       if (targetChapter) {
-                        goTo(targetChapter.id, 0, 'left');
+                        // 找到该章在目录中的元素并滑动到它
+                        setTimeout(() => {
+                          const chapterEl = document.querySelector(`[data-chapter-id="${targetChapter.id}"]`);
+                          if (chapterEl) {
+                            chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }, 0);
                       }
                     }}>
                       {stickyChapterTitle}
