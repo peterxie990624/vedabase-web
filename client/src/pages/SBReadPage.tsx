@@ -87,6 +87,7 @@ export default function SBReadPage({
   const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -179,13 +180,14 @@ export default function SBReadPage({
       if (!container) return;
 
       // 查找最后一个已经滑出顶部的篇和章标题
-      // 需求：只有当篇被展开且滑出时才显示；只有当章被展开且滑出时才显示
+      // 需求：只有当篇被展开且滑出时才显示篇；只有当章被展开且滑出时才显示章
       const cantoElements = container.querySelectorAll('[data-canto-id]');
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       
       let visibleCanto: string | null = null;
       let visibleCantoId: number | null = null;
       let visibleChapter: string | null = null;
+      let currentCantoId: number | null = null;
       const containerRect = container.getBoundingClientRect();
 
       // 找最后一个已经滑出顶部的篇（rect.top < containerRect.top + 60）
@@ -203,15 +205,27 @@ export default function SBReadPage({
         }
       }
 
-      // 只有当篇滑出且被展开时，才查找章
-      if (visibleCanto && visibleCantoId) {
-        // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
+      // 找当前展开的篇（不一定是滑出的）
+      if (!visibleCantoId) {
+        for (const el of cantoElements) {
+          const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
+          if (expandedCantos.has(cantoId)) {
+            currentCantoId = cantoId;
+            break;
+          }
+        }
+      } else {
+        currentCantoId = visibleCantoId;
+      }
+
+      // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
+      // 只有当章属于当前展开的篇时，才设置为visibleChapter
+      if (currentCantoId) {
         for (const el of chapterElements) {
           const rect = el.getBoundingClientRect();
           if (rect.top < containerRect.top + 60) {
             const chapterCantoId = parseInt(el.getAttribute('data-canto-id') || '0');
-            // 只有当章属于当前展开的篇时，才设置为visibleChapter
-            if (chapterCantoId === visibleCantoId) {
+            if (chapterCantoId === currentCantoId) {
               visibleChapter = el.getAttribute('data-chapter-title');
             }
           } else {
@@ -261,13 +275,16 @@ export default function SBReadPage({
 
   const toggleCantoExpand = (id: number) => {
     setExpandedCantos(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
+      // 只展开当前篇，其他篇自动合上
+      if (prev.has(id)) {
+        // 如果已经展开，则合上
+        const next = new Set(prev);
         next.delete(id);
+        return next;
       } else {
-        next.add(id);
+        // 如果未展开，则清空其他，只展开该篇
+        return new Set([id]);
       }
-      return next;
     });
   };
 
@@ -555,11 +572,10 @@ export default function SBReadPage({
                           }}
                           onClick={() => {
                             setShowToc(false);
-                            if (onGoToCanto) {
-                              onGoToCanto(ch.canto_id);
-                            } else {
-                              goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
-                            }
+                            // 直接导航到章节，不进入目录页
+                            // 同时清空该篇的其他章，只保留当前章
+                            setExpandedChapters(new Set([ch.id]));
+                            goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
                           }}
                         >
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
