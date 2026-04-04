@@ -505,6 +505,21 @@ export default function SBReadPage({
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     marginBottom: stickyChapterTitle ? '6px' : '0',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    const targetCanto = cantos.find(c => {
+                      const label = isEn ? c.en_name : c.zh_name;
+                      const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
+                      const fullTitle = subtitle ? `${label} ${subtitle}` : label;
+                      return fullTitle === stickyCantoTitle;
+                    });
+                    if (targetCanto) {
+                      const firstChapter = chapters.find(ch => ch.canto_id === targetCanto.id);
+                      if (firstChapter) {
+                        goTo(firstChapter.id, 0, 'left');
+                      }
+                    }
                   }}>
                     {stickyCantoTitle}
                   </div>
@@ -518,6 +533,18 @@ export default function SBReadPage({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    const targetChapter = chapters.find(ch => {
+                      const chapterName = isEn ? ch.en_name : ch.zh_name;
+                      const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
+                      const fullTitle = `${chapterName} ${chapterTitle}`;
+                      return fullTitle === stickyChapterTitle;
+                    });
+                    if (targetChapter) {
+                      goTo(targetChapter.id, 0, 'left');
+                    }
                   }}>
                     {stickyChapterTitle}
                   </div>
