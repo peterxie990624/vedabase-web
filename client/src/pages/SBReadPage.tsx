@@ -581,7 +581,9 @@ export default function SBReadPage({
                   </div>
                   {isExpanded && cantoChapters.map(ch => {
                     const isCurrentChapter = ch.id === chapterId;
-                    const chSections = isCurrentChapter ? sections : [];
+                    const isChapterExpanded = expandedChapters.has(ch.id);
+                    // 从 cantoData 中获取该章的小节
+                    const chSections = isChapterExpanded ? (cantoData?.sections[String(ch.id)] || []) : [];
                     // 组合章名和章节标题
                     const chapterName = isEn ? ch.en_name : ch.zh_name;
                     const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
@@ -598,11 +600,11 @@ export default function SBReadPage({
                             cursor: 'pointer',
                           }}
                           onClick={() => {
-                            setShowToc(false);
-                            // 直接导航到章节，不进入目录页
-                            // 同时清空该篇的其他章，只保留当前章
+                            // 展开该章，显示其小节列表
                             setExpandedChapters(new Set([ch.id]));
+                            // 导航到该章
                             goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
+                            // 不关闭 TOC，让用户看到展开的小节列表
                           }}
                         >
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
@@ -610,8 +612,8 @@ export default function SBReadPage({
                           </div>
                         </div>
 
-                        {/* Sections for current chapter only */}
-                        {isCurrentChapter && chSections && chSections.map((sec, idx) => (
+                        {/* Sections for expanded chapter */}
+                        {isChapterExpanded && chSections && chSections.map((sec, idx) => (
                           <div
                             key={sec.id}
                             style={{
@@ -625,7 +627,7 @@ export default function SBReadPage({
                             }}
                             onClick={() => {
                               setShowToc(false);
-                              goTo(chapterId, idx, idx > sectionIndex ? 'right' : 'left');
+                              goTo(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
                             }}
                           >
                             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
