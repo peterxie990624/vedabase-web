@@ -88,6 +88,7 @@ export default function SBReadPage({
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
+  const initializedRef = useRef(false);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -110,13 +111,13 @@ export default function SBReadPage({
 
   // 初始化时，自动展开当前篇和当前章
   useEffect(() => {
-    if (cantoId && chapterId) {
-      // 展开当前篇
+    if (cantoId && chapterId && !initializedRef.current) {
+      // 只在第一次初始化时展开当前篇和章
+      initializedRef.current = true;
       setExpandedCantos(new Set([cantoId]));
-      // 展开当前章
       setExpandedChapters(new Set([chapterId]));
     }
-  }, [cantoId, chapterId]);
+  }, []);
 
   // Save progress
   useEffect(() => {
@@ -545,6 +546,7 @@ export default function SBReadPage({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
                       // 滑动目录到该篇的位置，不导航
                       const targetCanto = cantos.find(c => {
                         const label = isEn ? c.en_name : c.zh_name;
