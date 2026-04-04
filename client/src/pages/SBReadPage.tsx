@@ -218,19 +218,14 @@ export default function SBReadPage({
         currentCantoId = visibleCantoId;
       }
 
-      // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
-      // 只有当章属于当前展开的篇时，才设置为visibleChapter
-      if (currentCantoId) {
-        for (const el of chapterElements) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top < containerRect.top + 60) {
-            const chapterCantoId = parseInt(el.getAttribute('data-canto-id') || '0');
-            if (chapterCantoId === currentCantoId) {
-              visibleChapter = el.getAttribute('data-chapter-title');
-            }
-          } else {
-            break;
-          }
+      // 只显示当前打开的章是否已经滑出顶部
+      // 当前章已滑出顶部时，才显示其标题
+      const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+      if (currentChapterEl && currentCantoId) {
+        const rect = currentChapterEl.getBoundingClientRect();
+        // 当前章已经滑出顶部（位置在顶部上方）时，显示其标题
+        if (rect.top < containerRect.top + 60) {
+          visibleChapter = currentChapterEl.getAttribute('data-chapter-title');
         }
       }
 
