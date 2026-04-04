@@ -283,6 +283,21 @@ export default function SBReadPage({
     });
   };
 
+  const toggleChapterExpand = (id: number) => {
+    setExpandedChapters(prev => {
+      // 展开/收起该章，其他章自动合上
+      if (prev.has(id)) {
+        // 如果已经展开，则合上
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      } else {
+        // 如果未展开，则清空其他，只展开该章
+        return new Set([id]);
+      }
+    });
+  };
+
   const DEV_MODE = devMode || import.meta.env.DEV;
   const uniqueUrls = Array.from(new Set(progresses.map(p => p.url)));
   const totalSteps = Math.max(2, uniqueUrls.length);
@@ -610,9 +625,9 @@ export default function SBReadPage({
                             cursor: 'pointer',
                           }}
                           onClick={() => {
-                            // 展开/合上该章，显示/隐藏其小节列表
-                            // 同时关闭其他章
-                            setExpandedChapters(new Set([ch.id]));
+                            // 展开/收起该章，显示/隐藏其小节列表
+                            // 同时其他章自动合上
+                            toggleChapterExpand(ch.id);
                             // 不导航，不关闭 TOC
                           }}
                         >
