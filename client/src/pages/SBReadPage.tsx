@@ -545,6 +545,7 @@ export default function SBReadPage({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      // 滑动目录到该篇的位置，不导航
                       const targetCanto = cantos.find(c => {
                         const label = isEn ? c.en_name : c.zh_name;
                         const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
@@ -552,10 +553,13 @@ export default function SBReadPage({
                         return fullTitle === stickyCantoTitle;
                       });
                       if (targetCanto) {
-                        const firstChapter = chapters.find(ch => ch.canto_id === targetCanto.id);
-                        if (firstChapter) {
-                          goTo(firstChapter.id, 0, 'left');
-                        }
+                        // 找到该篇在目录中的元素并滑动到它
+                        setTimeout(() => {
+                          const cantoEl = document.querySelector(`[data-canto-id="${targetCanto.id}"]`);
+                          if (cantoEl) {
+                            cantoEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }, 0);
                       }
                     }}>
                       {stickyCantoTitle}
@@ -679,7 +683,7 @@ export default function SBReadPage({
                             data-section-id={sec.section_id}
                             style={{
                               padding: '8px 16px 8px 28px',
-                              background: idx === sectionIndex ? tocActiveBg : 'transparent',
+                              background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
                               borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
                               cursor: 'pointer',
                               display: 'flex',
@@ -691,12 +695,12 @@ export default function SBReadPage({
                               goTo(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
                             }}
                           >
-                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
                               SB {sec.section_id}
                             </span>
-                            <span style={{ fontSize: '0.78rem', color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '0.78rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
-                              {idx === sectionIndex && ' ◀'}
+                              {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
                             </span>
                           </div>
                         ))}
