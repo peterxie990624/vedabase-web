@@ -625,10 +625,15 @@ export default function SBReadPage({
                             cursor: 'pointer',
                           }}
                           onClick={() => {
-                            // 展开/收起该章，显示/隐藏其小节列表
-                            // 同时其他章自动合上
-                            toggleChapterExpand(ch.id);
-                            // 不导航，不关闭 TOC
+                            // 如果章已展开，则收起；如果未展开，则展开并导航到该章
+                            if (expandedChapters.has(ch.id)) {
+                              // 已展开，则收起
+                              toggleChapterExpand(ch.id);
+                            } else {
+                              // 未展开，则展开并导航到该章的第一个小节
+                              toggleChapterExpand(ch.id);
+                              goTo(ch.id, 0, 'right');
+                            }
                           }}
                         >
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
