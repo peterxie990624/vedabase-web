@@ -149,16 +149,18 @@ export default function BGReadPage({
       const container = tocContainerRef.current;
       if (!container) return;
 
-      // 查找第一个超出顶部的章标题
+      // 查找最后一个已经滑出顶部的章标题
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       let visibleChapter: string | null = null;
+      const containerRect = container.getBoundingClientRect();
 
       for (const el of chapterElements) {
         const rect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        // 如果元素顶部在容器顶部以下，则该元素可见
-        if (rect.top >= containerRect.top + 60) {
+        // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
+        if (rect.top < containerRect.top + 60) {
           visibleChapter = el.getAttribute('data-chapter-title');
+        } else {
+          // 一旦找到没有滑出的章，后续章都不会滑出，可以停止
           break;
         }
       }
