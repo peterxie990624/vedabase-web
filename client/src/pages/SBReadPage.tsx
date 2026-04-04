@@ -490,19 +490,28 @@ export default function SBReadPage({
       {/* TOC Overlay */}
       {showToc && (
         <div
-          style={{ position: 'fixed', inset: 0, background: tocBg, zIndex: 300, display: 'flex', justifyContent: 'flex-end', flexDirection: 'column', alignItems: 'flex-end' }}
+          style={{ position: 'fixed', inset: 0, background: tocBg, zIndex: 300, display: 'flex', justifyContent: 'flex-end' }}
           onClick={() => setShowToc(false)}
         >
-          {/* 篇块：显示当前篇标题 */}
-          {stickyCantoTitle && (
-            <div style={{
-              width: '80%',
-              maxWidth: '360px',
-              borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-              padding: '14px 16px',
-              background: isDark ? 'rgba(212, 160, 23, 0.05)' : 'rgba(168, 128, 48, 0.05)',
-              zIndex: 299,
-            }}>
+          {/* 新的外层容器，包裹所有元素 */}
+          <div style={{ display: 'flex', flexDirection: 'column', width: '80%', maxWidth: '360px', height: '100%' }} onClick={e => e.stopPropagation()}>
+            {/* 目录标题（蓝色块） */}
+            <div ref={tocHeaderRef} style={{ borderBottom: `1px solid ${tocBorder}`, background: tocPanelBg, padding: '20px 16px', zIndex: 11 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif", letterSpacing: '0.05em' }}>
+                {isEn ? 'Table of Contents' : '目录'}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: tocTextSecondary, marginTop: '4px', fontWeight: 500 }}>
+                {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
+              </div>
+            </div>
+
+            {/* 篇块：显示当前篇标题 */}
+            {stickyCantoTitle && (
+              <div style={{
+                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                padding: '14px 16px',
+                background: isDark ? 'rgba(212, 160, 23, 0.05)' : 'rgba(168, 128, 48, 0.05)',
+              }}>
               <div style={{
                 fontSize: '0.8rem',
                 fontWeight: 700,
@@ -535,32 +544,29 @@ export default function SBReadPage({
                 }
               }}>
                 {stickyCantoTitle}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 章块：显示当前章标题 */}
-          {stickyChapterTitle && (
-            <div style={{
-              width: '80%',
-              maxWidth: '360px',
-              borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-              padding: '14px 16px',
-              background: isDark ? 'rgba(200, 168, 75, 0.05)' : 'rgba(160, 128, 48, 0.05)',
-              zIndex: 299,
-            }}>
+            {/* 章块：显示当前章标题 */}
+            {stickyChapterTitle && (
               <div style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isDark ? '#c8a84b' : '#a08030',
-                fontFamily: "'Noto Serif SC', serif",
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-              }}
-              onClick={(e) => {
+                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                padding: '14px 16px',
+                background: isDark ? 'rgba(200, 168, 75, 0.05)' : 'rgba(160, 128, 48, 0.05)',
+              }}>
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isDark ? '#c8a84b' : '#a08030',
+                  fontFamily: "'Noto Serif SC', serif",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                }}
+                onClick={(e) => {
                 e.stopPropagation();
                 // 滑动目录到该章的位置，不导航
                 const targetChapter = chapters.find(ch => {
@@ -580,37 +586,23 @@ export default function SBReadPage({
                 }
               }}>
                 {stickyChapterTitle}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div
-            ref={tocContainerRef}
-            style={{
-              width: '80%',
-              maxWidth: '360px',
-              height: '100%',
-              background: tocPanelBg,
-              borderLeft: `1px solid ${tocBorder}`,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              flex: 1,
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* TOC header */}
-            <div ref={tocHeaderRef} style={{ borderBottom: `1px solid ${tocBorder}`, background: tocPanelBg, zIndex: 11 }}>
-              {/* 目录标题 */}
-              <div style={{ padding: '20px 16px' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif", letterSpacing: '0.05em' }}>
-                  {isEn ? 'Table of Contents' : '目录'}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: tocTextSecondary, marginTop: '4px', fontWeight: 500 }}>
-                  {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
-                </div>
-              </div>
-            </div>
+            <div
+              ref={tocContainerRef}
+              style={{
+                height: '100%',
+                background: tocPanelBg,
+                borderLeft: `1px solid ${tocBorder}`,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+              }}
+              onClick={e => e.stopPropagation()}
+            >
 
             {/* 目录内容 */}
             {cantos.map(canto => {
@@ -719,7 +711,8 @@ export default function SBReadPage({
                   })}
                 </div>
               );
-            })}
+              })}
+            </div>
           </div>
         </div>
       )}
