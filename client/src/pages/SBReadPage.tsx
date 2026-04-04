@@ -201,46 +201,27 @@ export default function SBReadPage({
       let currentCantoId: number | null = null;
       const containerRect = container.getBoundingClientRect();
 
-      // 计算目录头的下方位置（作为上方边界）
-      const tocHeaderEl = tocHeaderRef.current;
-      let topBoundary = containerRect.top + 60; // 默认值
-      if (tocHeaderEl) {
-        const headerRect = tocHeaderEl.getBoundingClientRect();
-        topBoundary = headerRect.bottom; // 使用目录头的下方位置作为边界
-      }
+      // 目录容器的顶部作为边界
+      const topBoundary = containerRect.top;
 
-      // 找最后一个已经滑出顶部的篇
-      // 不依赖展开状态，只要篇已滑出就显示
-      for (const el of cantoElements) {
-        const rect = el.getBoundingClientRect();
+      // 找当前阅读的篇，判断其是否超过目录容器顶部
+      // 只有当前篇超过目录顶部时，才显示篇块
+      const currentCantoEl = container.querySelector(`[data-canto-id="${cantoId}"]`);
+      if (currentCantoEl) {
+        const rect = currentCantoEl.getBoundingClientRect();
+        // 当前篇的顶部已经超过目录容器顶部时，显示篇块
         if (rect.top < topBoundary) {
-          const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
-          visibleCanto = el.getAttribute('data-canto-title');
+          visibleCanto = currentCantoEl.getAttribute('data-canto-title');
           visibleCantoId = cantoId;
-        } else {
-          break;
         }
       }
 
-      // 找当前展开的篇（用于确定当前篇的上下文）
-      if (!visibleCantoId) {
-        for (const el of cantoElements) {
-          const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
-          if (expandedCantos.has(cantoId)) {
-            currentCantoId = cantoId;
-            break;
-          }
-        }
-      } else {
-        currentCantoId = visibleCantoId;
-      }
-
-      // 只显示当前打开的章是否已经滑出顶部
-      // 当前章已滑出顶部时，才显示其标题
+      // 找当前阅读的章，判断其是否超过目录容器顶部
+      // 只有当前章超过目录顶部时，才显示章块
       const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
-      if (currentChapterEl && currentCantoId) {
+      if (currentChapterEl) {
         const rect = currentChapterEl.getBoundingClientRect();
-        // 当前章已经滑出顶部（位置在顶部上方）时，显示其标题
+        // 当前章的顶部已经超过目录容器顶部时，显示章块
         if (rect.top < topBoundary) {
           visibleChapter = currentChapterEl.getAttribute('data-chapter-title');
         }
