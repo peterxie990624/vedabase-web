@@ -450,7 +450,16 @@ export default function SBReadPage({
         fontSize={fontSize}
         onFontSize={handleFontSize}
         theme={theme}
-        onToc={() => setShowToc(true)}
+        onToc={() => {
+          setShowToc(true);
+          // 打开目录时，自动展开当前章
+          if (chapterId) {
+            const chapter = chapters.find(c => c.id === chapterId);
+            if (chapter) {
+              setExpandedCantos(prev => new Set([...prev, chapter.canto_id]));
+            }
+          }
+        }}
       />
 
       <div
