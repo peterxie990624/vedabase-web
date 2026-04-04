@@ -86,6 +86,16 @@ export default function SBReadPage({
   const [stickyCantoTitle, setStickyCantoTitle] = useState<string | null>(null);
   const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
+
+  // 初始化时，自动展开当前篇和当前章
+  useEffect(() => {
+    if (cantoId && chapterId) {
+      // 展开当前篇
+      setExpandedCantos(new Set([cantoId]));
+      // 展开当前章
+      setExpandedChapters(new Set([chapterId]));
+    }
+  }, [cantoId, chapterId]);
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
 
@@ -191,21 +201,19 @@ export default function SBReadPage({
       const containerRect = container.getBoundingClientRect();
 
       // 找最后一个已经滑出顶部的篇（rect.top < containerRect.top + 60）
+      // 不依赖展开状态，只要篇已滑出就显示
       for (const el of cantoElements) {
         const rect = el.getBoundingClientRect();
         if (rect.top < containerRect.top + 60) {
           const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
-          // 只有当篇被展开时，才设置为visibleCanto
-          if (expandedCantos.has(cantoId)) {
-            visibleCanto = el.getAttribute('data-canto-title');
-            visibleCantoId = cantoId;
-          }
+          visibleCanto = el.getAttribute('data-canto-title');
+          visibleCantoId = cantoId;
         } else {
           break;
         }
       }
 
-      // 找当前展开的篇（不一定是滑出的）
+      // 找当前展开的篇（用于确定当前篇的上下文）
       if (!visibleCantoId) {
         for (const el of cantoElements) {
           const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
