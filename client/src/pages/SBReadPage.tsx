@@ -648,13 +648,8 @@ export default function SBReadPage({
                           <div 
                             style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1, cursor: 'pointer' }}
                             onClick={() => {
-                              // 点击章的文字时，展开该章的小节并导航到该章的第一个小节
-                              if (!expandedChapters.has(ch.id)) {
-                                // 如果未展开，先展开
-                                toggleChapterExpand(ch.id);
-                              }
-                              setShowToc(false);
-                              goTo(ch.id, 0, 'right');
+                              // 点击章的文字时，只展开/收起小节列表，不导航
+                              toggleChapterExpand(ch.id);
                             }}
                           >
                             {fullChapterTitle}
