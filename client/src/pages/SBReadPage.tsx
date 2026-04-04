@@ -248,7 +248,7 @@ export default function SBReadPage({
     return () => container.removeEventListener('scroll', handleScroll);
   }, [showToc, expandedCantos]);
 
-  // 打开目录时自动滑动到当前章节
+  // 打开目录时自动滑动到当前小节
   useEffect(() => {
     if (!showToc || !tocContainerRef.current) return;
 
@@ -256,14 +256,21 @@ export default function SBReadPage({
       const container = tocContainerRef.current;
       if (!container) return;
 
-      const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
-      if (currentChapterEl) {
-        currentChapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // 先尝试找到当前小节
+      const currentSectionEl = container.querySelector(`[data-section-id="${section?.section_id}"]`);
+      if (currentSectionEl) {
+        currentSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // 如果找不到小节，则滑动到当前章
+        const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+        if (currentChapterEl) {
+          currentChapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [showToc, chapterId]);
+  }, [showToc, chapterId, section?.section_id]);
 
   // 当打开TOC时，展开当前篇
   useEffect(() => {
