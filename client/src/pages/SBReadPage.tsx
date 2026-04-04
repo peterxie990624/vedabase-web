@@ -81,6 +81,8 @@ export default function SBReadPage({
   const touchStartY = useRef<number | null>(null);
   const [showToc, setShowToc] = useState(false);
   const tocContainerRef = useRef<HTMLDivElement>(null);
+  const tocHeaderRef = useRef<HTMLDivElement>(null);
+  const [tocHeaderHeight, setTocHeaderHeight] = useState(60);
   const [stickyCantoTitle, setStickyCantoTitle] = useState<string | null>(null);
   const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
@@ -160,6 +162,13 @@ export default function SBReadPage({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [goNext, goPrev, hasNext, hasPrev]);
+
+  // 测量 TOC header 的高度
+  useEffect(() => {
+    if (!tocHeaderRef.current) return;
+    const height = tocHeaderRef.current.offsetHeight;
+    setTocHeaderHeight(height);
+  }, [showToc]);
 
   // 处理目录滑动时的浮动块显示
   useEffect(() => {
@@ -439,7 +448,7 @@ export default function SBReadPage({
             onClick={e => e.stopPropagation()}
           >
             {/* TOC header */}
-            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 11 }}>
+            <div ref={tocHeaderRef} style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 11 }}>
               <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
                 {isEn ? 'Table of Contents' : '目录'}
               </div>
@@ -452,11 +461,11 @@ export default function SBReadPage({
             {(stickyCantoTitle || stickyChapterTitle) && (
               <div style={{
                 position: 'sticky',
-                top: '0px',
+                top: `${tocHeaderHeight}px`,
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
                 padding: '10px 16px',
-                zIndex: 12,
+                zIndex: 10,
                 backdropFilter: 'blur(4px)',
               }}>
                 {stickyCantoTitle && (
