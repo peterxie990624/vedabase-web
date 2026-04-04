@@ -47,7 +47,7 @@ function statusColor(r: ResourceStatus, isDark: boolean) {
 }
 
 export default function DevPanel({ resources, env, onRetry, isDark = false }: DevPanelProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   const hasError = resources.some(r => r.error);
