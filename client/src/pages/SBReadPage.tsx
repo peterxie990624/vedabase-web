@@ -205,24 +205,24 @@ export default function SBReadPage({
       const topBoundary = containerRect.top;
 
       // 找当前阅读的篇，判断其是否超过目录容器顶部
-      // 只有当前篇超过目录顶部时，才显示篇块
+      // 只有当前篇的底部超过目录顶部时，才显示篇块
       const currentCantoEl = container.querySelector(`[data-canto-id="${cantoId}"]`);
       if (currentCantoEl) {
         const rect = currentCantoEl.getBoundingClientRect();
-        // 当前篇的顶部已经超过目录容器顶部时，显示篇块
-        if (rect.top < topBoundary) {
+        // 当前篇的底部已经超过目录容器顶部时，显示篇块
+        if (rect.bottom < topBoundary) {
           visibleCanto = currentCantoEl.getAttribute('data-canto-title');
           visibleCantoId = cantoId;
         }
       }
 
       // 找当前阅读的章，判断其是否超过目录容器顶部
-      // 只有当前章超过目录顶部时，才显示章块
+      // 只有当前章的底部超过目录顶部时，才显示章块
       const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
       if (currentChapterEl) {
         const rect = currentChapterEl.getBoundingClientRect();
-        // 当前章的顶部已经超过目录容器顶部时，显示章块
-        if (rect.top < topBoundary) {
+        // 当前章的底部已经超过目录容器顶部时，显示章块
+        if (rect.bottom < topBoundary) {
           visibleChapter = currentChapterEl.getAttribute('data-chapter-title');
         }
       }
