@@ -452,11 +452,14 @@ export default function SBReadPage({
         theme={theme}
         onToc={() => {
           setShowToc(true);
-          // 打开目录时，自动展开当前章
+          // 打开目录时，自动展开当前篇和章
           if (chapterId) {
             const chapter = chapters.find(c => c.id === chapterId);
             if (chapter) {
+              // 展开当前篇
               setExpandedCantos(prev => new Set([...prev, chapter.canto_id]));
+              // 展开当前章
+              setExpandedChapters(prev => new Set([...prev, chapterId]));
             }
           }
         }}
