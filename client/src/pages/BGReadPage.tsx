@@ -150,6 +150,7 @@ export default function BGReadPage({
       if (!container) return;
 
       // 查找最后一个已经滑出顶部的章标题
+      // 需求：只有当章滑出时才显示
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       let visibleChapter: string | null = null;
       const containerRect = container.getBoundingClientRect();

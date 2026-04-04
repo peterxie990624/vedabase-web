@@ -169,7 +169,8 @@ export default function SBReadPage({
       const container = tocContainerRef.current;
       if (!container) return;
 
-      // 查找最后一个已经滑出顶部的篇和章标题（即当前正在滑出的）
+      // 查找最后一个已经滑出顶部的篇和章标题
+      // 需求：只有当篇滑出时才显示；只有当篇滑出且章也滑出时才显示章
       const cantoElements = container.querySelectorAll('[data-canto-id]');
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       
@@ -183,19 +184,20 @@ export default function SBReadPage({
         if (rect.top < containerRect.top + 60) {
           visibleCanto = el.getAttribute('data-canto-title');
         } else {
-          // 一旦找到没有滑出的篇，后续篇都不会滑出，可以停止
           break;
         }
       }
 
-      // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 120）
-      for (const el of chapterElements) {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < containerRect.top + 120) {
-          visibleChapter = el.getAttribute('data-chapter-title');
-        } else {
-          // 一旦找到没有滑出的章，后续章都不会滑出，可以停止
-          break;
+      // 只有当篇滑出时，才查找章
+      if (visibleCanto) {
+        // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
+        for (const el of chapterElements) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < containerRect.top + 60) {
+            visibleChapter = el.getAttribute('data-chapter-title');
+          } else {
+            break;
+          }
         }
       }
 
