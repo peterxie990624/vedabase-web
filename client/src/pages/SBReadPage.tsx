@@ -201,11 +201,19 @@ export default function SBReadPage({
       let currentCantoId: number | null = null;
       const containerRect = container.getBoundingClientRect();
 
-      // 找最后一个已经滑出顶部的篇（rect.top < containerRect.top + 60）
+      // 计算目录头的下方位置（作为上方边界）
+      const tocHeaderEl = tocHeaderRef.current;
+      let topBoundary = containerRect.top + 60; // 默认值
+      if (tocHeaderEl) {
+        const headerRect = tocHeaderEl.getBoundingClientRect();
+        topBoundary = headerRect.bottom; // 使用目录头的下方位置作为边界
+      }
+
+      // 找最后一个已经滑出顶部的篇
       // 不依赖展开状态，只要篇已滑出就显示
       for (const el of cantoElements) {
         const rect = el.getBoundingClientRect();
-        if (rect.top < containerRect.top + 60) {
+        if (rect.top < topBoundary) {
           const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
           visibleCanto = el.getAttribute('data-canto-title');
           visibleCantoId = cantoId;
@@ -233,7 +241,7 @@ export default function SBReadPage({
       if (currentChapterEl && currentCantoId) {
         const rect = currentChapterEl.getBoundingClientRect();
         // 当前章已经滑出顶部（位置在顶部上方）时，显示其标题
-        if (rect.top < containerRect.top + 60) {
+        if (rect.top < topBoundary) {
           visibleChapter = currentChapterEl.getAttribute('data-chapter-title');
         }
       }
