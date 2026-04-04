@@ -452,11 +452,11 @@ export default function SBReadPage({
             {(stickyCantoTitle || stickyChapterTitle) && (
               <div style={{
                 position: 'sticky',
-                top: '60px',
+                top: '0px',
                 background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
                 padding: '10px 16px',
-                zIndex: 10,
+                zIndex: 12,
                 backdropFilter: 'blur(4px)',
               }}>
                 {stickyCantoTitle && (
