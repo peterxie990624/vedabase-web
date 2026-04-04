@@ -666,12 +666,12 @@ export default function SBReadPage({
                           }}
                         >
                           <div 
-                            style={{ fontSize: '0.78rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
+                            style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                           >
                             {fullChapterTitle}
                           </div>
                           <div 
-                            style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextPrimary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                            style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleChapterExpand(ch.id);
@@ -687,7 +687,7 @@ export default function SBReadPage({
                             key={sec.id}
                             data-section-id={sec.section_id}
                             style={{
-                              padding: '8px 16px 8px 28px',
+                              padding: '8px 16px 8px 40px',
                               background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
                               borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
                               cursor: 'pointer',
@@ -700,10 +700,10 @@ export default function SBReadPage({
                               goTo(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
                             }}
                           >
-                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
                               SB {sec.section_id}
                             </span>
-                            <span style={{ fontSize: '0.78rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '0.72rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
                               {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
                             </span>
