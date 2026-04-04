@@ -179,11 +179,12 @@ export default function SBReadPage({
       if (!container) return;
 
       // 查找最后一个已经滑出顶部的篇和章标题
-      // 需求：只有当篇滑出时才显示；只有当篇滑出且章也滑出时才显示章
+      // 需求：只有当篇被展开且滑出时才显示；只有当章被展开且滑出时才显示
       const cantoElements = container.querySelectorAll('[data-canto-id]');
       const chapterElements = container.querySelectorAll('[data-chapter-id]');
       
       let visibleCanto: string | null = null;
+      let visibleCantoId: number | null = null;
       let visibleChapter: string | null = null;
       const containerRect = container.getBoundingClientRect();
 
@@ -191,19 +192,28 @@ export default function SBReadPage({
       for (const el of cantoElements) {
         const rect = el.getBoundingClientRect();
         if (rect.top < containerRect.top + 60) {
-          visibleCanto = el.getAttribute('data-canto-title');
+          const cantoId = parseInt(el.getAttribute('data-canto-id') || '0');
+          // 只有当篇被展开时，才设置为visibleCanto
+          if (expandedCantos.has(cantoId)) {
+            visibleCanto = el.getAttribute('data-canto-title');
+            visibleCantoId = cantoId;
+          }
         } else {
           break;
         }
       }
 
-      // 只有当篇滑出时，才查找章
-      if (visibleCanto) {
+      // 只有当篇滑出且被展开时，才查找章
+      if (visibleCanto && visibleCantoId) {
         // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 60）
         for (const el of chapterElements) {
           const rect = el.getBoundingClientRect();
           if (rect.top < containerRect.top + 60) {
-            visibleChapter = el.getAttribute('data-chapter-title');
+            const chapterCantoId = parseInt(el.getAttribute('data-canto-id') || '0');
+            // 只有当章属于当前展开的篇时，才设置为visibleChapter
+            if (chapterCantoId === visibleCantoId) {
+              visibleChapter = el.getAttribute('data-chapter-title');
+            }
           } else {
             break;
           }
@@ -219,7 +229,7 @@ export default function SBReadPage({
     handleScroll();
 
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [showToc]);
+  }, [showToc, expandedCantos]);
 
   // 打开目录时自动滑动到当前章节
   useEffect(() => {
