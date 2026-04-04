@@ -18,7 +18,7 @@ import type { SearchState } from './pages/SearchPage';
 import CalendarPage from './pages/CalendarPage';
 import { useSettings } from './hooks/useSettings';
 import type { TabType, Bookmark } from './types';
-import { Info, X } from 'lucide-react';
+import { Info, X, LogOut } from 'lucide-react';
 
 // Route types
 type Route =
@@ -183,6 +183,41 @@ function loadSession(): SessionData | null {
 // ─── Dev mode detection ──────────────────────────────────────────────────────
 function isDevMode(): boolean {
   return localStorage.getItem('vedabase_devmode') === 'true' || import.meta.env.DEV;
+}
+
+// ─── Version Info ───────────────────────────────────────────────────────────
+// 获取版本信息
+declare const __GIT_COMMIT_HASH__: string;
+declare const __GIT_COMMIT_FULL_HASH__: string;
+declare const __GIT_COMMIT_DATE__: string;
+declare const __BUILD_TIME__: string;
+
+function getVersionInfo() {
+  try {
+    const commitHash = typeof __GIT_COMMIT_HASH__ !== 'undefined' ? __GIT_COMMIT_HASH__ : 'unknown';
+    const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : 'unknown';
+    
+    // 解析时间戳
+    let buildTimeFormatted = 'unknown';
+    if (buildTime !== 'unknown') {
+      try {
+        const date = new Date(buildTime);
+        buildTimeFormatted = date.toLocaleString('zh-CN', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      } catch {}
+    }
+    
+    return { commitHash, buildTimeFormatted };
+  } catch {
+    return { commitHash: 'unknown', buildTimeFormatted: 'unknown' };
+  }
 }
 
 // 开发模式功能说明
@@ -848,6 +883,15 @@ function VedabaseApp() {
                 </pre>
               </details>
 
+              {/* 版本信息 */}
+              <div style={{ marginBottom: '12px', padding: '8px', borderRadius: '6px', background: isDark ? '#0f1923' : '#f5f7fa', border: `1px solid ${isDark ? '#2a3a50' : '#e0eaf2'}` }}>
+                <div style={{ fontSize: '11px', color: isDark ? '#8aa0b4' : '#6a8aa0', marginBottom: '4px', fontWeight: 600 }}>📦 版本信息</div>
+                <div style={{ fontSize: '10px', color: isDark ? '#c0d0e0' : '#666', fontFamily: 'monospace', lineHeight: 1.5 }}>
+                  <div>提交: {getVersionInfo().commitHash}</div>
+                  <div>构建: {getVersionInfo().buildTimeFormatted}</div>
+                </div>
+              </div>
+
               {/* 测试工具 */}
               <div style={{ fontSize: '11px', color: isDark ? '#8aa0b4' : '#6a8aa0', marginBottom: '8px', fontWeight: 600 }}>
                 测试工具
@@ -908,6 +952,30 @@ function VedabaseApp() {
                   style={devBtnStyle(isDark)}
                 >
                   📍 查看当前会话状态
+                </button>
+              </div>
+
+              {/* 退出 DEV 模式按钮 */}
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${isDark ? '#2a3a50' : '#e0eaf2'}` }}>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('vedabase_devmode');
+                    // 刷新页面以立即生效
+                    window.location.reload();
+                  }}
+                  style={{
+                    ...devBtnStyle(isDark),
+                    background: isDark ? '#1a3a2a' : '#f0f8f4',
+                    border: `1px solid ${isDark ? '#2a5a4a' : '#c0e0d8'}`,
+                    color: isDark ? '#5ad88a' : '#2a8a4a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <LogOut size={12} />
+                  退出 DEV 模式
                 </button>
               </div>
             </div>

@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
@@ -150,6 +151,22 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Get Git commit info for version display
+// ─────────────────────────────────────────────────────────────────────────────
+function getGitInfo() {
+  try {
+    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+    const commitFullHash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+    const commitDate = execSync('git log -1 --format=%ai', { encoding: 'utf-8' }).trim();
+    return { commitHash, commitFullHash, commitDate };
+  } catch (e) {
+    return { commitHash: 'unknown', commitFullHash: 'unknown', commitDate: 'unknown' };
+  }
+}
+
+const gitInfo = getGitInfo();
+
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
 
 // GitHub Pages deploys to /vedabase-web/ by default (repo name as base path)
@@ -158,6 +175,12 @@ const basePath = process.env.VITE_BASE_PATH ?? '/vedabase-web/';
 
 export default defineConfig({
   plugins,
+  define: {
+    __GIT_COMMIT_HASH__: JSON.stringify(gitInfo.commitHash),
+    __GIT_COMMIT_FULL_HASH__: JSON.stringify(gitInfo.commitFullHash),
+    __GIT_COMMIT_DATE__: JSON.stringify(gitInfo.commitDate),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

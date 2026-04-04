@@ -328,9 +328,13 @@ export default function BookshelfPage({
                     if (isNowDev) {
                       localStorage.removeItem('vedabase_devmode');
                       toast.success('开发模式已关闭', { duration: 2000 });
+                      // 立即刷新页面以生效
+                      setTimeout(() => window.location.reload(), 500);
                     } else {
                       localStorage.setItem('vedabase_devmode', 'true');
-                      toast.success('🛠 开发模式已激活！重新进入搜索页生效', { duration: 3000 });
+                      toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
+                      // 立即刷新页面以生效
+                      setTimeout(() => window.location.reload(), 500);
                     }
                     setShowSettings(false);
                   }, 3000);
@@ -353,9 +357,13 @@ export default function BookshelfPage({
                     if (isNowDev) {
                       localStorage.removeItem('vedabase_devmode');
                       toast.success('开发模式已关闭', { duration: 2000 });
+                      // 立即刷新页面以生效
+                      setTimeout(() => window.location.reload(), 500);
                     } else {
                       localStorage.setItem('vedabase_devmode', 'true');
-                      toast.success('🛠 开发模式已激活！重新进入搜索页生效', { duration: 3000 });
+                      toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
+                      // 立即刷新页面以生效
+                      setTimeout(() => window.location.reload(), 500);
                     }
                     setShowSettings(false);
                   }, 3000);
