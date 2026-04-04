@@ -636,6 +636,9 @@ export default function SBReadPage({
                           data-chapter-id={ch.id}
                           data-canto-id={canto.id}
                           data-chapter-title={fullChapterTitle}
+                          onClick={() => {
+                            toggleChapterExpand(ch.id);
+                          }}
                           style={{
                             padding: '10px 16px',
                             background: isCurrentChapter ? tocActiveBg : 'transparent',
@@ -643,14 +646,11 @@ export default function SBReadPage({
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
+                            cursor: 'pointer',
                           }}
                         >
                           <div 
-                            style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1, cursor: 'pointer' }}
-                            onClick={() => {
-                              // 点击章的文字时，只展开/收起小节列表，不导航
-                              toggleChapterExpand(ch.id);
-                            }}
+                            style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1 }}
                           >
                             {fullChapterTitle}
                           </div>
