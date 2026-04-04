@@ -86,16 +86,6 @@ export default function SBReadPage({
   const [stickyCantoTitle, setStickyCantoTitle] = useState<string | null>(null);
   const [stickyChapterTitle, setStickyChapterTitle] = useState<string | null>(null);
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
-
-  // 初始化时，自动展开当前篇和当前章
-  useEffect(() => {
-    if (cantoId && chapterId) {
-      // 展开当前篇
-      setExpandedCantos(new Set([cantoId]));
-      // 展开当前章
-      setExpandedChapters(new Set([chapterId]));
-    }
-  }, [cantoId, chapterId]);
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
 
@@ -117,6 +107,16 @@ export default function SBReadPage({
   const chapterIdx = chapters.findIndex(c => c.id === chapterId);
   const hasPrev = sectionIndex > 0 || chapterIdx > 0;
   const hasNext = sectionIndex < sections.length - 1 || chapterIdx < chapters.length - 1;
+
+  // 初始化时，自动展开当前篇和当前章
+  useEffect(() => {
+    if (cantoId && chapterId) {
+      // 展开当前篇
+      setExpandedCantos(new Set([cantoId]));
+      // 展开当前章
+      setExpandedChapters(new Set([chapterId]));
+    }
+  }, [cantoId, chapterId]);
 
   // Save progress
   useEffect(() => {
