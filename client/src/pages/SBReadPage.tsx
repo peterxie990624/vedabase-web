@@ -590,16 +590,18 @@ export default function SBReadPage({
                   <div
                     data-canto-id={canto.id}
                     data-canto-title={cantoTitle}
-                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCantoExpand(canto.id);
-                    }}
+                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
                       {cantoTitle}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : tocTextSecondary, marginLeft: '8px' }}>
+                    <div 
+                      style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCantoExpand(canto.id);
+                      }}
+                    >
                       {isExpanded ? '▼' : '▶'}
                     </div>
                   </div>
@@ -622,22 +624,29 @@ export default function SBReadPage({
                             padding: '10px 16px',
                             background: isCurrentChapter ? tocActiveBg : 'transparent',
                             borderBottom: `1px solid ${tocBorder}`,
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => {
-                            // 如果章已展开，则收起；如果未展开，则展开并导航到该章
-                            if (expandedChapters.has(ch.id)) {
-                              // 已展开，则收起
-                              toggleChapterExpand(ch.id);
-                            } else {
-                              // 未展开，则展开并导航到该章的第一个小节
-                              toggleChapterExpand(ch.id);
-                              goTo(ch.id, 0, 'right');
-                            }
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                           }}
                         >
-                          <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
+                          <div 
+                            style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1, cursor: 'pointer' }}
+                            onClick={() => {
+                              // 点击章的文字时，导航到该章的第一个小节
+                              setShowToc(false);
+                              goTo(ch.id, 0, 'right');
+                            }}
+                          >
                             {fullChapterTitle}
+                          </div>
+                          <div 
+                            style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextPrimary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleChapterExpand(ch.id);
+                            }}
+                          >
+                            {isChapterExpanded ? '▼' : '▶'}
                           </div>
                         </div>
 
