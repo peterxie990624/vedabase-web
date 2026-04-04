@@ -509,14 +509,14 @@ export default function SBReadPage({
             {/* 篇块：显示当前篇标题 */}
             {stickyCantoTitle && (
               <div style={{
-                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                borderBottom: `1.5px solid ${isDark ? '#8aa0b4' : '#a0b0c0'}`,
                 padding: '14px 16px',
-                background: isDark ? 'rgba(212, 160, 23, 0.05)' : 'rgba(168, 128, 48, 0.05)',
+                background: 'transparent',
               }}>
               <div style={{
                 fontSize: '0.95rem',
                 fontWeight: 700,
-                color: isDark ? '#d4a017' : '#b8860b',
+                color: cantoId ? tocActiveColor : tocTextSecondary,
                 fontFamily: "'Noto Serif SC', serif",
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -553,14 +553,14 @@ export default function SBReadPage({
             {/* 章块：显示当前章标题 */}
             {stickyChapterTitle && (
               <div style={{
-                borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                borderBottom: `1.5px solid ${isDark ? '#8aa0b4' : '#a0b0c0'}`,
                 padding: '14px 16px',
-                background: isDark ? 'rgba(200, 168, 75, 0.05)' : 'rgba(160, 128, 48, 0.05)',
+                background: 'transparent',
               }}>
                 <div style={{
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: isDark ? '#c8a84b' : '#a08030',
+                  color: chapterId ? tocActiveColor : tocTextSecondary,
                   fontFamily: "'Noto Serif SC', serif",
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
