@@ -624,7 +624,7 @@ export default function SBReadPage({
                     style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                     onClick={() => toggleCantoExpand(canto.id)}
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
                       {cantoTitle}
                     </div>
                     <div 
@@ -666,7 +666,7 @@ export default function SBReadPage({
                           }}
                         >
                           <div 
-                            style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1 }}
+                            style={{ fontSize: '0.78rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                           >
                             {fullChapterTitle}
                           </div>
