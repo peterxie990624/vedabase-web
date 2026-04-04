@@ -516,7 +516,7 @@ export default function SBReadPage({
               <div style={{
                 fontSize: '0.95rem',
                 fontWeight: 700,
-                color: cantoId ? tocActiveColor : tocTextSecondary,
+                color: isDark ? '#d4a017' : '#b8860b',
                 fontFamily: "'Noto Serif SC', serif",
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -560,7 +560,7 @@ export default function SBReadPage({
                 <div style={{
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: chapterId ? tocActiveColor : tocTextSecondary,
+                  color: isDark ? '#d4a017' : '#b8860b',
                   fontFamily: "'Noto Serif SC', serif",
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -666,7 +666,7 @@ export default function SBReadPage({
                           }}
                         >
                           <div 
-                            style={{ fontSize: '0.78rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
+                            style={{ fontSize: '0.78rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                           >
                             {fullChapterTitle}
                           </div>
