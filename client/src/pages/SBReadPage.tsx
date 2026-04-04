@@ -308,6 +308,13 @@ export default function SBReadPage({
         return next;
       } else {
         // 如果未展开，则清空其他，只展开该章
+        // 并自动滑动到该章的位置
+        setTimeout(() => {
+          const chapterEl = document.querySelector(`[data-chapter-id="${id}"]`);
+          if (chapterEl) {
+            chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 0);
         return new Set([id]);
       }
     });
