@@ -175,22 +175,27 @@ export default function SBReadPage({
       
       let visibleCanto: string | null = null;
       let visibleChapter: string | null = null;
+      const containerRect = container.getBoundingClientRect();
 
       // 找最后一个已经滑出顶部的篇（rect.top < containerRect.top + 60）
       for (const el of cantoElements) {
         const rect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
         if (rect.top < containerRect.top + 60) {
           visibleCanto = el.getAttribute('data-canto-title');
+        } else {
+          // 一旦找到没有滑出的篇，后续篇都不会滑出，可以停止
+          break;
         }
       }
 
       // 找最后一个已经滑出顶部的章（rect.top < containerRect.top + 120）
       for (const el of chapterElements) {
         const rect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
         if (rect.top < containerRect.top + 120) {
           visibleChapter = el.getAttribute('data-chapter-title');
+        } else {
+          // 一旦找到没有滑出的章，后续章都不会滑出，可以停止
+          break;
         }
       }
 
