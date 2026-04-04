@@ -481,17 +481,19 @@ export default function SBReadPage({
 
             {/* 浮动块：显示当前篇和章标题 */}
             {(stickyCantoTitle || stickyChapterTitle) && (
-              <>
-                {/* 篇的 sticky 块 */}
+              <div style={{
+                position: 'sticky',
+                top: `${tocHeaderHeight}px`,
+                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                zIndex: 10,
+                backdropFilter: 'blur(4px)',
+                pointerEvents: 'auto',
+              }}>
+                {/* 篇的行 */}
                 {stickyCantoTitle && (
                   <div style={{
-                    position: 'sticky',
-                    top: `${tocHeaderHeight}px`,
-                    background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
                     padding: '10px 16px',
-                    zIndex: 10,
-                    backdropFilter: 'blur(4px)',
                   }}>
                     <div style={{
                       fontSize: '0.8rem',
@@ -502,8 +504,10 @@ export default function SBReadPage({
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       cursor: 'pointer',
+                      pointerEvents: 'auto',
                     }}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const targetCanto = cantos.find(c => {
                         const label = isEn ? c.en_name : c.zh_name;
                         const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
@@ -521,16 +525,11 @@ export default function SBReadPage({
                     </div>
                   </div>
                 )}
-                {/* 章的 sticky 块 */}
+                {/* 章的行 */}
                 {stickyChapterTitle && (
                   <div style={{
-                    position: 'sticky',
-                    top: stickyCantoTitle ? `calc(${tocHeaderHeight}px + 40px)` : `${tocHeaderHeight}px`,
-                    background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
                     padding: '10px 16px',
-                    zIndex: 9,
-                    backdropFilter: 'blur(4px)',
                   }}>
                     <div style={{
                       fontSize: '0.75rem',
@@ -541,8 +540,10 @@ export default function SBReadPage({
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       cursor: 'pointer',
+                      pointerEvents: 'auto',
                     }}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const targetChapter = chapters.find(ch => {
                         const chapterName = isEn ? ch.en_name : ch.zh_name;
                         const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
@@ -557,7 +558,7 @@ export default function SBReadPage({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {/* Cantos */}
