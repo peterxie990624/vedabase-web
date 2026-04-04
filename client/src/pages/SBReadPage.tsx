@@ -674,6 +674,7 @@ export default function SBReadPage({
                         {isChapterExpanded && chSections && chSections.map((sec, idx) => (
                           <div
                             key={sec.id}
+                            data-section-id={sec.section_id}
                             style={{
                               padding: '8px 16px 8px 28px',
                               background: idx === sectionIndex ? tocActiveBg : 'transparent',
