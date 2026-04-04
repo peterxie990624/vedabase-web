@@ -508,110 +508,109 @@ export default function SBReadPage({
             onClick={e => e.stopPropagation()}
           >
             {/* TOC header */}
-            <div ref={tocHeaderRef} style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 11 }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                {isEn ? 'Table of Contents' : '目录'}
+            <div ref={tocHeaderRef} style={{ borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 11 }}>
+              {/* 目录标题 */}
+              <div style={{ padding: '20px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif", letterSpacing: '0.05em' }}>
+                  {isEn ? 'Table of Contents' : '目录'}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: tocTextSecondary, marginTop: '4px', fontWeight: 500 }}>
+                  {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
+                </div>
               </div>
-              <div style={{ fontSize: '0.8rem', color: tocTextSecondary, marginTop: '2px' }}>
-                {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
-              </div>
+
+              {/* 篇/章块：显示当前篇和章标题 */}
+              {(stickyCantoTitle || stickyChapterTitle) && (
+                <div style={{ borderTop: `1px solid ${tocBorder}` }}>
+                  {/* 篇的行 */}
+                  {stickyCantoTitle && (
+                    <div style={{
+                      borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                      padding: '14px 16px',
+                      background: isDark ? 'rgba(212, 160, 23, 0.05)' : 'rgba(168, 128, 48, 0.05)',
+                    }}>
+                      <div style={{
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        color: isDark ? '#d4a017' : '#b8860b',
+                        fontFamily: "'Noto Serif SC', serif",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        // 滑动目录到该篇的位置，不导航
+                        const targetCanto = cantos.find(c => {
+                          const label = isEn ? c.en_name : c.zh_name;
+                          const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
+                          const fullTitle = subtitle ? `${label} ${subtitle}` : label;
+                          return fullTitle === stickyCantoTitle;
+                        });
+                        if (targetCanto) {
+                          // 找到该篇在目录中的元素并滑动到它
+                          setTimeout(() => {
+                            const cantoEl = document.querySelector(`[data-canto-id="${targetCanto.id}"]`);
+                            if (cantoEl) {
+                              cantoEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }, 0);
+                        }
+                      }}>
+                        {stickyCantoTitle}
+                      </div>
+                    </div>
+                  )}
+                  {/* 章的行 */}
+                  {stickyChapterTitle && (
+                    <div style={{
+                      borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
+                      padding: '14px 16px',
+                      background: isDark ? 'rgba(200, 168, 75, 0.05)' : 'rgba(160, 128, 48, 0.05)',
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: isDark ? '#c8a84b' : '#a08030',
+                        fontFamily: "'Noto Serif SC', serif",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 滑动目录到该章的位置，不导航
+                        const targetChapter = chapters.find(ch => {
+                          const chapterName = isEn ? ch.en_name : ch.zh_name;
+                          const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
+                          const fullTitle = `${chapterName} ${chapterTitle}`;
+                          return fullTitle === stickyChapterTitle;
+                        });
+                        if (targetChapter) {
+                          // 找到该章在目录中的元素并滑动到它
+                          setTimeout(() => {
+                            const chapterEl = document.querySelector(`[data-chapter-id="${targetChapter.id}"]`);
+                            if (chapterEl) {
+                              chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }, 0);
+                        }
+                      }}>
+                        {stickyChapterTitle}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* 浮动块：显示当前篇和章标题 */}
-            {(stickyCantoTitle || stickyChapterTitle) && (
-              <div style={{
-                position: 'sticky',
-                top: `${tocHeaderHeight}px`,
-                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                zIndex: 10,
-                backdropFilter: 'blur(4px)',
-                pointerEvents: 'auto',
-              }}>
-                {/* 篇的行 */}
-                {stickyCantoTitle && (
-                  <div style={{
-                    borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-                    padding: '10px 16px',
-                  }}>
-                    <div style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      color: isDark ? '#d4a017' : '#b8860b',
-                      fontFamily: "'Noto Serif SC', serif",
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      cursor: 'pointer',
-                      pointerEvents: 'auto',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      // 滑动目录到该篇的位置，不导航
-                      const targetCanto = cantos.find(c => {
-                        const label = isEn ? c.en_name : c.zh_name;
-                        const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
-                        const fullTitle = subtitle ? `${label} ${subtitle}` : label;
-                        return fullTitle === stickyCantoTitle;
-                      });
-                      if (targetCanto) {
-                        // 找到该篇在目录中的元素并滑动到它
-                        setTimeout(() => {
-                          const cantoEl = document.querySelector(`[data-canto-id="${targetCanto.id}"]`);
-                          if (cantoEl) {
-                            cantoEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }, 0);
-                      }
-                    }}>
-                      {stickyCantoTitle}
-                    </div>
-                  </div>
-                )}
-                {/* 章的行 */}
-                {stickyChapterTitle && (
-                  <div style={{
-                    borderBottom: `1.5px solid ${isDark ? '#c8a84b' : '#a08030'}`,
-                    padding: '10px 16px',
-                  }}>
-                    <div style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDark ? '#c8a84b' : '#a08030',
-                      fontFamily: "'Noto Serif SC', serif",
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      cursor: 'pointer',
-                      pointerEvents: 'auto',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // 滑动目录到该章的位置，不导航
-                      const targetChapter = chapters.find(ch => {
-                        const chapterName = isEn ? ch.en_name : ch.zh_name;
-                        const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
-                        const fullTitle = `${chapterName} ${chapterTitle}`;
-                        return fullTitle === stickyChapterTitle;
-                      });
-                      if (targetChapter) {
-                        // 找到该章在目录中的元素并滑动到它
-                        setTimeout(() => {
-                          const chapterEl = document.querySelector(`[data-chapter-id="${targetChapter.id}"]`);
-                          if (chapterEl) {
-                            chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }, 0);
-                      }
-                    }}>
-                      {stickyChapterTitle}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* Cantos */}
+            {/* 目录内容 */}
             {cantos.map(canto => {
               const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
               const isCurrentCanto = cantoId === canto.id;
