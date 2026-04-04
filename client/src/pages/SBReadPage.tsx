@@ -592,6 +592,7 @@ export default function SBReadPage({
                       <div key={ch.id}>
                         <div
                           data-chapter-id={ch.id}
+                          data-canto-id={canto.id}
                           data-chapter-title={fullChapterTitle}
                           style={{
                             padding: '10px 16px',
@@ -600,11 +601,10 @@ export default function SBReadPage({
                             cursor: 'pointer',
                           }}
                           onClick={() => {
-                            // 展开该章，显示其小节列表
+                            // 展开/合上该章，显示/隐藏其小节列表
+                            // 同时关闭其他章
                             setExpandedChapters(new Set([ch.id]));
-                            // 导航到该章
-                            goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
-                            // 不关闭 TOC，让用户看到展开的小节列表
+                            // 不导航，不关闭 TOC
                           }}
                         >
                           <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
