@@ -371,6 +371,7 @@ export default function BGReadPage({
         cantos={[]}
         chapters={chapters}
         cantoData={{ sections: allSections }}
+        cachedCantos={{}}
         chapterId={chapterId}
         sectionIndex={sectionIndex}
         cantoId={null}
@@ -382,6 +383,7 @@ export default function BGReadPage({
           goTo(newChapterId, newSectionIdx, direction);
         }}
         onCloseToc={() => setShowToc(false)}
+        loadedCantos={new Set()}
         tocBg={tocBg}
         tocPanelBg={tocPanelBg}
         tocBorder={tocBorder}

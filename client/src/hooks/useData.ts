@@ -101,10 +101,15 @@ export function useBGData(onProgress?: (p: LoadProgress) => void) {
 
   useEffect(() => {
     loadJSON<BGData>('/data/bg_data.json', onProgress)
-      .then(setData)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [onProgress]);
 
   return { data, loading, error };
 }
@@ -116,39 +121,52 @@ export function useSBIndex(onProgress?: (p: LoadProgress) => void) {
 
   useEffect(() => {
     loadJSON<SBIndex>('/data/sb_index.json', onProgress)
-      .then(setData)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [onProgress]);
 
   return { data, loading, error };
 }
 
 export function useSBCantoData(cantoId: number | null, onProgress?: (p: LoadProgress) => void) {
   const [data, setData] = useState<SBCantoData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!cantoId);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (cantoId === null) return;
+    if (!cantoId) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    setError(null);
     loadJSON<SBCantoData>(`/data/sb/canto_${cantoId}.json`, onProgress)
-      .then(setData)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [cantoId]);
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [cantoId, onProgress]);
 
   return { data, loading, error };
 }
-
 
 // 缓存多个篇的数据
 const cantoDataCache: Record<number, SBCantoData> = {};
 const cantoLoadingState: Record<number, boolean> = {};
 
 export function useSBCantoDataCache() {
-  const [cachedCantos, setCachedCantos] = useState<Set<number>>(new Set());
+  const [cachedCantos, setCachedCantos] = useState<Record<number, SBCantoData>>({});
 
   const loadCantoData = async (cantoId: number): Promise<SBCantoData | null> => {
     // 如果已在缓存中，直接返回
@@ -178,7 +196,8 @@ export function useSBCantoDataCache() {
     try {
       const data = await loadJSON<SBCantoData>(`/data/sb/canto_${cantoId}.json`);
       cantoDataCache[cantoId] = data;
-      setCachedCantos(prev => new Set([...prev, cantoId]));
+      // 更新React状态，使组件能够看到新的缓存数据
+      setCachedCantos(prev => ({ ...prev, [cantoId]: data }));
       return data;
     } catch (e) {
       console.error(`Failed to load canto ${cantoId}:`, e);
@@ -198,10 +217,15 @@ export function useAkadasiData(onProgress?: (p: LoadProgress) => void) {
 
   useEffect(() => {
     loadJSON<AkadasiData>('/data/akadasi_data.json', onProgress)
-      .then(setData)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [onProgress]);
 
   return { data, loading, error };
 }
@@ -213,39 +237,45 @@ export function useCalendarData(onProgress?: (p: LoadProgress) => void) {
 
   useEffect(() => {
     loadJSON<CalendarData>('/data/calendar_data.json', onProgress)
-      .then(setData)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [onProgress]);
 
   return { data, loading, error };
 }
 
-// Preload functions
+// 预加载相邻篇
+export function useSBPreload(cantoId: number | null, ready: boolean) {
+  useEffect(() => {
+    if (!ready || !cantoId) return;
+
+    // 预加载相邻篇
+    const preloadCantos = [cantoId - 1, cantoId + 1].filter(id => id > 0 && id <= 12);
+    preloadCantos.forEach(id => {
+      // 后台预加载，不等待
+      loadJSON<SBCantoData>(`/data/sb/canto_${id}.json`).catch(() => {
+        // 忽略预加载失败
+      });
+    });
+  }, [cantoId, ready]);
+}
+
+
+// 预加载函数
 export function preloadBGData() {
-  loadJSON('/data/bg_data.json').catch(() => {});
+  loadJSON<BGData>('/data/bg_data.json').catch(() => {
+    // 忽略预加载失败
+  });
 }
 
 export function preloadSBIndex() {
-  loadJSON('/data/sb_index.json').catch(() => {});
-}
-
-export function preloadSBCanto(cantoId: number) {
-  if (cantoId < 1 || cantoId > 12) return;
-  loadJSON(`/data/sb/canto_${cantoId}.json`).catch(() => {});
-}
-
-/**
- * 后台预加载相邻篇：当前篇加载完成后，地山火源预加载上一篇和下一篇
- */
-export function useSBPreload(currentCantoId: number | null, isLoaded: boolean) {
-  useEffect(() => {
-    if (!currentCantoId || !isLoaded) return;
-    // 延迟 2 秒后开始预加载，避免干扰当前请求
-    const timer = setTimeout(() => {
-      if (currentCantoId > 1) preloadSBCanto(currentCantoId - 1);
-      if (currentCantoId < 12) preloadSBCanto(currentCantoId + 1);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [currentCantoId, isLoaded]);
+  loadJSON<SBIndex>('/data/sb_index.json').catch(() => {
+    // 忽略预加载失败
+  });
 }
