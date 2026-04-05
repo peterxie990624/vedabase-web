@@ -1,6 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { SBCanto, SBChapter, SBSection } from '../types';
 
+// 动画加载提示的CSS
+const loadingDotsStyle = `
+  @keyframes loading-dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+  .loading-dots::after {
+    animation: loading-dots 1.5s infinite;
+  }
+`;
+
 interface SBTableOfContentsProps {
   // 书籍类型
   bookType: 'sb' | 'bg';
@@ -9,6 +21,7 @@ interface SBTableOfContentsProps {
   cantos: SBCanto[];
   chapters: SBChapter[];
   cantoData: { sections: Record<string, SBSection[]> } | null;
+  cachedCantos?: Record<number, { sections: Record<string, SBSection[]> }>;
   
   // 当前位置
   chapterId: number;
@@ -55,6 +68,7 @@ export default function SBTableOfContents({
   onPreloadCanto,
   onLoadChapterData,
   loadedCantos = new Set(),
+  cachedCantos = {},
   tocBg,
   tocPanelBg,
   tocBorder,
@@ -75,16 +89,14 @@ export default function SBTableOfContents({
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const [loadingChapters, setLoadingChapters] = useState<Set<number>>(new Set());
-  const initializedRef = useRef(false);
   
-  // 初始化时，自动展开当前篇和当前章
+  // 当打开TOC时，展开当前篇和当前章
   useEffect(() => {
-    if (cantoId && chapterId && !initializedRef.current) {
-      initializedRef.current = true;
+    if (showToc && cantoId && chapterId) {
       setExpandedCantos(new Set([cantoId]));
       setExpandedChapters(new Set([chapterId]));
     }
-  }, []);
+  }, [showToc, cantoId, chapterId]);
   
   // 测量 TOC header 的高度
   useEffect(() => {
@@ -161,13 +173,7 @@ export default function SBTableOfContents({
     return () => clearTimeout(timer);
   }, [showToc, chapterId, sectionIndex, cantoData]);
 
-  // 当打开TOC时，展开当前篇
-  useEffect(() => {
-    if (showToc && cantoId) {
-      setCurrentCantoId(cantoId);
-      setExpandedCantos(prev => new Set([...prev, cantoId]));
-    }
-  }, [showToc, cantoId]);
+
   
   const toggleCantoExpand = (id: number) => {
     setExpandedCantos(prev => {
@@ -227,6 +233,14 @@ export default function SBTableOfContents({
   };
   
   if (!showToc) return null;
+  
+  // 注入动画CSS
+  if (typeof document !== 'undefined' && !document.getElementById('loading-dots-style')) {
+    const style = document.createElement('style');
+    style.id = 'loading-dots-style';
+    style.textContent = loadingDotsStyle;
+    document.head.appendChild(style);
+  }
   
   return (
     <div
@@ -307,10 +321,11 @@ export default function SBTableOfContents({
             }}
             onClick={(e) => {
             e.stopPropagation();
-            const targetChapter = chapters.find(ch => {
-              const chapterName = isEn ? ch.en_name : ch.zh_name;
-              const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
-              const fullTitle = `${chapterName} ${chapterTitle}`;
+            e.preventDefault();
+            const targetChapter = chapters.find(c => {
+              const name = isEn ? c.en_name : c.zh_name;
+              const title = isEn ? (c.en_title || c.zh_title || '') : (c.zh_title || c.en_title || '');
+              const fullTitle = `${name} ${title}`;
               return fullTitle === stickyChapterTitle;
             });
             if (targetChapter) {
@@ -372,7 +387,8 @@ export default function SBTableOfContents({
               {isExpanded && cantoChapters.map(ch => {
                 const isCurrentChapter = ch.id === chapterId;
                 const isChapterExpanded = expandedChapters.has(ch.id);
-                const chSections = isChapterExpanded ? (cantoData?.sections[String(ch.id)] || []) : [];
+                // 优先使用当前篇的数据，如果没有则使用缓存的篇数据
+                const chSections = isChapterExpanded ? (cantoData?.sections[String(ch.id)] || cachedCantos[canto.id]?.sections[String(ch.id)] || []) : [];
                 const chapterName = isEn ? ch.en_name : ch.zh_name;
                 const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
                 const fullChapterTitle = `${chapterName} ${chapterTitle}`;
@@ -398,7 +414,7 @@ export default function SBTableOfContents({
                       <div 
                         style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                       >
-                        {fullChapterTitle}{loadingChapters.has(ch.id) ? ' ...' : ''}
+                        {fullChapterTitle}{loadingChapters.has(ch.id) ? <span className="loading-dots" style={{ marginLeft: '4px' }} /> : ''}
                       </div>
                       <div 
                         style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
@@ -461,7 +477,7 @@ export default function SBTableOfContents({
                   }}
                   style={{
                     padding: '10px 16px',
-                    background: isCurrentChapter ? tocActiveBg : 'transparent',
+                    background: isCurrentChapter ? tocActiveBg : (isChapterExpanded ? (isDark ? '#1f3a52' : '#d0dce8') : 'transparent'),
                     borderBottom: `1px solid ${tocBorder}`,
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -470,9 +486,9 @@ export default function SBTableOfContents({
                   }}
                 >
                   <div 
-                    style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '0px' }}
+                    style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1 }}
                   >
-                    {fullChapterTitle}
+                    {fullChapterTitle}{loadingChapters.has(ch.id) ? <span className="loading-dots" style={{ marginLeft: '4px' }} /> : ''}
                   </div>
                   <div 
                     style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
@@ -490,7 +506,7 @@ export default function SBTableOfContents({
                     key={sec.id}
                     data-section-id={sec.section_id}
                     style={{
-                      padding: '8px 16px 8px 20px',
+                      padding: '8px 16px 8px 40px',
                       background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
                       borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
                       cursor: 'pointer',
@@ -514,8 +530,7 @@ export default function SBTableOfContents({
                 ))}
               </div>
             );
-          })
-        }
+          })}
         </div>
       </div>
     </div>

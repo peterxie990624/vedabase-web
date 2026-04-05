@@ -505,6 +505,7 @@ export default function SBReadPage({
         cantos={cantos}
         chapters={chapters}
         cantoData={cantoData}
+        cachedCantos={cachedCantos}
         chapterId={chapterId}
         sectionIndex={sectionIndex}
         cantoId={cantoId}
