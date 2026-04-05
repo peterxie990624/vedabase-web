@@ -415,7 +415,7 @@ export default function SBTableOfContents({
                       <div 
                         style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                       >
-                        {fullChapterTitle}{loadingChapters.has(ch.id) ? <span className="loading-dots" style={{ marginLeft: '4px' }} /> : ''}
+                        {fullChapterTitle}
                       </div>
                       <div 
                         style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
@@ -428,33 +428,51 @@ export default function SBTableOfContents({
                       </div>
                     </div>
 
-                    {isChapterExpanded && chSections && chSections.map((sec, idx) => (
-                      <div
-                        key={sec.id}
-                        data-section-id={sec.section_id}
-                        style={{
-                          padding: '8px 16px 8px 40px',
-                          background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
-                          borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                        }}
-                        onClick={() => {
-                          onCloseToc();
-                          onNavigate(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
-                        }}
-                      >
-                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
-                          SB {sec.section_id}
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
-                          {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
-                        </span>
-                      </div>
-                    ))}
+                    {isChapterExpanded && (
+                      <>
+                        {chSections && chSections.length > 0 ? (
+                          chSections.map((sec, idx) => (
+                            <div
+                              key={sec.id}
+                              data-section-id={sec.section_id}
+                              style={{
+                                padding: '8px 16px 8px 40px',
+                                background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
+                                borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                              }}
+                              onClick={() => {
+                                onCloseToc();
+                                onNavigate(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
+                              }}
+                            >
+                              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
+                                SB {sec.section_id}
+                              </span>
+                              <span style={{ fontSize: '0.72rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
+                                {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
+                              </span>
+                            </div>
+                          ))
+                        ) : loadingChapters.has(ch.id) ? (
+                          <div
+                            style={{
+                              padding: '8px 16px 8px 40px',
+                              borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                            }}
+                          >
+                            <span className="loading-dots" style={{ fontSize: '0.72rem', color: tocTextSecondary }}></span>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 );
               })}
