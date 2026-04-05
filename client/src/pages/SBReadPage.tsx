@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TopNav from '../components/TopNav';
 import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
+import SBTableOfContents from '../components/SBTableOfContents';
 import LoadingProgress from '../components/LoadingProgress';
 import { useSBIndex, useSBCantoData, useSBPreload } from '../hooks/useData';
 import type { LoadProgress } from '../hooks/useData';
@@ -489,236 +490,30 @@ export default function SBReadPage({
       )}
 
       {/* TOC Overlay */}
-      {showToc && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: tocBg, zIndex: 300, display: 'flex', justifyContent: 'flex-end' }}
-          onClick={() => setShowToc(false)}
-        >
-          {/* 新的外层容器，包裹所有元素 */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '80%', maxWidth: '360px', height: '100%' }} onClick={e => e.stopPropagation()}>
-            {/* 目录标题（蓝色块） */}
-            <div ref={tocHeaderRef} style={{ borderBottom: `1px solid ${tocBorder}`, background: tocPanelBg, padding: '20px 16px', zIndex: 11 }}>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif", letterSpacing: '0.05em' }}>
-                {isEn ? 'Table of Contents' : '目录'}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: tocTextSecondary, marginTop: '4px', fontWeight: 500 }}>
-                {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
-              </div>
-            </div>
-
-            {/* 篇块：显示当前篇标题 */}
-            {stickyCantoTitle && (
-              <div style={{
-                borderBottom: `1.5px solid ${isDark ? '#8aa0b4' : '#a0b0c0'}`,
-                padding: '14px 16px',
-                background: 'transparent',
-              }}>
-              <div style={{
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                color: isDark ? '#d4a017' : '#b8860b',
-                fontFamily: "'Noto Serif SC', serif",
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-                paddingLeft: '0px',
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                // 滑动目录到该篇的位置，不导航
-                const targetCanto = cantos.find(c => {
-                  const label = isEn ? c.en_name : c.zh_name;
-                  const subtitle = isEn ? (c.en_subtitle || '') : (c.zh_subtitle || '');
-                  const fullTitle = subtitle ? `${label} ${subtitle}` : label;
-                  return fullTitle === stickyCantoTitle;
-                });
-                if (targetCanto) {
-                  // 找到该篇在目录中的元素并滑动到它
-                  setTimeout(() => {
-                    const cantoEl = document.querySelector(`[data-canto-id="${targetCanto.id}"]`);
-                    if (cantoEl) {
-                      cantoEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }, 0);
-                }
-              }}>
-                {stickyCantoTitle}
-                </div>
-              </div>
-            )}
-
-            {/* 章块：显示当前章标题 */}
-            {stickyChapterTitle && (
-              <div style={{
-                borderBottom: `1.5px solid ${isDark ? '#8aa0b4' : '#a0b0c0'}`,
-                padding: '14px 16px',
-                background: 'transparent',
-              }}>
-                <div style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: isDark ? '#d4a017' : '#b8860b',
-                  fontFamily: "'Noto Serif SC', serif",
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  paddingLeft: '20px',
-                }}
-                onClick={(e) => {
-                e.stopPropagation();
-                // 滑动目录到该章的位置，不导航
-                const targetChapter = chapters.find(ch => {
-                  const chapterName = isEn ? ch.en_name : ch.zh_name;
-                  const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
-                  const fullTitle = `${chapterName} ${chapterTitle}`;
-                  return fullTitle === stickyChapterTitle;
-                });
-                if (targetChapter) {
-                  // 找到该章在目录中的元素并滑动到它
-                  setTimeout(() => {
-                    const chapterEl = document.querySelector(`[data-chapter-id="${targetChapter.id}"]`);
-                    if (chapterEl) {
-                      chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }, 0);
-                }
-              }}>
-                {stickyChapterTitle}
-                </div>
-              </div>
-            )}
-
-            <div
-              ref={tocContainerRef}
-              style={{
-                height: '100%',
-                background: tocPanelBg,
-                borderLeft: `1px solid ${tocBorder}`,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                flex: 1,
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-
-            {/* 目录内容 */}
-            {cantos.map(canto => {
-              const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
-              const isCurrentCanto = cantoId === canto.id;
-              const isExpanded = expandedCantos.has(canto.id);
-              // 组合篇名和副标题
-              const cantoLabel = isEn ? canto.en_name : canto.zh_name;
-              const cantoSubtitle = isEn ? (canto.en_subtitle || '') : (canto.zh_subtitle || '');
-              const cantoTitle = cantoSubtitle ? `${cantoLabel} ${cantoSubtitle}` : cantoLabel;
-              return (
-                <div key={canto.id}>
-                  <div
-                    data-canto-id={canto.id}
-                    data-canto-title={cantoTitle}
-                    style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                    onClick={() => toggleCantoExpand(canto.id)}
-                  >
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
-                      {cantoTitle}
-                    </div>
-                    <div 
-                      style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleCantoExpand(canto.id);
-                      }}
-                    >
-                      {isExpanded ? '▼' : '▶'}
-                    </div>
-                  </div>
-                  {isExpanded && cantoChapters.map(ch => {
-                    const isCurrentChapter = ch.id === chapterId;
-                    const isChapterExpanded = expandedChapters.has(ch.id);
-                    // 从 cantoData 中获取该章的小节
-                    const chSections = isChapterExpanded ? (cantoData?.sections[String(ch.id)] || []) : [];
-                    // 组合章名和章节标题
-                    const chapterName = isEn ? ch.en_name : ch.zh_name;
-                    const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
-                    const fullChapterTitle = `${chapterName} ${chapterTitle}`;
-                    return (
-                      <div key={ch.id}>
-                        <div
-                          data-chapter-id={ch.id}
-                          data-canto-id={canto.id}
-                          data-chapter-title={fullChapterTitle}
-                          onClick={() => {
-                            toggleChapterExpand(ch.id);
-                          }}
-                          style={{
-                            padding: '10px 16px',
-                            background: isCurrentChapter ? tocActiveBg : 'transparent',
-                            borderBottom: `1px solid ${tocBorder}`,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <div 
-                            style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
-                          >
-                            {fullChapterTitle}
-                          </div>
-                          <div 
-                            style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleChapterExpand(ch.id);
-                            }}
-                          >
-                            {isChapterExpanded ? '▼' : '▶'}
-                          </div>
-                        </div>
-
-                        {/* Sections for expanded chapter */}
-                        {isChapterExpanded && chSections && chSections.map((sec, idx) => (
-                          <div
-                            key={sec.id}
-                            data-section-id={sec.section_id}
-                            style={{
-                              padding: '8px 16px 8px 40px',
-                              background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
-                              borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                            }}
-                            onClick={() => {
-                              setShowToc(false);
-                              goTo(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
-                            }}
-                          >
-                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
-                              SB {sec.section_id}
-                            </span>
-                            <span style={{ fontSize: '0.72rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
-                              {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      <SBTableOfContents
+        bookType="sb"
+        cantos={cantos}
+        chapters={chapters}
+        cantoData={cantoData}
+        chapterId={chapterId}
+        sectionIndex={sectionIndex}
+        cantoId={cantoId}
+        language={language}
+        theme={theme}
+        showToc={showToc}
+        onNavigate={(newChapterId, newSectionIdx, direction) => {
+          setShowToc(false);
+          goTo(newChapterId, newSectionIdx, direction);
+        }}
+        onCloseToc={() => setShowToc(false)}
+        tocBg={tocBg}
+        tocPanelBg={tocPanelBg}
+        tocBorder={tocBorder}
+        tocTextPrimary={tocTextPrimary}
+        tocTextSecondary={tocTextSecondary}
+        tocActiveBg={tocActiveBg}
+        tocActiveColor={tocActiveColor}
+      />
     </div>
   );
 }
