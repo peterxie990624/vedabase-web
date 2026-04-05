@@ -142,6 +142,55 @@ export function useSBCantoData(cantoId: number | null, onProgress?: (p: LoadProg
   return { data, loading, error };
 }
 
+
+// 缓存多个篇的数据
+const cantoDataCache: Record<number, SBCantoData> = {};
+const cantoLoadingState: Record<number, boolean> = {};
+
+export function useSBCantoDataCache() {
+  const [cachedCantos, setCachedCantos] = useState<Set<number>>(new Set());
+
+  const loadCantoData = async (cantoId: number): Promise<SBCantoData | null> => {
+    // 如果已在缓存中，直接返回
+    if (cantoDataCache[cantoId]) {
+      return cantoDataCache[cantoId];
+    }
+
+    // 如果正在加载，等待加载完成
+    if (cantoLoadingState[cantoId]) {
+      return new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+          if (cantoDataCache[cantoId]) {
+            clearInterval(checkInterval);
+            resolve(cantoDataCache[cantoId]);
+          }
+        }, 100);
+        // 超时5秒
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve(null);
+        }, 5000);
+      });
+    }
+
+    // 开始加载
+    cantoLoadingState[cantoId] = true;
+    try {
+      const data = await loadJSON<SBCantoData>(`/data/sb/canto_${cantoId}.json`);
+      cantoDataCache[cantoId] = data;
+      setCachedCantos(prev => new Set([...prev, cantoId]));
+      return data;
+    } catch (e) {
+      console.error(`Failed to load canto ${cantoId}:`, e);
+      return null;
+    } finally {
+      cantoLoadingState[cantoId] = false;
+    }
+  };
+
+  return { cachedCantos, loadCantoData };
+}
+
 export function useAkadasiData(onProgress?: (p: LoadProgress) => void) {
   const [data, setData] = useState<AkadasiData | null>(null);
   const [loading, setLoading] = useState(true);

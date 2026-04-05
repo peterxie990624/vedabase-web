@@ -4,7 +4,7 @@ import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
 import SBTableOfContents from '../components/SBTableOfContents';
 import LoadingProgress from '../components/LoadingProgress';
-import { useSBIndex, useSBCantoData, useSBPreload } from '../hooks/useData';
+import { useSBIndex, useSBCantoData, useSBPreload, useSBCantoDataCache } from '../hooks/useData';
 import type { LoadProgress } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
@@ -90,6 +90,9 @@ export default function SBReadPage({
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const initializedRef = useRef(false);
+  const [loadedCantos, setLoadedCantos] = useState<Set<number>>(new Set());  // 已加载的篇
+  const [loadingCantoId, setLoadingCantoId] = useState<number | null>(null);  // 正在加载的篇
+  const { cachedCantos, loadCantoData } = useSBCantoDataCache();  // 缓存多个篇的数据
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -97,6 +100,13 @@ export default function SBReadPage({
   const chapter = index?.chapters.find(c => c.id === chapterId);
   const cantoId = chapter?.canto_id || null;
   const { data: cantoData, loading: cantoLoading, error: cantoError } = useSBCantoData(cantoId, onProgress);
+
+  // 当cantoData加载完成时，更新loadedCantos
+  useEffect(() => {
+    if (cantoData && cantoId) {
+      setLoadedCantos(prev => new Set([...prev, cantoId]));
+    }
+  }, [cantoData, cantoId]);
   const loading = indexLoading || cantoLoading;
 
   // 后台预加载相邻篇
@@ -506,6 +516,22 @@ export default function SBReadPage({
           goTo(newChapterId, newSectionIdx, direction);
         }}
         onCloseToc={() => setShowToc(false)}
+        onPreloadCanto={(cantoId) => {
+          // 预加载篇的数据
+          if (!loadedCantos.has(cantoId)) {
+            loadCantoData(cantoId).then(() => {
+              setLoadedCantos(prev => new Set([...prev, cantoId]));
+            });
+          }
+        }}
+        onLoadChapterData={async (cantoId, chapterId) => {
+          // 动态加载章的数据
+          if (!loadedCantos.has(cantoId)) {
+            await loadCantoData(cantoId);
+            setLoadedCantos(prev => new Set([...prev, cantoId]));
+          }
+        }}
+        loadedCantos={loadedCantos}
         tocBg={tocBg}
         tocPanelBg={tocPanelBg}
         tocBorder={tocBorder}

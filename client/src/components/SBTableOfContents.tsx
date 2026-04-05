@@ -25,6 +25,9 @@ interface SBTableOfContentsProps {
   // 回调
   onNavigate: (chapterId: number, sectionIndex: number, direction: 'left' | 'right') => void;
   onCloseToc: () => void;
+  onPreloadCanto?: (cantoId: number) => void;  // 预加载篇的数据
+  onLoadChapterData?: (cantoId: number, chapterId: number) => Promise<void>;  // 动态加载章的数据
+  loadedCantos?: Set<number>;  // 已加载的篇
   
   // 颜色配置
   tocBg: string;
@@ -49,6 +52,9 @@ export default function SBTableOfContents({
   showToc,
   onNavigate,
   onCloseToc,
+  onPreloadCanto,
+  onLoadChapterData,
+  loadedCantos = new Set(),
   tocBg,
   tocPanelBg,
   tocBorder,
@@ -169,24 +175,42 @@ export default function SBTableOfContents({
         next.delete(id);
         return next;
       } else {
+        // 展开篇时，预加载该篇的数据
+        if (onPreloadCanto && !loadedCantos.has(id)) {
+          onPreloadCanto(id);
+        }
         return new Set([id]);
       }
     });
   };
 
-  const toggleChapterExpand = (id: number) => {
+  const toggleChapterExpand = async (id: number) => {
     setExpandedChapters(prev => {
       if (prev.has(id)) {
         const next = new Set(prev);
         next.delete(id);
         return next;
       } else {
-        setTimeout(() => {
-          const chapterEl = document.querySelector(`[data-chapter-id="${id}"]`);
-          if (chapterEl) {
-            chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 0);
+        // 展开章时，先检查该篇的数据是否已加载
+        const chapter = chapters.find(c => c.id === id);
+        if (chapter && onLoadChapterData && !loadedCantos.has(chapter.canto_id)) {
+          // 如果该篇的数据还没加载，就动态加载
+          onLoadChapterData(chapter.canto_id, id).then(() => {
+            setTimeout(() => {
+              const chapterEl = document.querySelector(`[data-chapter-id="${id}"]`);
+              if (chapterEl) {
+                chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 0);
+          });
+        } else {
+          setTimeout(() => {
+            const chapterEl = document.querySelector(`[data-chapter-id="${id}"]`);
+            if (chapterEl) {
+              chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 0);
+        }
         return new Set([id]);
       }
     });
