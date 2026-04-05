@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { SBCanto, SBChapter, SBSection } from '../types';
 
 interface SBTableOfContentsProps {
+  // 书籍类型
+  bookType: 'sb' | 'bg';
+  
   // 数据
   cantos: SBCanto[];
   chapters: SBChapter[];
@@ -34,6 +37,7 @@ interface SBTableOfContentsProps {
 }
 
 export default function SBTableOfContents({
+  bookType,
   cantos,
   chapters,
   cantoData,
@@ -202,7 +206,10 @@ export default function SBTableOfContents({
             {isEn ? 'Table of Contents' : '目录'}
           </div>
           <div style={{ fontSize: '0.85rem', color: tocTextSecondary, marginTop: '4px', fontWeight: 500 }}>
-            {isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭'}
+            {bookType === 'sb' 
+              ? (isEn ? 'Śrīmad-Bhāgavatam' : '圣典博伽瓦谭')
+              : (isEn ? 'Bhagavad Gita' : '薄伽梵歌')
+            }
           </div>
         </div>
 
@@ -301,7 +308,7 @@ export default function SBTableOfContents({
           onClick={e => e.stopPropagation()}
         >
 
-        {cantos.map(canto => {
+        {bookType === 'sb' ? cantos.map(canto => {
           const cantoChapters = chapters.filter(c => c.canto_id === canto.id);
           const isCurrentCanto = cantoId === canto.id;
           const isExpanded = expandedCantos.has(canto.id);
@@ -403,7 +410,79 @@ export default function SBTableOfContents({
               })}
             </div>
           );
-          })}
+          })
+        : chapters.map(ch => {
+            const isCurrentChapter = ch.id === chapterId;
+            const isChapterExpanded = expandedChapters.has(ch.id);
+            const chSections = isChapterExpanded ? (cantoData?.sections[String(ch.id)] || []) : [];
+            const chapterName = isEn ? ch.en_name : ch.zh_name;
+            const chapterTitle = isEn ? (ch.en_title || ch.zh_title || '') : (ch.zh_title || ch.en_title || '');
+            const fullChapterTitle = `${chapterName} ${chapterTitle}`;
+            return (
+              <div key={ch.id}>
+                <div
+                  data-chapter-id={ch.id}
+                  data-chapter-title={fullChapterTitle}
+                  onClick={() => {
+                    toggleChapterExpand(ch.id);
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    background: isCurrentChapter ? tocActiveBg : 'transparent',
+                    borderBottom: `1px solid ${tocBorder}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div 
+                    style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '0px' }}
+                  >
+                    {fullChapterTitle}
+                  </div>
+                  <div 
+                    style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleChapterExpand(ch.id);
+                    }}
+                  >
+                    {isChapterExpanded ? '▼' : '▶'}
+                  </div>
+                </div>
+
+                {isChapterExpanded && chSections && chSections.map((sec, idx) => (
+                  <div
+                    key={sec.id}
+                    data-section-id={sec.section_id}
+                    style={{
+                      padding: '8px 16px 8px 20px',
+                      background: (ch.id === chapterId && idx === sectionIndex) ? tocActiveBg : 'transparent',
+                      borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                    onClick={() => {
+                      onCloseToc();
+                      onNavigate(ch.id, idx, idx > sectionIndex ? 'right' : 'left');
+                    }}
+                  >
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, minWidth: '60px' }}>
+                      BG {sec.section_id}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: (ch.id === chapterId && idx === sectionIndex) ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 28)}
+                      {(ch.id === chapterId && idx === sectionIndex) && ' ◀'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })
+        }
         </div>
       </div>
     </div>

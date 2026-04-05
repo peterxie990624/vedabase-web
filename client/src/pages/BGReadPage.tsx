@@ -367,6 +367,7 @@ export default function BGReadPage({
 
       {/* TOC Overlay */}
       <SBTableOfContents
+        bookType="bg"
         cantos={[]}
         chapters={chapters}
         cantoData={{ sections: allSections }}
