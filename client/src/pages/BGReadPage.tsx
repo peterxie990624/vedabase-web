@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TopNav from '../components/TopNav';
 import DevPanel from '../components/DevPanel';
 import SectionContent from '../components/SectionContent';
+import SBTableOfContents from '../components/SBTableOfContents';
 import { useBGData } from '../hooks/useData';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useSettings } from '../hooks/useSettings';
@@ -365,126 +366,29 @@ export default function BGReadPage({
       )}
 
       {/* TOC Overlay */}
-      {showToc && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: tocBg, zIndex: 300, display: 'flex', justifyContent: 'flex-end' }}
-          onClick={() => setShowToc(false)}
-        >
-          <div
-            ref={tocContainerRef}
-            style={{
-              width: '80%',
-              maxWidth: '360px',
-              height: '100%',
-              background: tocPanelBg,
-              borderLeft: `1px solid ${tocBorder}`,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* TOC header */}
-            <div style={{ padding: '16px', borderBottom: `1px solid ${tocBorder}`, position: 'sticky', top: 0, background: tocPanelBg, zIndex: 10 }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                {isEn ? 'Table of Contents' : '目录'}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: tocTextSecondary, marginTop: '2px' }}>
-                {isEn ? 'Bhagavad-gītā As It Is' : '博伽梵歌原义'}
-              </div>
-            </div>
-
-            {/* 浮动块：显示当前章标题 */}
-            {stickyChapterTitle && (
-              <div style={{
-                position: 'sticky',
-                top: '60px',
-                background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                borderBottom: `2px solid ${isDark ? '#d4a017' : '#b8860b'}`,
-                padding: '12px 16px',
-                zIndex: 9,
-                backdropFilter: 'blur(4px)',
-              }}>
-                <div style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  color: isDark ? '#d4a017' : '#b8860b',
-                  fontFamily: "'Noto Serif SC', serif",
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {stickyChapterTitle}
-                </div>
-              </div>
-            )}
-
-            {/* Chapters */}
-            {chapters.map(ch => {
-              const chSections = allSections[String(ch.id)] || [];
-              const isCurrentChapter = ch.id === chapterId;
-              const chapterTitle = isEn ? ch.en_title : ch.zh_title;
-              return (
-                <div key={ch.id}>
-                  {/* Chapter title — clickable to go to sections page */}
-                  <div
-                    data-chapter-id={ch.id}
-                    data-chapter-title={chapterTitle}
-                    style={{
-                      padding: '10px 16px',
-                      background: isCurrentChapter ? tocActiveBg : 'transparent',
-                      borderBottom: `1px solid ${tocBorder}`,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => {
-                      setShowToc(false);
-                      if (onGoToChapter) {
-                        onGoToChapter(ch.id);
-                      } else {
-                        // fallback: jump to first section of this chapter
-                        goTo(ch.id, 0, ch.id > chapterId ? 'right' : 'left');
-                      }
-                    }}
-                  >
-                    <div style={{ fontSize: '0.8rem', color: tocTextSecondary }}>{ch.zh_name}</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextPrimary, fontFamily: "'Noto Serif SC', serif" }}>
-                      {chapterTitle}
-                    </div>
-                  </div>
-
-                  {/* Sections (only show for current chapter) */}
-                  {isCurrentChapter && chSections.map((sec, idx) => (
-                    <div
-                      key={sec.id}
-                      style={{
-                        padding: '8px 16px 8px 28px',
-                        background: idx === sectionIndex ? tocActiveBg : 'transparent',
-                        borderBottom: `1px solid ${isDark ? '#1a2535' : '#f5f7fa'}`,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                      }}
-                      onClick={() => {
-                        setShowToc(false);
-                        goTo(chapterId, idx, idx > sectionIndex ? 'right' : 'left');
-                      }}
-                    >
-                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, minWidth: '52px' }}>
-                        Bg {sec.section_id}
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: idx === sectionIndex ? tocActiveColor : tocTextSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {((isEn ? sec.yw_en : sec.yw_zh) || '').replace(/<[^>]+>/g, '').trim().slice(0, 30)}
-                        {idx === sectionIndex && ' ◀'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <SBTableOfContents
+        cantos={[]}
+        chapters={chapters}
+        cantoData={{ sections: allSections }}
+        chapterId={chapterId}
+        sectionIndex={sectionIndex}
+        cantoId={null}
+        language={language}
+        theme={theme}
+        showToc={showToc}
+        onNavigate={(newChapterId, newSectionIdx, direction) => {
+          setShowToc(false);
+          goTo(newChapterId, newSectionIdx, direction);
+        }}
+        onCloseToc={() => setShowToc(false)}
+        tocBg={tocBg}
+        tocPanelBg={tocPanelBg}
+        tocBorder={tocBorder}
+        tocTextPrimary={tocTextPrimary}
+        tocTextSecondary={tocTextSecondary}
+        tocActiveBg={tocActiveBg}
+        tocActiveColor={tocActiveColor}
+      />
     </div>
   );
 }
