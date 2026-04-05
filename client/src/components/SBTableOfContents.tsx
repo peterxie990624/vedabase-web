@@ -97,9 +97,9 @@ export default function SBTableOfContents({
       const containerRect = container.getBoundingClientRect();
       const topBoundary = containerRect.top;
 
-      // 只检查当前篇是否超过顶部
+      // 只检查当前篇是否超过顶部（且被展开）
       let visibleCanto: string | null = null;
-      if (bookType === 'sb' && currentCantoId) {
+      if (bookType === 'sb' && currentCantoId && expandedCantos.has(currentCantoId)) {
         const cantoEl = container.querySelector(`[data-canto-id="${currentCantoId}"]`);
         if (cantoEl) {
           const rect = cantoEl.getBoundingClientRect();
@@ -109,13 +109,15 @@ export default function SBTableOfContents({
         }
       }
 
-      // 只检查当前章是否超过顶部
+      // 只检查当前章是否超过顶部（且被展开）
       let visibleChapter: string | null = null;
-      const chapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
-      if (chapterEl) {
-        const rect = chapterEl.getBoundingClientRect();
-        if (rect.bottom < topBoundary) {
-          visibleChapter = chapterEl.getAttribute('data-chapter-title');
+      if (expandedChapters.has(chapterId)) {
+        const chapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+        if (chapterEl) {
+          const rect = chapterEl.getBoundingClientRect();
+          if (rect.bottom < topBoundary) {
+            visibleChapter = chapterEl.getAttribute('data-chapter-title');
+          }
         }
       }
 
@@ -317,14 +319,14 @@ export default function SBTableOfContents({
               <div
                 data-canto-id={canto.id}
                 data-canto-title={cantoTitle}
-                style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isExpanded ? (isDark ? '#1a2a3a' : '#e8ecf0') : (isDark ? '#0f1923' : '#f5f7fa')), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isExpanded ? (isDark ? '#1f3a52' : '#d0dce8') : (isDark ? '#0f1923' : '#f5f7fa')), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                 onClick={() => toggleCantoExpand(canto.id)}
               >
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), letterSpacing: '0.05em', flex: 1 }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), letterSpacing: '0.05em', flex: 1 }}>
                   {cantoTitle}
                 </div>
                 <div 
-                  style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                  style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleCantoExpand(canto.id);
@@ -351,7 +353,7 @@ export default function SBTableOfContents({
                       }}
                       style={{
                         padding: '10px 16px',
-                        background: isCurrentChapter ? tocActiveBg : (isChapterExpanded ? (isDark ? '#1a2a3a' : '#e8ecf0') : 'transparent'),
+                        background: isCurrentChapter ? tocActiveBg : (isChapterExpanded ? (isDark ? '#1f3a52' : '#d0dce8') : 'transparent'),
                         borderBottom: `1px solid ${tocBorder}`,
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -360,12 +362,12 @@ export default function SBTableOfContents({
                       }}
                     >
                       <div 
-                        style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
+                        style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                       >
                         {fullChapterTitle}
                       </div>
                       <div 
-                        style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                        style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleChapterExpand(ch.id);
@@ -439,7 +441,7 @@ export default function SBTableOfContents({
                     {fullChapterTitle}
                   </div>
                   <div 
-                    style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                    style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleChapterExpand(ch.id);
