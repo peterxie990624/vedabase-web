@@ -86,7 +86,7 @@ export default function SBTableOfContents({
     setTocHeaderHeight(height);
   }, [showToc]);
   
-  // 处理目录滑动时的浮动块显示
+  // 处理目录滑动时的置顶块显示
   useEffect(() => {
     if (!showToc || !tocContainerRef.current) return;
 
@@ -94,31 +94,38 @@ export default function SBTableOfContents({
       const container = tocContainerRef.current;
       if (!container) return;
 
-      const cantoElements = container.querySelectorAll('[data-canto-id]');
-      const chapterElements = container.querySelectorAll('[data-chapter-id]');
-      
-      let visibleCanto: string | null = null;
-      let visibleCantoId: number | null = null;
-      let visibleChapter: string | null = null;
-      let currentCantoIdLocal: number | null = null;
       const containerRect = container.getBoundingClientRect();
-
       const topBoundary = containerRect.top;
 
-      const currentCantoEl = container.querySelector(`[data-canto-id="${cantoId}"]`);
-      if (currentCantoEl) {
-        const rect = currentCantoEl.getBoundingClientRect();
-        if (rect.bottom < topBoundary) {
-          visibleCanto = currentCantoEl.getAttribute('data-canto-title');
-          visibleCantoId = cantoId;
+      // 查找所有已展开的篇，找到第一个超过顶部的
+      let visibleCanto: string | null = null;
+      if (bookType === 'sb') {
+        const cantoElements = container.querySelectorAll('[data-canto-id]');
+        for (const el of cantoElements) {
+          const cantoIdVal = parseInt(el.getAttribute('data-canto-id') || '0');
+          // 只检查已展开的篇
+          if (expandedCantos.has(cantoIdVal)) {
+            const rect = el.getBoundingClientRect();
+            if (rect.bottom < topBoundary) {
+              visibleCanto = el.getAttribute('data-canto-title');
+              break; // 只取第一个
+            }
+          }
         }
       }
 
-      const currentChapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
-      if (currentChapterEl) {
-        const rect = currentChapterEl.getBoundingClientRect();
-        if (rect.bottom < topBoundary) {
-          visibleChapter = currentChapterEl.getAttribute('data-chapter-title');
+      // 查找所有已展开的章，找到第一个超过顶部的
+      let visibleChapter: string | null = null;
+      const chapterElements = container.querySelectorAll('[data-chapter-id]');
+      for (const el of chapterElements) {
+        const chapterIdVal = parseInt(el.getAttribute('data-chapter-id') || '0');
+        // 只检查已展开的章
+        if (expandedChapters.has(chapterIdVal)) {
+          const rect = el.getBoundingClientRect();
+          if (rect.bottom < topBoundary) {
+            visibleChapter = el.getAttribute('data-chapter-title');
+            break; // 只取第一个
+          }
         }
       }
 
