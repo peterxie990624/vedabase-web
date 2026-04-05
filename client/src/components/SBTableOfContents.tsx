@@ -327,14 +327,14 @@ export default function SBTableOfContents({
               <div
                 data-canto-id={canto.id}
                 data-canto-title={cantoTitle}
-                style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isDark ? '#0f1923' : '#f5f7fa'), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: isCurrentCanto ? tocActiveBg : (isExpanded ? (isDark ? '#1a2a3a' : '#e8ecf0') : (isDark ? '#0f1923' : '#f5f7fa')), borderBottom: `1px solid ${tocBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                 onClick={() => toggleCantoExpand(canto.id)}
               >
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : tocTextSecondary, letterSpacing: '0.05em', flex: 1 }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), letterSpacing: '0.05em', flex: 1 }}>
                   {cantoTitle}
                 </div>
                 <div 
-                  style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                  style={{ fontSize: '0.7rem', color: isCurrentCanto ? tocActiveColor : (isExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleCantoExpand(canto.id);
@@ -361,7 +361,7 @@ export default function SBTableOfContents({
                       }}
                       style={{
                         padding: '10px 16px',
-                        background: isCurrentChapter ? tocActiveBg : 'transparent',
+                        background: isCurrentChapter ? tocActiveBg : (isChapterExpanded ? (isDark ? '#1a2a3a' : '#e8ecf0') : 'transparent'),
                         borderBottom: `1px solid ${tocBorder}`,
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -370,12 +370,12 @@ export default function SBTableOfContents({
                       }}
                     >
                       <div 
-                        style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : tocTextSecondary, fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
+                        style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                       >
                         {fullChapterTitle}
                       </div>
                       <div 
-                        style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                        style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleChapterExpand(ch.id);
@@ -449,7 +449,7 @@ export default function SBTableOfContents({
                     {fullChapterTitle}
                   </div>
                   <div 
-                    style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : tocTextSecondary, marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
+                    style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#c9d4e0' : '#4a5f7f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleChapterExpand(ch.id);
