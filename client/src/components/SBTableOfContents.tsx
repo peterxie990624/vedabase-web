@@ -90,13 +90,14 @@ export default function SBTableOfContents({
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const [loadingChapters, setLoadingChapters] = useState<Set<number>>(new Set());
   
-  // 当打开TOC时，展开当前篇和当前章
+  // 当打开TOC时，展开当前篇和当前章（仅在showToc变化时执行）
   useEffect(() => {
     if (showToc && cantoId && chapterId) {
+      // 只在打开时展开，不要在cantoId/chapterId变化时重复执行
       setExpandedCantos(new Set([cantoId]));
       setExpandedChapters(new Set([chapterId]));
     }
-  }, [showToc, cantoId, chapterId]);
+  }, [showToc]);
   
   // 测量 TOC header 的高度
   useEffect(() => {
@@ -149,7 +150,7 @@ export default function SBTableOfContents({
     handleScroll();
 
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [showToc, expandedCantos, cantoId, chapterId]);
+  }, [showToc, expandedCantos, expandedChapters, cantoId, chapterId]);
 
   // 打开目录时自动滑动到当前小节
   useEffect(() => {
