@@ -808,7 +808,7 @@ function VedabaseApp() {
             style={{
               position: 'fixed',
               bottom: '76px', // 在底部导航栏上方
-              right: 'calc(50% - 320px + 12px)', // 在 640px 容器右侧内
+              right: 'max(12px, calc(50% - 320px + 12px))', // 在 640px 容器右侧内，手机上距离右边12px
               width: '36px',
               height: '36px',
               borderRadius: '50%',
@@ -842,7 +842,7 @@ function VedabaseApp() {
               style={{
                 position: 'fixed',
                 bottom: '120px',
-                right: 'calc(50% - 320px + 12px)',
+                right: 'max(12px, calc(50% - 320px + 12px))',
                 width: '280px',
                 background: isDark ? '#1a2535' : '#ffffff',
                 border: `1px solid ${isDark ? '#2a3a50' : '#e0eaf2'}`,
