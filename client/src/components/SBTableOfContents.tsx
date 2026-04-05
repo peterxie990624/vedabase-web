@@ -74,6 +74,7 @@ export default function SBTableOfContents({
   const [expandedCantos, setExpandedCantos] = useState<Set<number>>(new Set());
   const [currentCantoId, setCurrentCantoId] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
+  const [loadingChapters, setLoadingChapters] = useState<Set<number>>(new Set());
   const initializedRef = useRef(false);
   
   // 初始化时，自动展开当前篇和当前章
@@ -105,8 +106,8 @@ export default function SBTableOfContents({
 
       // 只检查当前篇是否超过顶部（且被展开）
       let visibleCanto: string | null = null;
-      if (bookType === 'sb' && currentCantoId && expandedCantos.has(currentCantoId)) {
-        const cantoEl = container.querySelector(`[data-canto-id="${currentCantoId}"]`);
+      if (bookType === 'sb' && cantoId && expandedCantos.has(cantoId)) {
+        const cantoEl = container.querySelector(`[data-canto-id="${cantoId}"]`);
         if (cantoEl) {
           const rect = cantoEl.getBoundingClientRect();
           if (rect.bottom < topBoundary) {
@@ -189,13 +190,21 @@ export default function SBTableOfContents({
       if (prev.has(id)) {
         const next = new Set(prev);
         next.delete(id);
+        setLoadingChapters(new Set());  // 关闭时清除加载状态
         return next;
       } else {
-        // 展开章时，先检查该篇的数据是否已加载
+        // 立即展开章
         const chapter = chapters.find(c => c.id === id);
+        
+        // 如果该篇的数据还没加载，就动态加载
         if (chapter && onLoadChapterData && !loadedCantos.has(chapter.canto_id)) {
-          // 如果该篇的数据还没加载，就动态加载
+          setLoadingChapters(prev => new Set([...prev, id]));  // 标记为加载中
           onLoadChapterData(chapter.canto_id, id).then(() => {
+            setLoadingChapters(prev => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
             setTimeout(() => {
               const chapterEl = document.querySelector(`[data-chapter-id="${id}"]`);
               if (chapterEl) {
@@ -211,6 +220,7 @@ export default function SBTableOfContents({
             }
           }, 0);
         }
+        
         return new Set([id]);
       }
     });
@@ -388,7 +398,7 @@ export default function SBTableOfContents({
                       <div 
                         style={{ fontSize: '0.82rem', fontWeight: 600, color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), fontFamily: "'Noto Serif SC', serif", flex: 1, paddingLeft: '20px' }}
                       >
-                        {fullChapterTitle}
+                        {fullChapterTitle}{loadingChapters.has(ch.id) ? ' ...' : ''}
                       </div>
                       <div 
                         style={{ fontSize: '0.75rem', color: isCurrentChapter ? tocActiveColor : (isChapterExpanded ? (isDark ? '#e8f0f8' : '#2a3f5f') : tocTextSecondary), marginLeft: '8px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}
