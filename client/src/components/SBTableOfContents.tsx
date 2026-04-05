@@ -97,35 +97,25 @@ export default function SBTableOfContents({
       const containerRect = container.getBoundingClientRect();
       const topBoundary = containerRect.top;
 
-      // 查找所有已展开的篇，找到第一个超过顶部的
+      // 只检查当前篇是否超过顶部
       let visibleCanto: string | null = null;
-      if (bookType === 'sb') {
-        const cantoElements = container.querySelectorAll('[data-canto-id]');
-        for (const el of cantoElements) {
-          const cantoIdVal = parseInt(el.getAttribute('data-canto-id') || '0');
-          // 只检查已展开的篇
-          if (expandedCantos.has(cantoIdVal)) {
-            const rect = el.getBoundingClientRect();
-            if (rect.bottom < topBoundary) {
-              visibleCanto = el.getAttribute('data-canto-title');
-              break; // 只取第一个
-            }
+      if (bookType === 'sb' && currentCantoId) {
+        const cantoEl = container.querySelector(`[data-canto-id="${currentCantoId}"]`);
+        if (cantoEl) {
+          const rect = cantoEl.getBoundingClientRect();
+          if (rect.bottom < topBoundary) {
+            visibleCanto = cantoEl.getAttribute('data-canto-title');
           }
         }
       }
 
-      // 查找所有已展开的章，找到第一个超过顶部的
+      // 只检查当前章是否超过顶部
       let visibleChapter: string | null = null;
-      const chapterElements = container.querySelectorAll('[data-chapter-id]');
-      for (const el of chapterElements) {
-        const chapterIdVal = parseInt(el.getAttribute('data-chapter-id') || '0');
-        // 只检查已展开的章
-        if (expandedChapters.has(chapterIdVal)) {
-          const rect = el.getBoundingClientRect();
-          if (rect.bottom < topBoundary) {
-            visibleChapter = el.getAttribute('data-chapter-title');
-            break; // 只取第一个
-          }
+      const chapterEl = container.querySelector(`[data-chapter-id="${chapterId}"]`);
+      if (chapterEl) {
+        const rect = chapterEl.getBoundingClientRect();
+        if (rect.bottom < topBoundary) {
+          visibleChapter = chapterEl.getAttribute('data-chapter-title');
         }
       }
 
