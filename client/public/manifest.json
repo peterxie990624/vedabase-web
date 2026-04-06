@@ -1,0 +1,33 @@
+{
+  "name": "韦达书库",
+  "short_name": "韦达书库",
+  "description": "圣典博伽瓦谭、博伽梵歌原义，含中英双语",
+  "start_url": "/vedabase-web/",
+  "display": "standalone",
+  "background_color": "#0f1923",
+  "theme_color": "#0f1923",
+  "lang": "zh",
+  "icons": [
+    {
+      "src": "/vedabase-web/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/vedabase-web/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/vedabase-web/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vedabase-web/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
