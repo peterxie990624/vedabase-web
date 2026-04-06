@@ -60,23 +60,39 @@ async function loadJSONParallel<T>(
       return { data, source: 'github' as const, url: ghUrl };
     });
 
-  // Use Promise.any to get the first successful result
+  // Use Promise.race as fallback for older browsers that don't support Promise.any
+  // Promise.any is not supported in Safari < 15 and older iPad versions
   try {
-    const winner = await Promise.any([jsdPromise, ghPromise]);
-    const durationMs = Date.now() - t0;
+    // Try Promise.any first (modern browsers)
+    if (Promise.any) {
+      const winner = await Promise.any([jsdPromise, ghPromise]);
+      const durationMs = Date.now() - t0;
 
-    // Cancel the losing request
-    if (winner.source === 'jsdelivr') {
-      ghCtrl.abort();
-      onProgress?.({ url: ghUrl, source: 'github', status: 'error', error: 'cancelled (jsdelivr won)' });
+      // Cancel the losing request
+      if (winner.source === 'jsdelivr') {
+        ghCtrl.abort();
+        onProgress?.({ url: ghUrl, source: 'github', status: 'error', error: 'cancelled (jsdelivr won)' });
+      } else {
+        jsdCtrl.abort();
+        onProgress?.({ url: jsdelivrUrl, source: 'jsdelivr', status: 'error', error: 'cancelled (github won)' });
+      }
+
+      cache[path] = winner.data;
+      onProgress?.({ url: winner.url, source: winner.source, status: 'ok', durationMs });
+      return winner.data as T;
     } else {
-      jsdCtrl.abort();
-      onProgress?.({ url: jsdelivrUrl, source: 'jsdelivr', status: 'error', error: 'cancelled (github won)' });
-    }
+      // Fallback to Promise.race for older browsers
+      const winner = await Promise.race([jsdPromise, ghPromise]);
+      const durationMs = Date.now() - t0;
 
-    cache[path] = winner.data;
-    onProgress?.({ url: winner.url, source: winner.source, status: 'ok', durationMs });
-    return winner.data as T;
+      // Cancel both requests after one succeeds
+      jsdCtrl.abort();
+      ghCtrl.abort();
+
+      cache[path] = winner.data;
+      onProgress?.({ url: winner.url, source: winner.source, status: 'ok', durationMs });
+      return winner.data as T;
+    }
   } catch (aggErr) {
     // Both failed
     const durationMs = Date.now() - t0;
