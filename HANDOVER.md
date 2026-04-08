@@ -15,7 +15,7 @@
 ### 原则二：自动化日志记录与交接文档维护
 
 #### 原则：
-每次在回复人类对话后，在文件夹 `logs_human_to_manus` 下自动按照日期创建/更新其中的文件，将用户的话原封不动地加入（包括用户发的图片，用户上传的文件仅用名字替代），对 Manus 的话的部分，摘取每一段必要的内容，包括在每段最后做了哪些改动，进行了哪些必要和关键尝试，原则是摘取的内容也要原封不动。参考 `https://github.com/peterxie990624/yipeitai/blob/main/logs_human_to_manus/2026-04-04.md` ，图片上传到`https://github.com/peterxie990624/yipeitai/blob/main/logs_human_to_manus/images` ，先保留之前的命名，并在日志中引用这些图片
+每次在回复人类对话后，在文件夹 `logs_human_to_manus` 下自动按照日期创建/更新其中的文件，将用户的话原封不动地加入（包括用户发的图片，用户上传的文件仅用名字替代），对 Manus 的话的部分，摘取每一段必要的内容，包括在每段最后做了哪些改动，进行了哪些必要和关键尝试，原则是摘取的内容也要原封不动。参考 `https://github.com/peterxie990624/yipeitai/blob/main/logs_human_to_manus/2026-04-04.md` ，图片上传到`./docs/chat_logs/logs_human_to_manus/images` ，先保留之前的命名，并在日志中引用这些图片
 
 #### 实施方式：
 - 按日期创建文件（如 `2026-04-04.md`）
