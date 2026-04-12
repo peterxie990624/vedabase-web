@@ -15,8 +15,9 @@ export default function ContactDevDialog({
   theme = 'light',
   language = 'zh',
 }: ContactDevDialogProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [qrLoaded, setQrLoaded] = useState(false);
+  const [qrError, setQrError] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   const isDark = theme === 'dark';
   const isEn = language === 'en';
@@ -31,18 +32,32 @@ export default function ContactDevDialog({
   const lightBorder = isDark ? '#1e2e42' : '#f0f5fa';
   const heavyBorder = isDark ? '#3a4a60' : '#d0dae8';
 
+  // 根据主题选择对应的二维码
+  const qrSrc = isDark
+    ? '/vedabase-web/assets/wechat_qr_dark.png'
+    : '/vedabase-web/assets/wechat_qr_light.png';
+
+  const avatarSrc = '/vedabase-web/assets/avatar_daxing.jpg';
+
   useEffect(() => {
     if (!open) {
-      setImageLoaded(false);
-      setImageError(false);
+      setQrLoaded(false);
+      setQrError(false);
+      setAvatarLoaded(false);
       return;
     }
 
-    const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.onerror = () => setImageError(true);
-    img.src = '/vedabase-web/assets/wechat_qr.jpg';
-  }, [open]);
+    // 预加载二维码
+    const qrImg = new window.Image();
+    qrImg.onload = () => setQrLoaded(true);
+    qrImg.onerror = () => setQrError(true);
+    qrImg.src = qrSrc;
+
+    // 预加载头像
+    const avatarImg = new window.Image();
+    avatarImg.onload = () => setAvatarLoaded(true);
+    avatarImg.src = avatarSrc;
+  }, [open, qrSrc]);
 
   if (!open) return null;
 
@@ -125,28 +140,35 @@ export default function ContactDevDialog({
                 gap: '12px',
               }}
             >
+              {/* 大星头像 */}
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '10px',
-                  background: accentColor,
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  background: '#f9a8b8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: cardBg,
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  flexShrink: 0,
                 }}
               >
-                ⭐
+                {avatarLoaded ? (
+                  <img
+                    src={avatarSrc}
+                    alt="大星 Patrick"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span style={{ fontSize: '22px' }}>⭐</span>
+                )}
               </div>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: textPrimary }}>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: textPrimary }}>
                   大星 Patrick
                 </div>
-                <div style={{ fontSize: '12px', color: textSecondary, marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: textSecondary, marginTop: '3px' }}>
                   {isEn ? 'Developer' : '开发者'}
                 </div>
               </div>
@@ -159,7 +181,7 @@ export default function ContactDevDialog({
           {/* 第二部分：微信二维码 */}
           <div style={{ marginBottom: '16px', textAlign: 'center' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: textPrimary, marginBottom: '12px' }}>
-              {isEn ? 'WeChat QR Code' : '微信二维码'}
+              {isEn ? 'WeChat QR Code · Long press to add friend' : '微信二维码 长按添加好友'}
             </div>
             <div
               style={{
@@ -168,16 +190,15 @@ export default function ContactDevDialog({
                 maxWidth: '220px',
                 margin: '0 auto',
                 borderRadius: '10px',
-                border: `1px solid ${borderColor}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: isDark ? '#0a1420' : '#f9fbfd',
+                background: '#ffffff',
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
-              {!imageLoaded && !imageError && (
+              {!qrLoaded && !qrError && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div
                     style={{
@@ -194,14 +215,14 @@ export default function ContactDevDialog({
                   </div>
                 </div>
               )}
-              {imageLoaded && (
+              {qrLoaded && (
                 <img
-                  src="/vedabase-web/assets/wechat_qr.jpg"
+                  src={qrSrc}
                   alt="WeChat QR Code"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               )}
-              {imageError && (
+              {qrError && (
                 <div style={{ fontSize: '13px', color: textSecondary, textAlign: 'center', padding: '20px' }}>
                   {isEn ? 'Failed to load image' : '图片加载失败'}
                 </div>
@@ -241,7 +262,7 @@ export default function ContactDevDialog({
           <div style={{ height: '2px', background: heavyBorder, margin: '16px 0' }} />
 
           {/* 第四部分：邮箱 */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 600, color: textSecondary, marginBottom: '8px' }}>
               {isEn ? 'Email' : '邮箱'}
             </div>
