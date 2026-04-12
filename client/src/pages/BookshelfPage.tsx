@@ -116,6 +116,10 @@ export default function BookshelfPage({
   const dropdownBorder = isDark ? '#2a3a50' : '#e0eaf2';
   const activeColor = isDark ? '#e8d5a3' : '#2e6fa0';
   const activeBg = isDark ? 'rgba(232,213,163,0.1)' : 'rgba(74,127,165,0.08)';
+  // 卡片边框颜色（比下拉框边框略淡）
+  const sectionBorder = isDark ? 'rgba(232,213,163,0.16)' : 'rgba(74,127,165,0.16)';
+  const sectionBg = isDark ? 'rgba(232,213,163,0.03)' : 'rgba(74,127,165,0.03)';
+  const itemHoverBg = isDark ? 'rgba(232,213,163,0.07)' : 'rgba(74,127,165,0.07)';
 
   // 书架页加载时，地山火源预加载主要数据文件
   useEffect(() => {
@@ -209,7 +213,7 @@ export default function BookshelfPage({
             <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
           </button>
 
-          {/* Dropdown menu */}
+          {/* Dropdown menu — card-style sections */}
           {showSettings && (
             <div
               style={{
@@ -218,233 +222,279 @@ export default function BookshelfPage({
                 left: 0,
                 background: dropdownBg,
                 border: `1px solid ${dropdownBorder}`,
-                borderRadius: '10px',
-                padding: '8px 0',
-                minWidth: '220px',
-                boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.12)',
+                borderRadius: '12px',
+                padding: '10px',
+                minWidth: '236px',
+                boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.55)' : '0 8px 28px rgba(74,127,165,0.15)',
                 zIndex: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
               }}
             >
-              {/* Language */}
-              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
-                语言 / Language
-              </div>
-              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
-              {(['zh', 'en'] as Language[]).map(lang => (
-                <button
-                  key={lang}
-                  onClick={() => handleSetLanguage(lang)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '10px 16px',
-                    background: language === lang ? activeBg : 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: language === lang ? activeColor : (isDark ? '#c0d0e0' : '#444'),
-                    fontSize: '14px',
-                    fontWeight: language === lang ? 600 : 400,
-                    textAlign: 'left',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (language !== lang) {
-                      e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (language !== lang) {
-                      e.currentTarget.style.background = 'none';
-                    }
-                  }}
-                >
-                  <span>{lang === 'zh' ? '中文 / Chinese' : 'English / 英文'}</span>
-                  {language === lang && <span style={{ color: activeColor }}>✓</span>}
-                </button>
-              ))}
-
-              {/* Font size */}
-              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
-                字号 / Font Size
-              </div>
-              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
-              <div style={{ display: 'flex', padding: '8px 16px', gap: '8px' }}>
-                {FONT_SIZE_OPTIONS.map(opt => (
+              {/* ── Card: Language ── */}
+              <div style={{
+                border: `1px solid ${sectionBorder}`,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: sectionBg,
+              }}>
+                <div style={{
+                  padding: '6px 13px 5px',
+                  fontSize: '10.5px',
+                  color: activeColor,
+                  fontWeight: 700,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  opacity: 0.8,
+                }}>
+                  {isEn ? 'Language' : '语言'}
+                </div>
+                {(['zh', 'en'] as Language[]).map(lang => (
                   <button
-                    key={opt.value}
-                    onClick={() => handleSetFontSize(opt.value)}
+                    key={lang}
+                    onClick={() => handleSetLanguage(lang)}
                     style={{
-                      flex: 1,
-                      padding: '6px 4px',
-                      border: `1.5px solid ${fontSize === opt.value ? activeColor : dropdownBorder}`,
-                      borderRadius: '6px',
-                      background: fontSize === opt.value ? activeBg : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 13px',
+                      background: language === lang ? activeBg : 'none',
+                      border: 'none',
                       cursor: 'pointer',
-                      color: fontSize === opt.value ? activeColor : (isDark ? '#c0d0e0' : '#444'),
-                      fontSize: '13px',
-                      fontWeight: fontSize === opt.value ? 700 : 400,
-                      transition: 'all 0.1s',
+                      color: language === lang ? activeColor : (isDark ? '#c0d0e0' : '#444'),
+                      fontSize: '13.5px',
+                      fontWeight: language === lang ? 600 : 400,
+                      textAlign: 'left',
+                      transition: 'background 0.1s',
                     }}
                     onMouseEnter={(e) => {
-                      if (fontSize !== opt.value) {
-                        e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
-                        e.currentTarget.style.borderColor = activeColor;
-                      }
+                      if (language !== lang) e.currentTarget.style.background = itemHoverBg;
                     }}
                     onMouseLeave={(e) => {
-                      if (fontSize !== opt.value) {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.borderColor = dropdownBorder;
-                      }
+                      if (language !== lang) e.currentTarget.style.background = 'none';
                     }}
                   >
-                    <div>{isEn ? opt.label_en : opt.label_zh}</div>
-                    <div style={{ fontSize: '10px', opacity: 0.6 }}>{isEn ? opt.label_zh : opt.label_en}</div>
+                    <span>{lang === 'zh' ? '中文 / Chinese' : 'English / 英文'}</span>
+                    {language === lang && <span style={{ color: activeColor, fontSize: '13px' }}>✓</span>}
                   </button>
                 ))}
               </div>
 
-              {/* Theme */}
-              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
-                风格 / Theme
+              {/* ── Card: Font Size ── */}
+              <div style={{
+                border: `1px solid ${sectionBorder}`,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: sectionBg,
+              }}>
+                <div style={{
+                  padding: '6px 13px 5px',
+                  fontSize: '10.5px',
+                  color: activeColor,
+                  fontWeight: 700,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  opacity: 0.8,
+                }}>
+                  {isEn ? 'Font Size' : '字号'}
+                </div>
+                <div style={{ display: 'flex', padding: '6px 10px 10px', gap: '6px' }}>
+                  {FONT_SIZE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSetFontSize(opt.value)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 4px',
+                        border: `1.5px solid ${fontSize === opt.value ? activeColor : sectionBorder}`,
+                        borderRadius: '6px',
+                        background: fontSize === opt.value ? activeBg : 'none',
+                        cursor: 'pointer',
+                        color: fontSize === opt.value ? activeColor : (isDark ? '#c0d0e0' : '#444'),
+                        fontSize: '13px',
+                        fontWeight: fontSize === opt.value ? 700 : 400,
+                        transition: 'all 0.1s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (fontSize !== opt.value) {
+                          e.currentTarget.style.background = itemHoverBg;
+                          e.currentTarget.style.borderColor = activeColor;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (fontSize !== opt.value) {
+                          e.currentTarget.style.background = 'none';
+                          e.currentTarget.style.borderColor = sectionBorder;
+                        }
+                      }}
+                    >
+                      <div>{isEn ? opt.label_en : opt.label_zh}</div>
+                      <div style={{ fontSize: '10px', opacity: 0.6 }}>{isEn ? opt.label_zh : opt.label_en}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
-              {([
-                { value: 'dark' as VT, label_zh: '夜间深色', label_en: 'Dark Mode' },
-                { value: 'light' as VT, label_zh: '日间浅色', label_en: 'Light Mode' },
-              ]).map(opt => (
+
+              {/* ── Card: Theme ── */}
+              <div style={{
+                border: `1px solid ${sectionBorder}`,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: sectionBg,
+              }}>
+                <div style={{
+                  padding: '6px 13px 5px',
+                  fontSize: '10.5px',
+                  color: activeColor,
+                  fontWeight: 700,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  opacity: 0.8,
+                }}>
+                  {isEn ? 'Theme' : '风格'}
+                </div>
+                {([
+                  { value: 'dark' as VT, label_zh: '夜间深色', label_en: 'Dark Mode' },
+                  { value: 'light' as VT, label_zh: '日间浅色', label_en: 'Light Mode' },
+                ]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleSetTheme(opt.value)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 13px',
+                      background: theme === opt.value ? activeBg : 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: theme === opt.value ? activeColor : (isDark ? '#c0d0e0' : '#444'),
+                      fontSize: '13.5px',
+                      fontWeight: theme === opt.value ? 600 : 400,
+                      textAlign: 'left',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (theme !== opt.value) e.currentTarget.style.background = itemHoverBg;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (theme !== opt.value) e.currentTarget.style.background = 'none';
+                    }}
+                  >
+                    <span>{isEn ? `${opt.label_en} / ${opt.label_zh}` : `${opt.label_zh} / ${opt.label_en}`}</span>
+                    {theme === opt.value && <span style={{ color: activeColor, fontSize: '13px' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Card: Contact & About ── */}
+              <div style={{
+                border: `1px solid ${sectionBorder}`,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: sectionBg,
+              }}>
+                {/* Contact Developer */}
                 <button
-                  key={opt.value}
-                  onClick={() => handleSetTheme(opt.value)}
+                  onClick={() => { setShowContactDev(true); setShowSettings(false); }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
                     width: '100%',
-                    padding: '10px 16px',
-                    background: theme === opt.value ? activeBg : 'none',
+                    padding: '9px 13px',
+                    background: 'none',
                     border: 'none',
+                    borderBottom: `1px solid ${sectionBorder}`,
                     cursor: 'pointer',
-                    color: theme === opt.value ? activeColor : (isDark ? '#c0d0e0' : '#444'),
-                    fontSize: '14px',
-                    fontWeight: theme === opt.value ? 600 : 400,
+                    color: isDark ? '#c0d0e0' : '#444',
+                    fontSize: '13.5px',
                     textAlign: 'left',
                     transition: 'background 0.1s',
                   }}
-                  onMouseEnter={(e) => {
-                    if (theme !== opt.value) {
-                      e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
+                  onMouseEnter={(e) => { e.currentTarget.style.background = itemHoverBg; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                >
+                  {isEn ? 'Contact Developer / 联系开发者' : '联系开发者 / Contact Developer'}
+                </button>
+
+                {/* About */}
+                <button
+                  onClick={() => { setShowAbout(true); setShowSettings(false); }}
+                  onMouseDown={() => {
+                    // 长按3秒激活开发模式
+                    aboutLongPressRef.current = setTimeout(() => {
+                      const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
+                      if (isNowDev) {
+                        localStorage.removeItem('vedabase_devmode');
+                        toast.success('开发模式已关闭', { duration: 2000 });
+                        // 立即刷新页面以生效
+                        setTimeout(() => window.location.reload(), 500);
+                      } else {
+                        localStorage.setItem('vedabase_devmode', 'true');
+                        toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
+                        // 立即刷新页面以生效
+                        setTimeout(() => window.location.reload(), 500);
+                      }
+                      setShowSettings(false);
+                    }, 3000);
+                  }}
+                  onMouseUp={() => {
+                    if (aboutLongPressRef.current) {
+                      clearTimeout(aboutLongPressRef.current);
+                      aboutLongPressRef.current = null;
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (theme !== opt.value) {
-                      e.currentTarget.style.background = 'none';
+                    if (aboutLongPressRef.current) {
+                      clearTimeout(aboutLongPressRef.current);
+                      aboutLongPressRef.current = null;
+                    }
+                    e.currentTarget.style.background = 'none';
+                  }}
+                  onTouchStart={() => {
+                    aboutLongPressRef.current = setTimeout(() => {
+                      const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
+                      if (isNowDev) {
+                        localStorage.removeItem('vedabase_devmode');
+                        toast.success('开发模式已关闭', { duration: 2000 });
+                        // 立即刷新页面以生效
+                        setTimeout(() => window.location.reload(), 500);
+                      } else {
+                        localStorage.setItem('vedabase_devmode', 'true');
+                        toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
+                        // 立即刷新页面以生效
+                        setTimeout(() => window.location.reload(), 500);
+                      }
+                      setShowSettings(false);
+                    }, 3000);
+                  }}
+                  onTouchEnd={() => {
+                    if (aboutLongPressRef.current) {
+                      clearTimeout(aboutLongPressRef.current);
+                      aboutLongPressRef.current = null;
                     }
                   }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '9px 13px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: isDark ? '#c0d0e0' : '#444',
+                    fontSize: '13.5px',
+                    textAlign: 'left',
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = itemHoverBg; }}
                 >
-                  <span>{isEn ? `${opt.label_en} / ${opt.label_zh}` : `${opt.label_zh} / ${opt.label_en}`}</span>
-                  {theme === opt.value && <span style={{ color: activeColor }}>✓</span>}
+                  {isEn ? 'About / 关于韦达书库' : '关于韦达书库 / About'}
                 </button>
-              ))}
-
-              {/* Contact Developer */}
-              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <button
-                onClick={() => { setShowContactDev(true); setShowSettings(false); }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  padding: '10px 16px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: isDark ? '#c0d0e0' : '#444',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  transition: 'background 0.1s',
-                }}
-              >
-                {isEn ? 'Contact Developer / 联系开发者' : '联系开发者 / Contact Developer'}
-              </button>
-
-              {/* About */}
-              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <button
-                onClick={() => { setShowAbout(true); setShowSettings(false); }}
-                onMouseDown={() => {
-                  // 长按3秒激活开发模式
-                  aboutLongPressRef.current = setTimeout(() => {
-                    const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
-                    if (isNowDev) {
-                      localStorage.removeItem('vedabase_devmode');
-                      toast.success('开发模式已关闭', { duration: 2000 });
-                      // 立即刷新页面以生效
-                      setTimeout(() => window.location.reload(), 500);
-                    } else {
-                      localStorage.setItem('vedabase_devmode', 'true');
-                      toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
-                      // 立即刷新页面以生效
-                      setTimeout(() => window.location.reload(), 500);
-                    }
-                    setShowSettings(false);
-                  }, 3000);
-                }}
-                onMouseUp={() => {
-                  if (aboutLongPressRef.current) {
-                    clearTimeout(aboutLongPressRef.current);
-                    aboutLongPressRef.current = null;
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (aboutLongPressRef.current) {
-                    clearTimeout(aboutLongPressRef.current);
-                    aboutLongPressRef.current = null;
-                  }
-                }}
-                onTouchStart={() => {
-                  aboutLongPressRef.current = setTimeout(() => {
-                    const isNowDev = localStorage.getItem('vedabase_devmode') === 'true';
-                    if (isNowDev) {
-                      localStorage.removeItem('vedabase_devmode');
-                      toast.success('开发模式已关闭', { duration: 2000 });
-                      // 立即刷新页面以生效
-                      setTimeout(() => window.location.reload(), 500);
-                    } else {
-                      localStorage.setItem('vedabase_devmode', 'true');
-                      toast.success('🛠 开发模式已激活！页面刷新生效', { duration: 3000 });
-                      // 立即刷新页面以生效
-                      setTimeout(() => window.location.reload(), 500);
-                    }
-                    setShowSettings(false);
-                  }, 3000);
-                }}
-                onTouchEnd={() => {
-                  if (aboutLongPressRef.current) {
-                    clearTimeout(aboutLongPressRef.current);
-                    aboutLongPressRef.current = null;
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  padding: '10px 16px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: isDark ? '#c0d0e0' : '#444',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  transition: 'background 0.1s',
-                }}
-              >
-                {isEn ? 'About / 关于韦达书库' : '关于韦达书库 / About'}
-              </button>
+              </div>
             </div>
           )}
         </div>
@@ -461,35 +511,30 @@ export default function BookshelfPage({
             gap: '8px',
           }}
         >
-          <img
-            src={CDN.APP_ICON}
-            alt="韦达书库"
-            style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }}
-          />
-          {isEn ? 'Veda Library' : '韦达书库'}
+          韦达书库
         </h1>
-        <div style={{ width: '40px' }} />
+        <div style={{ width: '60px' }} />
       </div>
 
-      {/* Books list */}
-      <div style={{ padding: '16px' }}>
-        {/* 回到上次阅读按钮 */}
-        {lastReading && onContinueReading && (
+      {/* Main content */}
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '16px 16px 0' }}>
+        {/* Continue reading button */}
+        {lastReading && (
           <button
-            onClick={() => onContinueReading(lastReading.bookId)}
+            onClick={() => onContinueReading?.(lastReading.bookId)}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               width: '100%',
               padding: '12px 16px',
               marginBottom: '16px',
+              borderRadius: '10px',
               background: isDark ? 'rgba(200,168,75,0.1)' : 'rgba(74,127,165,0.08)',
               border: `1.5px solid ${isDark ? 'rgba(200,168,75,0.3)' : 'rgba(74,127,165,0.2)'}`,
-              borderRadius: '10px',
               cursor: 'pointer',
               textAlign: 'left',
-              transition: 'background 0.15s, border-color 0.15s',
+              transition: 'background 0.15s, box-shadow 0.15s',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(200,168,75,0.18)' : 'rgba(74,127,165,0.14)';

@@ -83,7 +83,7 @@ export default function ContactDevDialog({
           style={{
             background: cardBg,
             borderRadius: '16px',
-            padding: '24px',
+            padding: '20px 24px 24px',
             maxWidth: '340px',
             width: '90%',
             maxHeight: '85vh',
@@ -117,19 +117,6 @@ export default function ContactDevDialog({
           >
             <X size={20} />
           </button>
-
-          {/* 标题 */}
-          <h2
-            style={{
-              margin: '0 0 20px 0',
-              fontSize: '24px',
-              fontWeight: 700,
-              color: titleColor,
-              paddingRight: '28px',
-            }}
-          >
-            {isEn ? 'Contact Developer' : '联系开发者'}
-          </h2>
 
           {/* 第一部分：开发者信息 */}
           <div style={{ marginBottom: '16px' }}>
@@ -187,7 +174,7 @@ export default function ContactDevDialog({
               style={{
                 width: '100%',
                 aspectRatio: '1',
-                maxWidth: '220px',
+                maxWidth: '157px',
                 margin: '0 auto',
                 borderRadius: '10px',
                 display: 'flex',
