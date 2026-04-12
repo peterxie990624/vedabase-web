@@ -226,7 +226,7 @@ export default function BookshelfPage({
               }}
             >
               {/* Language */}
-              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
                 语言 / Language
               </div>
               <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
@@ -249,6 +249,16 @@ export default function BookshelfPage({
                     textAlign: 'left',
                     transition: 'background 0.1s',
                   }}
+                  onMouseEnter={(e) => {
+                    if (language !== lang) {
+                      e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (language !== lang) {
+                      e.currentTarget.style.background = 'none';
+                    }
+                  }}
                 >
                   <span>{lang === 'zh' ? '中文 / Chinese' : 'English / 英文'}</span>
                   {language === lang && <span style={{ color: activeColor }}>✓</span>}
@@ -257,7 +267,7 @@ export default function BookshelfPage({
 
               {/* Font size */}
               <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
                 字号 / Font Size
               </div>
               <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
@@ -278,6 +288,18 @@ export default function BookshelfPage({
                       fontWeight: fontSize === opt.value ? 700 : 400,
                       transition: 'all 0.1s',
                     }}
+                    onMouseEnter={(e) => {
+                      if (fontSize !== opt.value) {
+                        e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
+                        e.currentTarget.style.borderColor = activeColor;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (fontSize !== opt.value) {
+                        e.currentTarget.style.background = 'none';
+                        e.currentTarget.style.borderColor = dropdownBorder;
+                      }
+                    }}
                   >
                     <div>{isEn ? opt.label_en : opt.label_zh}</div>
                     <div style={{ fontSize: '10px', opacity: 0.6 }}>{isEn ? opt.label_zh : opt.label_en}</div>
@@ -287,7 +309,7 @@ export default function BookshelfPage({
 
               {/* Theme */}
               <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
-              <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: textSecondary, fontWeight: 600, letterSpacing: '0.05em' }}>
+              <div style={{ padding: '10px 16px', fontSize: '12px', color: activeColor, fontWeight: 700, letterSpacing: '0.05em', background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)', marginBottom: '4px' }}>
                 风格 / Theme
               </div>
               <div style={{ borderBottom: `1px solid ${dropdownBorder}`, marginBottom: '4px' }} />
@@ -312,6 +334,16 @@ export default function BookshelfPage({
                     fontWeight: theme === opt.value ? 600 : 400,
                     textAlign: 'left',
                     transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (theme !== opt.value) {
+                      e.currentTarget.style.background = isDark ? 'rgba(232, 213, 163, 0.05)' : 'rgba(74, 127, 165, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (theme !== opt.value) {
+                      e.currentTarget.style.background = 'none';
+                    }
                   }}
                 >
                   <span>{isEn ? `${opt.label_en} / ${opt.label_zh}` : `${opt.label_zh} / ${opt.label_en}`}</span>

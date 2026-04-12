@@ -27,6 +27,8 @@ export default function ContactDevDialog({
   const borderColor = isDark ? '#2a3a50' : '#e0eaf2';
   const accentColor = isDark ? '#c8a84b' : '#4a7fa5';
   const loadingColor = isDark ? '#e8d5a3' : '#2e6fa0';
+  const sectionBg = isDark ? 'rgba(26, 37, 53, 0.8)' : 'rgba(245, 247, 250, 0.8)';
+  const sectionBorder = isDark ? '#1e2e42' : '#f0f5fa';
 
   useEffect(() => {
     if (!open) {
@@ -66,9 +68,9 @@ export default function ContactDevDialog({
             background: cardBg,
             borderRadius: '16px',
             padding: '24px',
-            maxWidth: '320px',
+            maxWidth: '340px',
             width: '90%',
-            maxHeight: '80vh',
+            maxHeight: '85vh',
             overflowY: 'auto',
             boxShadow: isDark
               ? '0 20px 60px rgba(0, 0, 0, 0.6)'
@@ -77,6 +79,7 @@ export default function ContactDevDialog({
             position: 'relative',
           }}
         >
+          {/* 关闭按钮 */}
           <button
             onClick={onClose}
             style={{
@@ -99,11 +102,12 @@ export default function ContactDevDialog({
             <X size={20} />
           </button>
 
+          {/* 标题 */}
           <h2
             style={{
-              margin: '0 0 16px 0',
-              fontSize: '18px',
-              fontWeight: 600,
+              margin: '0 0 20px 0',
+              fontSize: '20px',
+              fontWeight: 700,
               color: textPrimary,
               paddingRight: '28px',
             }}
@@ -111,54 +115,72 @@ export default function ContactDevDialog({
             {isEn ? 'Contact Developer' : '联系开发者'}
           </h2>
 
+          {/* 第一部分：开发者信息 */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '20px',
-              padding: '12px',
-              background: isDark ? 'rgba(232, 213, 163, 0.08)' : 'rgba(74, 127, 165, 0.08)',
-              borderRadius: '8px',
+              padding: '16px',
+              background: sectionBg,
+              border: `1px solid ${sectionBorder}`,
+              borderRadius: '10px',
+              marginBottom: '16px',
             }}
           >
             <div
               style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '8px',
-                background: accentColor,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: cardBg,
-                fontSize: '20px',
-                fontWeight: 700,
-                flexShrink: 0,
+                gap: '12px',
               }}
             >
-              ⭐
-            </div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: textPrimary }}>
-                大星 Patrick
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '10px',
+                  background: accentColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: cardBg,
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                ⭐
               </div>
-              <div style={{ fontSize: '12px', color: textSecondary, marginTop: '2px' }}>
-                {isEn ? 'Developer' : '开发者'}
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: textPrimary }}>
+                  大星 Patrick
+                </div>
+                <div style={{ fontSize: '12px', color: textSecondary, marginTop: '2px' }}>
+                  {isEn ? 'Developer' : '开发者'}
+                </div>
               </div>
             </div>
           </div>
 
-          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <div style={{ fontSize: '12px', color: textSecondary, marginBottom: '8px' }}>
+          {/* 第二部分：微信二维码 */}
+          <div
+            style={{
+              padding: '16px',
+              background: sectionBg,
+              border: `1px solid ${sectionBorder}`,
+              borderRadius: '10px',
+              marginBottom: '16px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '13px', fontWeight: 600, color: textPrimary, marginBottom: '12px' }}>
               {isEn ? 'WeChat QR Code' : '微信二维码'}
             </div>
             <div
               style={{
-                width: '200px',
-                height: '200px',
+                width: '100%',
+                aspectRatio: '1',
+                maxWidth: '220px',
                 margin: '0 auto',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 border: `1px solid ${borderColor}`,
                 display: 'flex',
                 alignItems: 'center',
@@ -172,8 +194,8 @@ export default function ContactDevDialog({
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div
                     style={{
-                      width: '32px',
-                      height: '32px',
+                      width: '36px',
+                      height: '36px',
                       border: `3px solid ${loadingColor}`,
                       borderTop: `3px solid transparent`,
                       borderRadius: '50%',
@@ -193,46 +215,70 @@ export default function ContactDevDialog({
                 />
               )}
               {imageError && (
-                <div style={{ fontSize: '12px', color: textSecondary, textAlign: 'center' }}>
-                  {isEn ? 'Failed to load' : '加载失败'}
+                <div style={{ fontSize: '13px', color: textSecondary, textAlign: 'center', padding: '20px' }}>
+                  {isEn ? 'Failed to load image' : '图片加载失败'}
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ fontSize: '13px', color: textSecondary, lineHeight: 1.6, marginBottom: '16px' }}>
-            {isEn ? (
-              <>
-                <p style={{ margin: '0 0 8px 0' }}>
-                  I am the developer of Vedabase Web: Patrick. If you have any e-book resources or spiritual teacher lectures, please contact me.
-                </p>
-                <p style={{ margin: '0 0 8px 0' }}>
-                  If you have any suggestions for improving Vedabase or ideas for cooperation, you can contact me through this QR code.
-                </p>
-              </>
-            ) : (
-              <>
-                <p style={{ margin: '0 0 8px 0' }}>
-                  我是韦达书库网页版的开发者：大星Patrick。如果您有任何电子版书籍的资源，或者灵性导师的讲课等资源，可以联系我。
-                </p>
-                <p style={{ margin: '0 0 8px 0' }}>
-                  如果您对韦达书库有任何改进的建议、合作的想法，可以通过这个二维码联系开发者。
-                </p>
-              </>
-            )}
+          {/* 第三部分：描述文字 */}
+          <div
+            style={{
+              padding: '16px',
+              background: sectionBg,
+              border: `1px solid ${sectionBorder}`,
+              borderRadius: '10px',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ fontSize: '13px', color: textSecondary, lineHeight: 1.7 }}>
+              {isEn ? (
+                <>
+                  <p style={{ margin: '0 0 10px 0' }}>
+                    I am the developer of Vedabase Web: Patrick. If you have any e-book resources or spiritual teacher lectures, please contact me.
+                  </p>
+                  <p style={{ margin: '0' }}>
+                    If you have any suggestions for improving Vedabase or ideas for cooperation, you can contact me through this QR code.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 10px 0' }}>
+                    我是韦达书库网页版的开发者：大星Patrick。如果您有任何电子版书籍的资源，或者灵性导师的讲课等资源，可以联系我。
+                  </p>
+                  <p style={{ margin: '0' }}>
+                    如果您对韦达书库有任何改进的建议、合作的想法，可以通过这个二维码联系开发者。
+                  </p>
+                </>
+              )}
+            </div>
           </div>
 
-          <div style={{ padding: '12px', background: isDark ? 'rgba(200, 168, 75, 0.08)' : 'rgba(74, 127, 165, 0.08)', borderRadius: '8px', fontSize: '13px', color: textSecondary, marginBottom: '16px' }}>
-            <span style={{ fontWeight: 600 }}>Email:</span>
-            <br />
-            <span style={{ fontFamily: 'monospace', color: textPrimary }}>3431503934@qq.com</span>
+          {/* 第四部分：邮箱 */}
+          <div
+            style={{
+              padding: '16px',
+              background: sectionBg,
+              border: `1px solid ${sectionBorder}`,
+              borderRadius: '10px',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 600, color: textSecondary, marginBottom: '8px' }}>
+              {isEn ? 'Email' : '邮箱'}
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: '13px', color: textPrimary, fontWeight: 500 }}>
+              3431503934@qq.com
+            </div>
           </div>
 
+          {/* 关闭按钮 */}
           <button
             onClick={onClose}
             style={{
               width: '100%',
-              padding: '10px',
+              padding: '12px',
               background: accentColor,
               border: 'none',
               borderRadius: '8px',
@@ -240,10 +286,16 @@ export default function ContactDevDialog({
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'opacity 0.2s',
+              transition: 'all 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.9';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
           >
             {isEn ? 'Close' : '关闭'}
           </button>
