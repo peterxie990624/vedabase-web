@@ -86,7 +86,7 @@ export default function ContactDevDialog({
             padding: '20px 24px 24px',
             maxWidth: '340px',
             width: '90%',
-            maxHeight: '85vh',
+            maxHeight: '72vh',
             overflowY: 'auto',
             boxShadow: isDark
               ? '0 20px 60px rgba(0, 0, 0, 0.6)'
@@ -226,19 +226,19 @@ export default function ContactDevDialog({
               {isEn ? (
                 <>
                   <p style={{ margin: '0 0 10px 0' }}>
-                    I am the developer of Vedabase Web: Patrick. If you have any e-book resources or spiritual teacher lectures, please contact me.
+                    I am the developer of this app: Patrick. If you have any e-book resources or learning resources you'd like to share, please contact me.
                   </p>
                   <p style={{ margin: '0' }}>
-                    If you have any suggestions for improving Vedabase or ideas for cooperation, you can contact me through this QR code.
+                    If you have any suggestions for improving Vedabase, or ideas for collaboration, please contact me.
                   </p>
                 </>
               ) : (
                 <>
                   <p style={{ margin: '0 0 10px 0' }}>
-                    我是韦达书库网页版的开发者：大星Patrick。如果您有任何电子版书籍的资源，或者灵性导师的讲课等资源，可以联系我。
+                    我是这个应用的开发者：大星Patrick。如果您有任何电子版书籍的资源、或者学习资源，想要分享的，请联系我。
                   </p>
                   <p style={{ margin: '0' }}>
-                    如果您对韦达书库有任何改进的建议、合作的想法，可以通过这个二维码联系开发者。
+                    如果您对韦达书库有任何改进的建议、或者有合作的想法，请联系我。
                   </p>
                 </>
               )}
