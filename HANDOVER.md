@@ -5,9 +5,9 @@
 
 ---
 
-## 零、Manus 工作原则
+## 一、Manus 工作原则
 
-> **Manus 须知**：当用户让Manus读取这个文档的时候，特别要读取**【零、Manus工作原则】**，而且要**注意【零】里面的每一个字，**特别要注意**加粗的部分**。每次对话结尾，将提交号（如果修改了项目文件的话）和相对应的时间[年月日时分]、你所提交的所有文件位置还有遵从【Manus工作原则】做了哪些事情、项目里有多少个日志文件都在结尾告诉用户。
+> **Manus 须知**：当用户让Manus读取这个文档的时候，特别要读取**【一、Manus工作原则】**，而且要**注意【一】里面的每一个字，**特别要注意**加粗的部分**。每次对话结尾，将提交号（如果修改了项目文件的话）和相对应的时间[年月日时分]、你所提交的所有文件位置还有遵从【Manus工作原则】做了哪些事情、项目里有多少个日志文件都在结尾告诉用户。
 > 比如`提交号：xxx 日期：xxx 换行 遵从原则二，将日志上传到xxx 换行 日志文件：xxx个 换行 遵从原则一，查找了某段历史对话，然后对应着了解了用户所指的相关内容，更清楚其详情`等等
 
 ### 原则一：确认工作原则
@@ -99,36 +99,6 @@
 - **部署地址**：部署完成后，网站会自动更新到 https://peterxie990624.github.io/vedabase-web/
 - **版本检查**：可以通过开发模式工具（DEV 按钮）查看当前部署的版本号（commit hash）和构建时间
 - **Token 安全**：Personal Access Token 应该妥善保管，不要在代码中硬编码，仅在推送时使用
-
----
-
-## 一、如何开启新的 Manus 对话（复制以下内容发给 Manus）
-
-```
-我有一个韦达书库项目，请帮我继续开发：
-
-GitHub 仓库：https://github.com/peterxie990624/vedabase-web
-克隆到：/home/ubuntu/vedabase_web
-
-项目说明：
-- 纯静态前端，React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui
-- 数据以 JSON 文件存储在 client/public/data/（无数据库）
-- 永久网站：https://peterxie990624.github.io/vedabase-web/
-- 每次推送到 main 分支，GitHub Actions 自动构建部署（约 1-2 分钟）
-
-开发流程：
-1. 克隆仓库：git clone https://github.com/peterxie990624/vedabase-web /home/ubuntu/vedabase_web
-2. 安装依赖：cd /home/ubuntu/vedabase_web && pnpm install
-3. 启动预览：pnpm dev（端口 3000）
-4. 修改完成后：git add -A && git commit -m "描述" && git push origin main
-5. GitHub Actions 自动部署到 https://peterxie990624.github.io/vedabase-web/
-
-GitHub 账号：3431503934@qq.com / Peterxie1
-
-请先克隆仓库后阅读根目录的 HANDOVER.md 文件，并按照其中的 Manus 工作原则进行本次开发。
-
-本次我想要：[在这里描述你想做的事情]
-```
 
 ---
 
