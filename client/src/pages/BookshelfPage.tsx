@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import AboutDialog from '../components/AboutDialog';
+import ContactDevDialog from '../components/ContactDevDialog';
 import type { Language, FontSize, VedaTheme } from '../types';
 import { CDN, formatSectionLabel } from '../constants';
 import type { VedaTheme as VT } from '../hooks/useSettings';
@@ -65,6 +66,7 @@ export default function BookshelfPage({
   setTheme,
 }: BookshelfPageProps) {
   const [showAbout, setShowAbout] = useState(false);
+  const [showContactDev, setShowContactDev] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   // 封面图加载状态（整个书卡等图片加载完再显示）
@@ -317,6 +319,27 @@ export default function BookshelfPage({
                 </button>
               ))}
 
+              {/* Contact Developer */}
+              <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
+              <button
+                onClick={() => { setShowContactDev(true); setShowSettings(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: isDark ? '#c0d0e0' : '#444',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  transition: 'background 0.1s',
+                }}
+              >
+                {isEn ? 'Contact Developer / 联系开发者' : '联系开发者 / Contact Developer'}
+              </button>
+
               {/* About */}
               <div style={{ borderTop: `1px solid ${dropdownBorder}`, margin: '4px 0' }} />
               <button
@@ -536,6 +559,7 @@ export default function BookshelfPage({
       </div>
 
       <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} theme={theme} language={language} />
+      <ContactDevDialog open={showContactDev} onClose={() => setShowContactDev(false)} theme={theme} language={language} />
     </div>
   );
 }
