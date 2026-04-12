@@ -24,11 +24,12 @@ export default function ContactDevDialog({
   const cardBg = isDark ? '#0f1923' : '#ffffff';
   const textPrimary = isDark ? '#e8d5a3' : '#1a3a5c';
   const textSecondary = isDark ? '#8aa0b4' : '#6a8aa0';
+  const titleColor = isDark ? '#ffd700' : '#2e5fa0';
   const borderColor = isDark ? '#2a3a50' : '#e0eaf2';
   const accentColor = isDark ? '#c8a84b' : '#4a7fa5';
   const loadingColor = isDark ? '#e8d5a3' : '#2e6fa0';
-  const sectionBg = isDark ? 'rgba(26, 37, 53, 0.8)' : 'rgba(245, 247, 250, 0.8)';
-  const sectionBorder = isDark ? '#1e2e42' : '#f0f5fa';
+  const lightBorder = isDark ? '#1e2e42' : '#f0f5fa';
+  const heavyBorder = isDark ? '#3a4a60' : '#d0dae8';
 
   useEffect(() => {
     if (!open) {
@@ -106,9 +107,9 @@ export default function ContactDevDialog({
           <h2
             style={{
               margin: '0 0 20px 0',
-              fontSize: '20px',
+              fontSize: '24px',
               fontWeight: 700,
-              color: textPrimary,
+              color: titleColor,
               paddingRight: '28px',
             }}
           >
@@ -116,15 +117,7 @@ export default function ContactDevDialog({
           </h2>
 
           {/* 第一部分：开发者信息 */}
-          <div
-            style={{
-              padding: '16px',
-              background: sectionBg,
-              border: `1px solid ${sectionBorder}`,
-              borderRadius: '10px',
-              marginBottom: '16px',
-            }}
-          >
+          <div style={{ marginBottom: '16px' }}>
             <div
               style={{
                 display: 'flex',
@@ -160,17 +153,11 @@ export default function ContactDevDialog({
             </div>
           </div>
 
+          {/* 第一部分与第二部分的分隔线（细） */}
+          <div style={{ height: '1px', background: lightBorder, margin: '12px 0' }} />
+
           {/* 第二部分：微信二维码 */}
-          <div
-            style={{
-              padding: '16px',
-              background: sectionBg,
-              border: `1px solid ${sectionBorder}`,
-              borderRadius: '10px',
-              marginBottom: '16px',
-              textAlign: 'center',
-            }}
-          >
+          <div style={{ marginBottom: '16px', textAlign: 'center' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: textPrimary, marginBottom: '12px' }}>
               {isEn ? 'WeChat QR Code' : '微信二维码'}
             </div>
@@ -222,16 +209,11 @@ export default function ContactDevDialog({
             </div>
           </div>
 
+          {/* 第二部分与第三部分的分隔线（细） */}
+          <div style={{ height: '1px', background: lightBorder, margin: '12px 0' }} />
+
           {/* 第三部分：描述文字 */}
-          <div
-            style={{
-              padding: '16px',
-              background: sectionBg,
-              border: `1px solid ${sectionBorder}`,
-              borderRadius: '10px',
-              marginBottom: '16px',
-            }}
-          >
+          <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', color: textSecondary, lineHeight: 1.7 }}>
               {isEn ? (
                 <>
@@ -255,16 +237,11 @@ export default function ContactDevDialog({
             </div>
           </div>
 
+          {/* 前三个部分与第四个部分的分隔线（粗） */}
+          <div style={{ height: '2px', background: heavyBorder, margin: '16px 0' }} />
+
           {/* 第四部分：邮箱 */}
-          <div
-            style={{
-              padding: '16px',
-              background: sectionBg,
-              border: `1px solid ${sectionBorder}`,
-              borderRadius: '10px',
-              marginBottom: '16px',
-            }}
-          >
+          <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '12px', fontWeight: 600, color: textSecondary, marginBottom: '8px' }}>
               {isEn ? 'Email' : '邮箱'}
             </div>
