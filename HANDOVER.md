@@ -58,7 +58,7 @@
 - 有多种实现方案值得用户选择
 - 发现某个样式、交互或功能参考主流网站后值得改进
 - 某项改动是否需要同步更新"设置 - 关于 App"页面
-遇到用户在描述一个布局需要调整或者提到了某个页面这类自然语言时，主动询问用户让他与你配合，对这些前端元素起名字，比如‘头部块’‘节页面’‘红色框’‘顶部章标题块’等等，你应该主动给这些实际的代码元素起不同的名字，以便方便用户描述
+遇到用户在描述一个布局需要调整或者提到了某个页面这类自然语言时，主动询问用户让他与你配合，对这些前端元素起名字，比如'头部块''节页面''红色框''顶部章标题块'等等，你应该主动给这些实际的代码元素起不同的名字，以便方便用户描述
 -可以用如下的图描述：
 ```markdown
 ┌─────────────────────────┐
@@ -98,7 +98,7 @@
 - **深色版二维码**：紫色 RGB(174,132,196) → 粉色 RGB(247,170,176) 渐变，对角线方向
 - **浅色版二维码**：深蓝 RGB(30,80,160) → 浅蓝 RGB(100,170,220) 渐变，对角线方向
 - **微信图标**：`/home/ubuntu/wechat_icon.png`，占二维码尺寸的 0.22
-- **对话框标题**：界面上不显示内部开发名称，如“联系开发者窗口”等标题应删除
+- **对话框标题**：界面上不显示内部开发名称，如"联系开发者窗口"等标题应删除
 - **二维码展示尺寸**：在 ContactDevDialog.tsx 中通过 `maxWidth` CSS 控制，当前为 157px
 
 #### 关于设置菜单卡片化的开发指南：
@@ -119,16 +119,17 @@
 
 ---
 
-## 二、项目现状（截至 2026-04-04）
+## 二、项目现状（截至 2026-04-24）
 
-### 项目架构概览
+本文档管理两个独立项目：
+
+### 项目一：韦达书库（vedabase-web）
 
 **技术栈**：React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui  
 **数据存储**：纯 JSON 文件（无数据库），存储在 `client/public/data/`  
 **部署方式**：GitHub Pages + GitHub Actions（推送即部署）  
-**国内加速**：jsDelivr CDN（自动检测并切换）
-
-### 已完成功能
+**国内加速**：jsDelivr CDN（自动检测并切换）  
+**访问地址**：https://peterxie990624.github.io/vedabase-web/
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
@@ -141,52 +142,105 @@
 | 字体大小 | ✅ | 4档（sm/md/lg/xl），设置持久化 |
 | 书签收藏 | ✅ | 精确跳转到具体节，localStorage持久化 |
 | 全文搜索 | ✅ | 含历史记录、关键词高亮、截取预览、中英文映射 |
-| 屏幕导航 | ✅ | 触摸滑动、键盘导航（点击屏幕左右已禁用） |
-| GitHub Pages 部署 | ✅ | 自动 CI/CD，推送即部署 |
-| jsDelivr CDN 加速 | ✅ | 国内无需翻墙，自动检测并切换 |
-| 搜索进度条 | ✅ | 显示正在加载哪篇、来源、耗时 |
-| 开发模式调试面板 | ✅ | 仅 pnpm dev 时显示，含错误诊断 |
-| 多位置高亮 | ✅ | 支持梵文、逐词、译文、要旨四个位置的高亮 |
-| 中英文词汇映射 | ✅ | 英文搜索时自动映射到中文，中文模式下高亮中文翻译 |
-| 高亮颜色 | ✅ | 查坦尼亚金色（#d4a017），深色模式下为 #b8860b |
-| 搜索历史记忆 | ✅ | 2 小时内记忆搜索历史，超时后清除 |
-
-### 最近修复的 Bug（2026-04-04）
-
-| Bug | 提交 | 说明 |
-|-----|------|------|
-| 目录激活标记逻辑错误 | 3b250e8 | 小节激活判断改为 `(ch.id === chapterId && idx === sectionIndex)` |
-| 顶部章块点击导航 | 37e82b0 | 改为滑动目录而不导航，使用 `scrollIntoView()` |
-
-### 之前修复的 Bug（2026-03-30）
-
-| Bug | 提交 | 说明 |
-|-----|------|------|
-| 英文模式下搜索结果不高亮 | 2df791c | SearchPage 中 highlightKeywordZh/En 未传递到 SearchResult |
-| 导航返回后高亮消失 | 395fa4f | 非overlay模式下高亮参数丢失 |
-| useEffect 依赖不对 | 395fa4f | 依赖了 searchKeyword 而非 currentKeyword |
-| 点击屏幕左右翻页 | 5a5fc40 | 已注释掉，保留触摸滑动和键盘导航 |
-| vedabooks.net 网址 | 36727fb | 已从关于页面移除 |
-
-### 已修复的历史 Bug
-
-| Bug | 状态 | 版本 |
-|-----|------|------|
-| 书签精确跳转（之前跳到章节开头） | ✅ 已修复 | v1.0 |
-| 深色主题下导航栏白色背景 | ✅ 已修复 | v1.0 |
-| 列表页面硬编码白色背景 | ✅ 已修复 | v1.0 |
-| GitHub Pages 数据路径（404） | ✅ 已修复 | v1.0 |
-| 搜索返回逻辑（从阅读页返回搜索结果） | ✅ 已修复 | v1.6 |
-| 中文模式下搜索英文关键词的高亮 | ✅ 已修复 | v1.7 |
-| 搜索高亮颜色 | ✅ 已修复 | v1.6 |
-| 搜索结果预览截取 | ✅ 已修复 | v1.6 |
-| 封面图加载闪烁 | ✅ 已修复 | v1.6 |
-| 开发模式激活 | ✅ 已修复 | v1.6 |
-| Tab 切换记忆 | ✅ 已修复 | v1.6 |
 
 ---
 
-## 三、技术架构
+### 项目二：数字化学习空间（krishna.中国）
+
+**访问地址**：https://krishna.中国（即 https://krishna.xn--fiqs8s）  
+**服务器**：腾讯云 124.223.1.32（ubuntu / Greengrass1）  
+**前端仓库**：https://github.com/peterxie990624/dlspace-frontend（私有）  
+**后端仓库**：https://github.com/peterxie990624/dlspace-backend（私有）  
+**GitHub Token**：请向用户获取（不存入文档以防泄露）
+
+#### 技术架构
+
+| 层 | 技术 | 路径 |
+|----|------|------|
+| 前端 | 原生 HTML + CSS + JS（单页应用） | 服务器 `/var/www/krishna/`，本地 `/home/ubuntu/krishna_web/` |
+| 后端 | Node.js + Express + SQLite | 服务器 `/home/ubuntu/memo-api/`，本地 `/home/ubuntu/memo-api/` |
+| 数据库 | SQLite | 服务器 `/home/ubuntu/memo-api/data/app.db` |
+| 进程管理 | PM2 | `pm2 status`，进程名 `memo-api` |
+| Web 服务器 | Nginx | 配置在 `/etc/nginx/sites-enabled/` |
+| 部署 | GitHub Actions（SSH rsync） | 前后端各有独立 workflow |
+
+#### 后端路由（v4.0，已部署）
+
+| 路由文件 | 路径前缀 | 主要功能 |
+|----------|----------|----------|
+| auth.js | /api/auth | 注册、登录、JWT |
+| memos.js | /api/memos | 备忘录 CRUD |
+| circles.js | /api/circles | 打卡圈子 CRUD |
+| checkins.js | /api/checkins | 打卡记录 |
+| upload.js | /api/upload | 图片上传（multer） |
+| users.js | /api/users | 用户资料 |
+
+#### 前端页面（tab 切换，单页应用）
+
+| Tab ID | 功能 | 说明 |
+|--------|------|------|
+| tab-checkin | 打卡圈子 | 列表、详情、创建、打卡 |
+| tab-search | 搜索 | 搜索备忘录 |
+| tab-memo | 备忘录 | 列表、新建、编辑 |
+| tab-calendar | 日历 | 月历视图，点击日期查看当天备忘录 |
+| tab-profile | 我的 | 用户资料、统计 |
+
+#### 已完成功能
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 用户注册/登录 | ✅ | JWT 认证，记住我（localStorage） |
+| 备忘录 CRUD | ✅ | 标题、内容、分类、日期、重要标记 |
+| 打卡圈子 | ✅ | 创建、加入（公开/私密）、打卡、统计 |
+| 日历视图 | ✅ | 月历，有备忘录的日期显示小圆点 |
+| 日历新建备忘录 | ✅ | 点击日期后显示当天备忘录，标题旁有「+ 新建」按钮 |
+| 全局备忘录弹窗 | ✅ | memoModal 移至 body 全局，任意 tab 均可弹出 |
+| 图片上传 | ✅ | multer，存储在服务器 uploads/ 目录 |
+| 花瓣飘落背景 | ✅ | CSS 动画 |
+| 备案号显示 | ✅ | 浙ICP备2026026285号-1 |
+| HTTPS | ✅ | Let's Encrypt 证书，自动续期 |
+
+#### 已知技术债务
+
+1. **GitHub Actions 后端部署 workflow 需要修复**：服务器上的 git 历史与 GitHub 不一致（服务器是旧的初始化仓库，本地是重写的 v4.0），导致 `git pull` 时 diverge 失败。建议在服务器上执行：
+   ```bash
+   cd /home/ubuntu/memo-api
+   git fetch --all && git reset --hard origin/main
+   ```
+2. **后端 package.json 未纳入 git 追踪**：服务器上已手动 `npm install multer`，但 package.json 不在 git 中，下次重新部署时需再次安装。
+
+#### 测试账号
+
+| 账号 | 密码 | 说明 |
+|------|------|------|
+| admin | admin123 | 管理员，含丰富测试数据 |
+
+测试数据包括：
+- 4 个打卡圈子（每日晨读、冥想打卡、韦达学习小组[私密,密码 vedabase]、健康生活）
+- 过去 60 天约 173 条打卡记录
+- 10 条备忘录（含学习笔记、感恩清单、斋戒计划等）
+
+#### 服务器常用命令
+
+```bash
+# SSH 连接
+ssh ubuntu@124.223.1.32  # 密码: Greengrass1
+
+# 后端管理
+pm2 status               # 查看进程状态
+pm2 logs memo-api        # 查看日志
+pm2 restart memo-api     # 重启后端
+
+# 前端部署
+rsync -avz /home/ubuntu/krishna_web/ ubuntu@124.223.1.32:/var/www/krishna/
+
+# 健康检查
+curl https://krishna.xn--fiqs8s/api/health
+```
+
+---
+
+## 三、技术架构（韦达书库）
 
 ### 目录结构
 
@@ -209,52 +263,20 @@ vedabase-web/
 │       ├── const.ts               # 常量定义
 │       ├── types.ts               # TypeScript 类型定义
 │       ├── pages/                 # 页面组件
-│       │   ├── BGReadPage.tsx      # 博伽梵歌阅读页
-│       │   ├── SBReadPage.tsx      # 圣典博伽瓦谭阅读页
-│       │   ├── SearchPage.tsx      # 全文搜索页
-│       │   ├── BookshelfPage.tsx   # 书架页
-│       │   ├── BookmarkPage.tsx    # 书签页
-│       │   ├── AkadasiPage.tsx     # 爱卡达西页
-│       │   └── CalendarPage.tsx    # 韦达日历页
-│       ├── components/            # 通用组件
-│       │   ├── TopNav.tsx         # 顶部导航（CSS变量主题）
-│       │   ├── BottomNav.tsx      # 底部标签栏
-│       │   ├── SectionContent.tsx # 节内容显示（含高亮逻辑）
-│       │   ├── DevPanel.tsx       # 开发模式调试面板
-│       │   ├── LoadingProgress.tsx # 加载进度条
-│       │   └── ...
-│       ├── contexts/              # React Context
-│       │   └── SettingsContext.tsx # 全局设置（主题、语言、字号）
-│       ├── hooks/                 # 自定义 Hook
-│       │   ├── useData.ts         # 数据加载（jsDelivr CDN优先）
-│       │   ├── useSettings.ts     # 主题/语言/字体设置
-│       │   └── ...
-│       └── lib/                   # 工具函数库
-│           ├── wordMapping.ts     # 英文-中文词汇映射表
-│           ├── normalizeSanskrit.ts # 梵文规范化函数
-│           └── ...
-├── server/                        # 后端服务（可选）
-│   └── index.ts
+│       └── components/            # 通用组件
 ├── docs/
-│   └── chat_logs/                 # 对话记录存档
-│       ├── 2026-03-14_session.md
-│       ├── 2026-03-22_session.md
-│       ├── 2026-03-23_v1.6_fixes.md
-│       ├── 2026-03-29_v1.7_multi_highlight.md
-│       ├── 2026-03-30_highlight_fix/
-│       │   ├── CODE_CHANGES_DETAILED.md
-│       │   ├── HIGHLIGHT_FLOW_ANALYSIS.md
-│       │   └── PROBLEM_DIAGNOSIS_COMPLETE.md
-│       └── ...
+│   └── chat_logs/
+│       └── logs_human_to_manus/   # 对话日志（按日期命名）
+│           ├── 2026-04-03.md
+│           ├── 2026-04-04.md
+│           ├── 2026-04-10.md
+│           ├── 2026-04-12.md
+│           ├── 2026-04-22.md
+│           └── 2026-04-24.md
 ├── .github/workflows/
 │   └── deploy.yml                 # GitHub Actions 自动部署配置
-├── vite.config.ts                 # Vite 配置（base: /vedabase-web/）
-├── tsconfig.json                  # TypeScript 配置
-├── package.json                   # 项目依赖
-├── pnpm-lock.yaml                 # pnpm 锁定文件
 ├── HANDOVER.md                    # 本文档
-├── CHANGELOG.md                   # 版本更新日志
-└── todo.md                        # 待办事项
+└── CHANGELOG.md                   # 版本更新日志
 ```
 
 ### 关键技术决策
@@ -268,54 +290,79 @@ vedabase-web/
 | 部署 | GitHub Actions → GitHub Pages，推送即部署 |
 | 高亮系统 | 支持四个位置（梵文/逐词/译文/要旨）、中英文映射、自动滚动 |
 
-### CDN 地址
-
-```
-jsDelivr: https://cdn.jsdelivr.net/gh/peterxie990624/vedabase-web@main/client/public
-GitHub Pages: https://peterxie990624.github.io/vedabase-web
-```
-
 ---
 
 ## 四、自动推送配置说明
 
-**当前配置：每次修改代码后，运行以下命令即可自动部署：**
+### 韦达书库（vedabase-web）
 
 ```bash
-cd /home/ubuntu/vedabase-web
+cd /home/ubuntu/vedabase_web
 git add -A
 git commit -m "你的修改说明"
 git push origin main
 # 约 1-2 分钟后 https://peterxie990624.github.io/vedabase-web/ 自动更新
 ```
 
-**GitHub Actions 工作流（`.github/workflows/deploy.yml`）已配置：**
-- 触发条件：推送到 `main` 分支
-- 构建命令：`VITE_BASE_PATH=/vedabase-web/ pnpm build`
-- 部署目标：GitHub Pages
+### 数字化学习空间前端（dlspace-frontend）
 
-**注意**：Manus 的 gh CLI token 默认没有 `workflow` 权限，如果需要修改 `.github/workflows/` 目录下的文件，需要通过浏览器登录 GitHub 网页操作，或者让 Manus 通过浏览器完成。
+```bash
+cd /home/ubuntu/krishna_web
+git add -A
+git commit -m "你的修改说明"
+git push origin main
+# GitHub Actions 自动 rsync 到服务器 /var/www/krishna/
+```
 
----
+### 数字化学习空间后端（dlspace-backend）
 
-## 五、最近修复的问题详解
-
-### 搜索高亮问题（2026-03-30）
-
-**问题**：在英文模式搜索"devotee"时，进入节页面后看不到高亮
-
-**根本原因**：SearchPage 中构造 SearchResult 时，虽然 `getMatchInfo()` 生成了 `highlightKeywordZh` 和 `highlightKeywordEn`，但没有传递到 SearchResult 对象
-
-**修复**：在 SearchPage.tsx 的 BG 和 SB 搜索中，添加这两个字段的传递
-
-**相关文档**：
-- `docs/chat_logs/2026-03-30_highlight_fix/CODE_CHANGES_DETAILED.md` - 详细的代码对比
-- `docs/chat_logs/2026-03-30_highlight_fix/PROBLEM_DIAGNOSIS_COMPLETE.md` - 完整的诊断过程
-- `docs/chat_logs/2026-03-30_highlight_fix/HIGHLIGHT_FLOW_ANALYSIS.md` - 高亮功能数据流分析
+```bash
+cd /home/ubuntu/memo-api
+git add -A
+git commit -m "你的修改说明"
+git push origin main
+# GitHub Actions 自动 SSH 到服务器执行 git pull + pm2 restart
+# 注意：当前服务器 git 历史与 GitHub 不一致，Actions 可能失败，需手动部署
+```
 
 ---
 
-> 详细对话记录请查看 `docs/chat_logs/` 目录下的 session 文件。
+## 五、最近修复的问题详解（2026-04-24）
 
-*文档更新时间：2026-04-12*  
-*项目版本：v2.0（设置菜单卡片化、联系开发者窗口优化、二维码缩小）*
+### 日历页备忘录弹窗无法打开（根本原因）
+
+**问题**：在日历页点击"+ 新建"按钮没有反应
+
+**根本原因**：`memoModal` 是 `position: fixed` 的弹窗，但它嵌套在 `tab-memo` section 内部。当用户切换到日历页时，`tab-memo` 的 CSS 变为 `display: none`，**CSS 规范规定：父元素 `display:none` 时，子元素无论 position 为何值，都不会渲染**，因此 `memoModal.style.display = 'flex'` 虽然执行了，但弹窗不可见。
+
+**修复**：将 `memoModal` 从 `tab-memo` section 内移出，放到 `body` 最底部（`</div>` 主应用之后，`<script>` 之前），作为全局弹窗，不受任何 tab 切换影响。
+
+**提交**：`0164280`
+
+### 日历页"+ 新建"按钮样式问题
+
+**问题**：日历页点击日期后显示的"+ 新建"按钮使用了 `link-btn`（文字下划线样式），与其他页面的 `add-btn`（紫色渐变圆角）不一致。
+
+**修复**：`showDayMemos` 函数中，将按钮 class 改为 `add-btn`，并将按钮移到标题行内（无论当天是否有备忘录都显示）。
+
+### 日历页有备忘录时缺少新增按钮
+
+**问题**：当某天已有备忘录时，底部详情区没有新增按钮，只有无备忘录时才有。
+
+**修复**：重构 `showDayMemos` 函数，将"+ 新建"按钮放在日期标题旁边，始终显示。
+
+### 后端 v4.0 部署（circles/checkins 接口不存在）
+
+**问题**：创建圈子时提示"接口不存在"
+
+**根本原因**：服务器运行的是旧版后端 v1.0（仅有 auth.js 和 memos.js），本地已升级到 v4.0 但从未同步到服务器。
+
+**修复**：通过 paramiko SFTP 直接将 v4.0 路由文件上传到服务器，安装 multer 依赖，重启 pm2。
+
+---
+
+> 详细对话记录请查看 `docs/chat_logs/logs_human_to_manus/` 目录下的日志文件。
+
+*文档更新时间：2026-04-24*  
+*韦达书库版本：v2.0*  
+*数字化学习空间版本：v4.0（后端）/ 前端最新提交 `0164280`*
